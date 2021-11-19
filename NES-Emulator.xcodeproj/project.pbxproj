@@ -40,6 +40,7 @@
 		1A3C431E2747D94700DD181D = {
 			isa = PBXGroup;
 			children = (
+				1A3C43342747D99500DD181D /* README.md */,
 				1A3C43292747D94700DD181D /* NES-Emulator */,
 				1A3C43282747D94700DD181D /* Products */,
 			);
@@ -57,7 +58,6 @@
 			isa = PBXGroup;
 			children = (
 				1A3C43312747D99500DD181D /* obj */,
-				1A3C43342747D99500DD181D /* README.md */,
 				1A3C43322747D99500DD181D /* ressources.md */,
 				1A3C43332747D99500DD181D /* src */,
 			);

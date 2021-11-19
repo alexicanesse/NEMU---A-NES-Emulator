@@ -8,6 +8,7 @@ http://www.qmtpro.com/~nes/misc/nestest.txt
 https://github.com/Klaus2m5/6502_65C02_functional_tests
 
 BEST SITE EVER
+http://archive.6502.org/books/mcs6500_family_programming_manual.pdf
 http://www.6502.org/tools/emu/
 https://www.youtube.com/watch?v=8XmxKPJDGU0&t=0s
 
