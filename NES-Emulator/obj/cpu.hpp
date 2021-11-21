@@ -19,30 +19,24 @@ typedef uint8_t Byte;
 typedef uint16_t Address;
 
 class CPU{
-public:
-    /*
-     Registers
-    */
-    enum flags {
-        N = 0b10000000, //negative result | After most instructions that have a value result, this flag will contain bit 7 of that result.
-        V = 0b01000000, //overflow
-        B = 0b00010000, //break command | No CPU effect
-        D = 0b00001000, //decimal mode | On the NES, this flag has no effect
-        I = 0b00000100, //interrupt disable | When set, all interrupts except the NMI are inhibited.
-        Z = 0b00000010, //zero result | After most instructions that have a value result, if that value is zero, this flag will be set.
-        C = 0b00000001, //carry
-    } flags;
-    typedef enum flags flag;
-    
-    void setflag(flag, bool);
-    void getflag(flag);
-    
-    #warning TODO
-    bool reset();
+
     
 
     
 private:
+#warning NOT WORKING
+    struct flgs {
+        Byte N = 0x80; //negative result | After most instructions that have a value result, this flag will contain bit 7 of that result.
+        Byte V = 0x40; //overflow
+        Byte B = 0x10; //break command | No CPU effect
+        Byte D = 0x08; //decimal mode | On the NES, this flag has no effect
+        Byte I = 0x04; //interrupt disable | When set, all interrupts except the NMI are inhibited.
+        Byte Z = 0x02; //zero result | After most instructions that have a value result, if that value is zero, this flag will be set.
+        Byte C = 0x01; //carry
+    };
+    typedef struct flgs flgs;
+    
+    
     #warning TODO adr_pc
     struct registers {
         Byte r_A = 0;    //accumulator register (A)
@@ -53,7 +47,20 @@ private:
         Byte nv_bdizc = 0b11111111; //Processor status register
                                     //_ = expansion | No CPU effect
     } registers;
-        
+  
+public:
+    /*
+     Registers
+    */
+    
+    flgs flags;
+    
+    void setflag(Byte, bool);
+    bool getflag(Byte flg);
+    
+    #warning TODO
+    bool reset();
+    
 };
 
 }

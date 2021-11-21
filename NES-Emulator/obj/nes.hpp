@@ -21,6 +21,7 @@ namespace nes {
 
 class NES{
 public:
+#warning TODO init matrix at init
     std::array<Byte, 2048> *ram = new std::array<Byte, 2048>; //le reste et un miroire de cette tranche mémoire.
     
 #warning TODO WRITE/READ
