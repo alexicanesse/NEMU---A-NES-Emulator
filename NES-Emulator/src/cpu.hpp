@@ -24,6 +24,9 @@ class CPU{
 
     
 private:
+    /*
+     Registers
+    */
     struct flgs {
         Byte N = 0x80; //negative result | After most instructions that have a value result, this flag will contain bit 7 of that result.
         Byte V = 0x40; //overflow
@@ -46,6 +49,19 @@ private:
                                     //_ = expansion | No CPU effect
     } registers;
   
+    
+    
+    /*
+     Addressing modes
+     */
+#warning TODO addressing modes 
+    bool IMP(); //implied
+    bool IMM(); //immediate
+    bool ABS(); //absolute
+    bool ZPA(); //zero page
+    bool REL(); //relative
+    bool IND(); //indexed
+    bool IDD(); //indirect
 public:
     /*
      Registers

@@ -4,25 +4,15 @@
 //
 //  Created by Alexi Canesse on 19/11/2021.
 //
-#include <chrono>
-#include <thread>
-
-
-#include <iostream>
-#include <array>
-#include <ncurses.h>
-#include <string>
-#include <sstream>
 
 #include "debug.hpp"
-#include "cpu.hpp"
 
 
 
 //Show ram value
 void show_ram(std::array<Byte, 2048> ram){
     std::stringstream buffer;
-    buffer << "\n\n Ram:\n";
+    buffer << "\n\nRam:\n";
     for(int i = 0; i < 2048; i++){
         buffer << "0x" << std::hex << (int) ram[i] << ", ";
         if(i% 30 == 29) buffer << "\n";
