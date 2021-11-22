@@ -8,10 +8,10 @@
 #ifndef cpu_hpp
 #define cpu_hpp
 
-#include <stdio.h>
-#include <stdint.h>
+//#include <stdio.h>
+#include <cstdint>
 
-#include "nes.hpp"
+//#include "nes.hpp"
 
 namespace nes {
 
@@ -52,7 +52,6 @@ public:
     /*
      Registers
     */
-    
     flgs flags;
     
     void setflag(Byte, bool);

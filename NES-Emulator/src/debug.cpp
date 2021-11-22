@@ -8,22 +8,21 @@
 #include <thread>
 
 
-#include <stdio.h>
 #include <iostream>
 #include <array>
 #include <ncurses.h>
 #include <string>
 #include <sstream>
 
-#include "../obj/debug.hpp"
-#include "../obj/cpu.hpp"
+#include "debug.hpp"
+#include "cpu.hpp"
 
 
 
-
-#warning TODO comment
+//Show ram value
 void show_ram(std::array<Byte, 2048> ram){
     std::stringstream buffer;
+    buffer << "\n\n Ram:\n";
     for(int i = 0; i < 2048; i++){
         buffer << "0x" << std::hex << (int) ram[i] << ", ";
         if(i% 30 == 29) buffer << "\n";
@@ -31,27 +30,33 @@ void show_ram(std::array<Byte, 2048> ram){
     addstr(buffer.str().c_str());
 }
 
-#warning TODO comment
+//Show the register flags statue
 void show_registers(nes::CPU cpu){
     std::stringstream buffer;
-    buffer << "N = " << cpu.getflag(cpu.flags.N);
-//           << "\nV = " << cpu.getflag(cpu.registers::V)
-//           << "\nB = " << cpu.getflag(nes::CPU::registers::B)
-//           << "\nD = " << cpu.getflag(nes::CPU::D)
-//           << "\nI = " << cpu.getflag(nes::CPU::I)
-//           << "\nZ = " << cpu.getflag(nes::CPU::Z)
-//           << "\nC = " << cpu.getflag(nes::CPU::C);
+    buffer << "Registers:\n";
+    buffer << "N = " << cpu.getflag(cpu.flags.N)
+           << "\nV = " << cpu.getflag(cpu.flags.V)
+           << "\nB = " << cpu.getflag(cpu.flags.B)
+           << "\nD = " << cpu.getflag(cpu.flags.D)
+           << "\nI = " << cpu.getflag(cpu.flags.I)
+           << "\nZ = " << cpu.getflag(cpu.flags.Z)
+           << "\nC = " << cpu.getflag(cpu.flags.C);
     addstr(buffer.str().c_str());
 }
 
-#warning TODO comment
+void show_state(nes::CPU cpu, std::array<Byte, 2048> ram){
+    move(0,0);
+    
+    show_registers(cpu);
+    show_ram(ram);
+    
+    refresh();
+}
+
 int main(){
     initscr();
-    
     nes::CPU cpu;
-    show_registers(cpu);
-    
-    
+
     /* Exemple 1 */
     std::array<Byte, 2048> *ram = new std::array<Byte, 2048>;
     ram->fill(13);
@@ -60,23 +65,21 @@ int main(){
     show_registers(cpu);
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     
-//    int i = 0;
-//    while(1) {
-//        i++;
-//        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//        move(0,0);
-//        ram->fill(i);
-//        show_ram(*ram);
-//        refresh();
-//    }
+    
+    int i = 0;
+    while(1) {
+        i++;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        ram->fill(i);
+        show_state(cpu, *ram);
+    }
     /* End of exemple 1*/
     
 //    addstr("\npress any key to exit...");
 //
 //    getch();
 
-    
-    
 
     return 0;
 }
+

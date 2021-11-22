@@ -8,7 +8,7 @@
 #ifndef nes_hpp
 #define nes_hpp
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <array>
 #include <errno.h>
 

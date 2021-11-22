@@ -8,7 +8,7 @@
 #ifndef debug_hpp
 #define debug_hpp
 
-#include <stdio.h>
+//#include <stdio.h>
 
 typedef uint8_t Byte;
 typedef uint16_t Address;

@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		1A3C43372747DF3A00DD181D /* debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C43352747DF3A00DD181D /* debug.cpp */; };
 		1A3C433A2747EF5000DD181D /* libncurses.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A3C43392747EF5000DD181D /* libncurses.tbd */; };
+		1A3C4340274B86B600DD181D /* nes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C433D274B86B600DD181D /* nes.cpp */; };
+		1A3C4341274B86B600DD181D /* cpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C433E274B86B600DD181D /* cpu.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,6 +34,9 @@
 		1A3C43352747DF3A00DD181D /* debug.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = debug.cpp; path = src/debug.cpp; sourceTree = "<group>"; };
 		1A3C43362747DF3A00DD181D /* debug.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = debug.hpp; path = src/debug.hpp; sourceTree = "<group>"; };
 		1A3C43392747EF5000DD181D /* libncurses.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libncurses.tbd; path = usr/lib/libncurses.tbd; sourceTree = SDKROOT; };
+		1A3C433D274B86B600DD181D /* nes.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = nes.cpp; path = "NES-Emulator/src/nes.cpp"; sourceTree = "<group>"; };
+		1A3C433E274B86B600DD181D /* cpu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = cpu.cpp; path = "NES-Emulator/src/cpu.cpp"; sourceTree = "<group>"; };
+		1A3C433F274B86B600DD181D /* debug.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = debug.cpp; path = "NES-Emulator/src/debug.cpp"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,6 +54,9 @@
 		1A3C431E2747D94700DD181D = {
 			isa = PBXGroup;
 			children = (
+				1A3C433E274B86B600DD181D /* cpu.cpp */,
+				1A3C433F274B86B600DD181D /* debug.cpp */,
+				1A3C433D274B86B600DD181D /* nes.cpp */,
 				1A3C43342747D99500DD181D /* README.md */,
 				1A3C43292747D94700DD181D /* NES-Emulator */,
 				1A3C43282747D94700DD181D /* Products */,
@@ -141,6 +149,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A3C4340274B86B600DD181D /* nes.cpp in Sources */,
+				1A3C4341274B86B600DD181D /* cpu.cpp in Sources */,
 				1A3C43372747DF3A00DD181D /* debug.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -262,6 +272,8 @@
 		1A3C432F2747D94700DD181D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 27S37U5VQM;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -272,6 +284,8 @@
 		1A3C43302747D94700DD181D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 27S37U5VQM;
 				ENABLE_HARDENED_RUNTIME = YES;
