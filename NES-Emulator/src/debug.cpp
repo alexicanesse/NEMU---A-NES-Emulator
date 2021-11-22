@@ -40,7 +40,12 @@ void show_registers(nes::CPU cpu){
            << "\nD = " << cpu.getflag(cpu.flags.D)
            << "\nI = " << cpu.getflag(cpu.flags.I)
            << "\nZ = " << cpu.getflag(cpu.flags.Z)
-           << "\nC = " << cpu.getflag(cpu.flags.C);
+           << "\nC = " << cpu.getflag(cpu.flags.C)
+           << "\nA : 0x" << std::hex << (int) cpu.get_register_A()
+           << "\nX : 0x" << std::hex << (int) cpu.get_register_X()
+           << "\nY : 0x" << std::hex << (int) cpu.get_register_Y()
+           << "\nStack pointer : 0x" << std::hex << (int) cpu.get_register_SP()
+           << "\nProgram counter : 0x" << std::hex << (int) cpu.get_register_PC();
     addstr(buffer.str().c_str());
 }
 

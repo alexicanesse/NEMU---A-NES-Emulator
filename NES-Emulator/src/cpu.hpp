@@ -24,7 +24,6 @@ class CPU{
 
     
 private:
-#warning NOT WORKING
     struct flgs {
         Byte N = 0x80; //negative result | After most instructions that have a value result, this flag will contain bit 7 of that result.
         Byte V = 0x40; //overflow
@@ -34,7 +33,6 @@ private:
         Byte Z = 0x02; //zero result | After most instructions that have a value result, if that value is zero, this flag will be set.
         Byte C = 0x01; //carry
     };
-    typedef struct flgs flgs;
     
     
     #warning TODO adr_pc
@@ -56,6 +54,11 @@ public:
     
     void setflag(Byte, bool);
     bool getflag(Byte flg);
+    Byte get_register_A();
+    Byte get_register_X();
+    Byte get_register_Y();
+    Byte get_register_SP();
+    Address get_register_PC();
     
     #warning TODO
     bool reset();

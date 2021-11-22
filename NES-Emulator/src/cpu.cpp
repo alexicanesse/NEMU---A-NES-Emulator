@@ -13,7 +13,6 @@
 namespace nes{
 
 
-//Renvoie un bool ayant la valeur du drapeau donné en argument.
 void CPU::setflag(Byte flg, bool value){
     this->registers.nv_bdizc &= ~flg | (value & flg);
 }
@@ -25,8 +24,28 @@ bool CPU::getflag(Byte flg){
     return true;
 }
 
+Byte CPU::get_register_A(){
+    return this->registers.r_A;
+}
+
+Byte CPU::get_register_X(){
+    return this->registers.r_iX;
+}
+
+Byte CPU::get_register_Y(){
+    return this->registers.r_iY;
+}
+
+Byte CPU::get_register_SP(){
+    return this->registers.r_SP;
+}
+
+Address CPU::get_register_PC(){
+    return this->registers.r_PC;
+}
 
 }
+
 
 
 //int main(){
