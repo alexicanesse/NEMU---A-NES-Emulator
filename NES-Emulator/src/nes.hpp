@@ -10,14 +10,12 @@
 
 //#include <stdio.h>
 #include <array>
-#include <errno.h>
 
-#include "cpu.hpp"
+
 
 typedef uint8_t Byte;
 typedef uint16_t Address;
 
-namespace nes {
 
 class NES{
 public:
@@ -29,6 +27,5 @@ public:
     Byte read(Address adr); //errno = 22 en cas d'erreur.
 };
 
-}
 
 #endif /* nes_hpp */

@@ -4,8 +4,9 @@
 //
 //  Created by Alexi Canesse on 19/11/2021.
 //
-
+#include "nes.hpp"
 #include "debug.hpp"
+#include "cpu.hpp"
 
 
 
@@ -21,7 +22,7 @@ void show_ram(std::array<Byte, 2048> ram){
 }
 
 //Show the register flags statue
-void show_registers(nes::CPU cpu){
+void show_registers(CPU cpu){
     std::stringstream buffer;
     buffer << "Registers:\n";
     buffer << "N = " << cpu.getflag(cpu.flags.N)
@@ -39,7 +40,7 @@ void show_registers(nes::CPU cpu){
     addstr(buffer.str().c_str());
 }
 
-void show_state(nes::CPU cpu, std::array<Byte, 2048> ram){
+void show_state(CPU cpu, std::array<Byte, 2048> ram){
     move(0,0);
     
     show_registers(cpu);
@@ -50,7 +51,7 @@ void show_state(nes::CPU cpu, std::array<Byte, 2048> ram){
 
 int main(){
     initscr();
-    nes::CPU cpu;
+    CPU cpu;
 
     /* Exemple 1 */
     std::array<Byte, 2048> *ram = new std::array<Byte, 2048>;

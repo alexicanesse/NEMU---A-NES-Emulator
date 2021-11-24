@@ -11,12 +11,13 @@
 //#include <stdio.h>
 #include <cstdint>
 
-//#include "nes.hpp"
 
-namespace nes {
 
 typedef uint8_t Byte;
 typedef uint16_t Address;
+
+class NES;
+
 
 class CPU{
 
@@ -54,14 +55,108 @@ private:
     /*
      Addressing modes
      */
-#warning TODO addressing modes 
+#warning TODO
     bool IMP(); //implied
+    bool ACC(); //accumulator
     bool IMM(); //immediate
     bool ABS(); //absolute
+    bool XIA(); //X indexed absolute
+    bool YIA(); //Y indexed absolute
+    bool IND(); //absolute indirect
     bool ZPA(); //zero page
+    bool XZP(); //X-indexed zero page
+    bool YZP(); //Y-indexed zero page
+    bool XZI(); //X-indexed zero page indirect
+    bool YZI(); //Y-indexed zero page indirect
     bool REL(); //relative
-    bool IND(); //indexed
-    bool IDD(); //indirect
+    
+    /*
+     OPCODES
+    */
+    //load
+    bool LDA();
+    bool LDX();
+    bool LDY();
+    bool STA();
+    bool STX();
+    bool STY();
+    
+    //trans
+    bool TAX();
+    bool TAY();
+    bool TSX();
+    bool TXA();
+    bool TXS();
+    bool TYA();
+    
+    //stack
+    bool PHA();
+    bool PHP();
+    bool PLA();
+    bool PLP();
+    
+    //shift
+    bool ASL();
+    bool LSR();
+    bool ROL();
+    bool ROR();
+    
+    //logic
+    bool AND();
+    bool BIT();
+    bool EOR();
+    bool ORA();
+    
+    //arith
+    bool ADC();
+    bool CMP();
+    bool CPX();
+    bool CPY();
+    bool SBC();
+    
+    //inc
+    bool DEC();
+    bool DEX();
+    bool DEY();
+    bool INC();
+    bool INX();
+    bool INY();
+    
+    //ctrl
+    bool BRK();
+    bool JMP();
+    bool JSR();
+    bool RTI();
+    bool RTS();
+    
+    //bra
+    bool BCC();
+    bool BCS();
+    bool BEQ();
+    bool BMI();
+    bool BNE();
+    bool BPL();
+    bool BVC();
+    bool BVS();
+    
+    //flags
+    bool CLC();
+    bool CLD();
+    bool CLI();
+    bool CLV();
+    bool SEC();
+    bool SED();
+    bool SEI();
+    
+    //nop
+    bool nop();
+    
+    
+    
+    /*
+    Other
+    */
+    Byte opcode = 0x00;
 public:
     /*
      Registers
@@ -79,9 +174,14 @@ public:
     #warning TODO
     bool reset();
     
+    /*
+     Other
+    */
+    NES* nes;
+    void clock();
 };
 
-}
+
 
 #endif /* cpu_hpp */
 

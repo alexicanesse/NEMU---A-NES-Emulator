@@ -18,14 +18,19 @@
 #include <string>
 #include <sstream>
 
-#include "cpu.hpp"
+
+
 
 typedef uint8_t Byte;
 typedef uint16_t Address;
 
+class CPU;
+
 
 void show_ram(std::array<Byte, 2048> ram);
-void show_registers(nes::CPU cpu);
-void show_state(nes::CPU cpu, std::array<Byte, 2048> ram);
+void show_registers(CPU cpu);
+void show_state(CPU cpu, std::array<Byte, 2048> ram);
 
-#endif /* debug_hpp */
+
+
+#endif /* debug */

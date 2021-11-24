@@ -6,11 +6,10 @@
 //
 //#include <cstdio>
 #include <array>
-#include <errno.h>
 
 #include "nes.hpp"
 
-namespace nes {
+
  
 
 
@@ -50,8 +49,7 @@ Byte NES::read(Address adr){
         
     }
     //Failed
-    errno = 22;
     return 0x00;
-} //errno = 22 en cas d'erreur.
-
 }
+
+

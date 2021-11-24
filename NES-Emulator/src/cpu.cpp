@@ -10,7 +10,6 @@
 
 #include "cpu.hpp"
 
-namespace nes{
 
 
 void CPU::setflag(Byte flg, bool value){
@@ -44,7 +43,15 @@ Address CPU::get_register_PC(){
     return this->registers.r_PC;
 }
 
+#warning todo
+//Emulate one cycle
+void CPU::clock(){
+    //fetch opcode
+//    this->opcode = read(this->pc);
 }
+
+
+
 
 
 
