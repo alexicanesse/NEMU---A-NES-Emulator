@@ -47,7 +47,10 @@ Address CPU::get_register_PC(){
 //Emulate one cycle
 void CPU::clock(){
     //fetch opcode
-//    this->opcode = read(this->pc);
+    this->opcode = this->nes.read(this->registers.r_PC);
+    
+    
+    
 }
 
 

@@ -11,6 +11,7 @@
 //#include <stdio.h>
 #include <cstdint>
 
+#include "nes.hpp"
 
 
 typedef uint8_t Byte;
@@ -177,7 +178,7 @@ public:
     /*
      Other
     */
-    NES* nes;
+    NES nes;
     void clock();
 };
 

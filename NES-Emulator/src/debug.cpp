@@ -4,9 +4,10 @@
 //
 //  Created by Alexi Canesse on 19/11/2021.
 //
+#include "cpu.hpp"
 #include "nes.hpp"
 #include "debug.hpp"
-#include "cpu.hpp"
+
 
 
 
