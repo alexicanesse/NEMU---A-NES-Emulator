@@ -60,10 +60,10 @@ private:
     bool ACC(); //accumulator
     bool IMM(); //immediate
     bool ABS(); //absolute
-#warning TODO
     bool XIA(); //X indexed absolute
     bool YIA(); //Y indexed absolute
     bool IND(); //absolute indirect
+#warning TODO
     bool ZPA(); //zero page
     bool XZP(); //X-indexed zero page
     bool YZP(); //Y-indexed zero page

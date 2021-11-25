@@ -93,8 +93,67 @@ bool CPU::ABS(){
     return false; //no additionnal cycle requiered
 }
 
+//X indexed absolute
+bool CPU::XIA(){
+    Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
+    this->registers.r_PC++;
+    
+    Byte high = this->nes.read(this->registers.r_PC++); //read 8 high bits
+    this->registers.r_PC++;
+    
+    this->data_to_read = (high << 8) | low; //concat them
+    
+    this->data_to_read += this->registers.r_iX; //X-indexed
+    
+    //if a page is crossed, an additional cycle may be needed
+    if((this->data_to_read & 0xFF00) == (high << 8))
+        return false;
+    else
+        return true;
+}
 
+//Y indexed absolute
+bool CPU::YIA(){
+    Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
+    this->registers.r_PC++;
+    
+    Byte high = this->nes.read(this->registers.r_PC++); //read 8 high bits
+    this->registers.r_PC++;
+    
+    this->data_to_read = (high << 8) | low; //concat them
+    
+    this->data_to_read += this->registers.r_iY; //Y-indexed
+    
+    //if a page is crossed, an additional cycle may be needed
+    if((this->data_to_read & 0xFF00) == (high << 8))
+        return false;
+    else
+        return true;
+}
 
+//absolute indirect
+bool CPU::IND(){
+    Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
+    this->registers.r_PC++;
+    
+    Byte high = this->nes.read(this->registers.r_PC++); //read 8 high bits
+    this->registers.r_PC++;
+    
+    Address temp = (high << 8) | low; //concat them
+    
+    //There is a bug on the chip
+    //The indirect jump instruction does not increment the page address when
+    //the indirect pointer crosses a page boundary.
+    //JMP ($xxFF) will fetch the address from $xxFF and $xx00.
+    
+    if(low != 0x00FF)
+        this->data_to_read = this->nes.read(temp) | (this->nes.read(temp + 1) << 8);
+    else
+        this->data_to_read = this->nes.read(temp) | (this->nes.read(temp & 0xFF00) << 8);
+        
+
+    return false;
+}
 
 //int main(){
 //    #warning TODO handle args
