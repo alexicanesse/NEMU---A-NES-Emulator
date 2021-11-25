@@ -70,8 +70,9 @@ private:
     bool YZP(); //Y-indexed zero page
 #warning need to be verified 
     bool XZI(); //X-indexed zero page indirect
-#warning TODO
     bool YZI(); //Y-indexed zero page indirect
+#warning TODO
+
     bool REL(); //relative
     
     /*

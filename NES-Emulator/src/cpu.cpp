@@ -193,6 +193,28 @@ bool CPU::XZI(){
     return false;
 }
 
+//Y-indexed zero page indirect
+//In indirect indexed addressing, the second byte of the instruction points to a memory location in page zero.
+//The contents of this memory location is added to the contents of the Y index register, the result being the
+//low order eight bits of the effective address. The carry from this addition is added to the contents of the next
+//page zero memory location, the result being the high order eight bits of the effective address.
+bool CPU:: YZI(){
+    Byte low = this->nes.read(this->registers.r_PC) & 0x00FF; //read 8 low bits and discard carry
+    this->registers.r_PC++;
+    
+    Byte high = this->nes.read(this->registers.r_PC) & 0x00FF;
+    this->registers.r_PC++;
+    
+    Address without_offset = (high << 8) | low; //concat them;
+
+    this->data_to_read = without_offset + this->registers.r_iY;
+    
+    if((this->data_to_read ^ without_offset) >> 8) //check if page crossed
+        return true;
+    else
+        return false;
+}
+
 //int main(){
 //    #warning TODO handle args
 //    return 0;
