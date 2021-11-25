@@ -48,12 +48,50 @@ Address CPU::get_register_PC(){
 void CPU::clock(){
     //fetch opcode
     this->opcode = this->nes.read(this->registers.r_PC);
+    //the pc register is incremented to be prepared for the next read.
+    this->registers.r_PC++;
     
     
     
+# warning TODO Handle number of cycles + use addrmode + opperate
 }
 
 
+
+
+/*
+ 
+    Addressing modes
+*/
+//implied
+bool CPU::IMP(){
+    return false; //no additionnal cycle requiered
+}
+
+//accumulator
+bool CPU::ACC(){
+    return false; //no additionnal cycle requiered
+}
+
+//immediate
+bool CPU::IMM(){
+    //program counter is increamented to be prepared
+    this->data_to_read = this->registers.r_PC++;
+    return false; //no additionnal cycle requiered
+}
+
+//absolute
+bool CPU::ABS(){
+    Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
+    this->registers.r_PC++;
+    
+    Byte high = this->nes.read(this->registers.r_PC++); //read 8 high bits
+    this->registers.r_PC++;
+    
+    this->data_to_read = (high << 8) | low; //concat them
+    
+    return false; //no additionnal cycle requiered
+}
 
 
 

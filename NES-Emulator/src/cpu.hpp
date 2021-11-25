@@ -56,11 +56,11 @@ private:
     /*
      Addressing modes
      */
-#warning TODO
     bool IMP(); //implied
     bool ACC(); //accumulator
     bool IMM(); //immediate
     bool ABS(); //absolute
+#warning TODO
     bool XIA(); //X indexed absolute
     bool YIA(); //Y indexed absolute
     bool IND(); //absolute indirect
@@ -179,7 +179,9 @@ public:
      Other
     */
     NES nes;
+    Address data_to_read = 0x0000;
     void clock();
+    
 };
 
 
