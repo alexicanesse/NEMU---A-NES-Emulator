@@ -55,6 +55,7 @@ private:
     
     /*
      Addressing modes
+     https://www.pagetable.com/c64ref/6502/?tab=3
      */
     bool IMP(); //implied
     bool ACC(); //accumulator
@@ -62,17 +63,20 @@ private:
     bool ABS(); //absolute
     bool XIA(); //X indexed absolute
     bool YIA(); //Y indexed absolute
+#warning need to be verified
     bool IND(); //absolute indirect
-#warning TODO
     bool ZPA(); //zero page
     bool XZP(); //X-indexed zero page
     bool YZP(); //Y-indexed zero page
+#warning need to be verified 
     bool XZI(); //X-indexed zero page indirect
+#warning TODO
     bool YZI(); //Y-indexed zero page indirect
     bool REL(); //relative
     
     /*
      OPCODES
+     https://www.pagetable.com/c64ref/6502/?tab=2
     */
     //load
     bool LDA();

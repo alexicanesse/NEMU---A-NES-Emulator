@@ -136,7 +136,7 @@ bool CPU::IND(){
     Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
     this->registers.r_PC++;
     
-    Byte high = this->nes.read(this->registers.r_PC++); //read 8 high bits
+    Byte high = this->nes.read(this->registers.r_PC); //read 8 high bits
     this->registers.r_PC++;
     
     Address temp = (high << 8) | low; //concat them
@@ -145,12 +145,50 @@ bool CPU::IND(){
     //The indirect jump instruction does not increment the page address when
     //the indirect pointer crosses a page boundary.
     //JMP ($xxFF) will fetch the address from $xxFF and $xx00.
-    
     if(low != 0x00FF)
         this->data_to_read = this->nes.read(temp) | (this->nes.read(temp + 1) << 8);
     else
         this->data_to_read = this->nes.read(temp) | (this->nes.read(temp & 0xFF00) << 8);
         
+
+    return false;
+}
+
+//zero page
+bool CPU::ZPA(){
+    this->data_to_read = (0x00FF) & this->nes.read(this->registers.r_PC);
+    this->registers.r_PC++;
+    
+    return false;
+}
+
+//X-indexed zero page
+bool CPU::XZP(){
+    //like ZPA but we must add an offset
+    this->data_to_read = (0x00FF) & (this->nes.read(this->registers.r_PC) + this->registers.r_iX);
+    this->registers.r_PC++;
+    
+    return false;
+}
+
+//Y-indexed zero page
+bool CPU::YZP(){
+    //like ZPA but we must add an offset
+    this->data_to_read = (0x00FF) & (this->nes.read(this->registers.r_PC) + this->registers.r_iY);
+    this->registers.r_PC++;
+    
+    return false;
+}
+
+//X-indexed zero page indirect
+bool CPU::XZI(){
+    Byte low = (this->nes.read(this->registers.r_PC) + this->registers.r_iX) & 0x00FF; //read 8 low bits and discard carry
+    this->registers.r_PC++;
+    
+    Byte high = this->nes.read(this->registers.r_PC + this->registers.r_iX) & 0x00FF;
+    this->registers.r_PC++;
+
+    this->data_to_read = (high << 8) | low; //concat them
 
     return false;
 }
