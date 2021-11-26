@@ -182,10 +182,10 @@ bool CPU::YZP(){
 
 //X-indexed zero page indirect
 bool CPU::XZI(){
-    Byte low = (this->nes.read(this->registers.r_PC) + this->registers.r_iX) & 0x00FF; //read 8 low bits and discard carry
+    Byte low = this->nes.read((this->registers.r_PC + this->registers.r_iX) & 0x00FF); //discard carry
     this->registers.r_PC++;
     
-    Byte high = this->nes.read(this->registers.r_PC + this->registers.r_iX) & 0x00FF;
+    Byte high = this->nes.read((this->registers.r_PC + this->registers.r_iX) & 0x00FF);
     this->registers.r_PC++;
 
     this->data_to_read = (high << 8) | low; //concat them
@@ -199,7 +199,7 @@ bool CPU::XZI(){
 //low order eight bits of the effective address. The carry from this addition is added to the contents of the next
 //page zero memory location, the result being the high order eight bits of the effective address.
 bool CPU:: YZI(){
-    Byte low = this->nes.read(this->registers.r_PC) & 0x00FF; //read 8 low bits and discard carry
+    Byte low = this->nes.read(this->registers.r_PC) & 0x00FF;
     this->registers.r_PC++;
     
     Byte high = this->nes.read(this->registers.r_PC) & 0x00FF;
@@ -215,7 +215,17 @@ bool CPU:: YZI(){
         return false;
 }
 
-//int main(){
-//    #warning TODO handle args
-//    return 0;
-//}
+//relative
+//instructions will handle the t additionnal cycle
+bool CPU::REL(){
+    Byte offset = this->nes.read(this->registers.r_PC);
+    this->registers.r_PC++;
+    
+    this->data_to_read = this->registers.r_PC + offset;
+    if((this->registers.r_PC - this->data_to_read) & 0xFF00) //no page crossed
+        return false;
+    else
+        return true;
+}
+
+
