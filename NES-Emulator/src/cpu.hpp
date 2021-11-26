@@ -10,6 +10,7 @@
 
 //#include <stdio.h>
 #include <cstdint>
+#include <map>
 
 #include "nes.hpp"
 
@@ -51,7 +52,20 @@ private:
                                     //_ = expansion | No CPU effect
     } registers;
   
+    int cycles = 0; //Total number of cycles
+    int additionnal_cycles = 0; //additionnal cycles for the current instruction
     
+    
+    /*
+     instructions
+    */
+    struct instruction { //instructions type
+        bool *function(void) = NULL; //function doing the instructions's job
+        bool *addressing_mode(void) = NULL; // addressing mode function
+        int cycles = 0; //number of necessary cycles
+    };
+#warning todo size
+    map<instruction, 256> *instructions = new map<instruction, 256>; //we use an arry even thogh many cases are not used
     
     /*
      Addressing modes
@@ -79,82 +93,82 @@ private:
     */
     //load
 #warning TODO
-    bool LDA();
-    bool LDX();
-    bool LDY();
-    bool STA();
-    bool STX();
-    bool STY();
+    bool LDA(); //Load Accumulator with Memory
+    bool LDX(); //Load Index Register X From Memory
+    bool LDY(); //Load Index Register Y From Memory
+    bool STA(); //Store Accumulator in Memory
+    bool STX(); //Store Index Register X In Memory
+    bool STY(); //Store Index Register Y In Memory
     
     //trans
-    bool TAX();
-    bool TAY();
-    bool TSX();
-    bool TXA();
-    bool TXS();
-    bool TYA();
+    bool TAX(); //Transfer Accumulator To Index X
+    bool TAY(); //Transfer Accumula Tor To Index Y
+    bool TSX(); //Transfer Stack Pointer To Index X
+    bool TXA(); //Transfer Index X To Accumulator
+    bool TXS(); //Transfer Index X To Stack Pointer
+    bool TYA(); //Transfer Index Y To Accumulator
     
     //stack
-    bool PHA();
-    bool PHP();
-    bool PLA();
-    bool PLP();
+    bool PHA(); //Push Accumulator On Stack
+    bool PHP(); //Push Processor Status On Stack
+    bool PLA(); //Pull Accumulator From Stack
+    bool PLP(); //Pull Processor Status From Stack
     
     //shift
-    bool ASL();
-    bool LSR();
-    bool ROL();
-    bool ROR();
+    bool ASL(); //Arithmetic Shift Left
+    bool LSR(); //Logical Shift Right
+    bool ROL(); //Rotate Left
+    bool ROR(); //Rotate Right
     
     //logic
-    bool AND();
-    bool BIT();
-    bool EOR();
-    bool ORA();
+    bool AND(); //"AND" Memory with Accumulator
+    bool BIT(); //Test Bits in Memory with Accumulator
+    bool EOR(); //"Exclusive OR" Memory with Accumulator
+    bool ORA(); //"OR" Memory with Accumulator
     
     //arith
-    bool ADC();
-    bool CMP();
-    bool CPX();
-    bool CPY();
-    bool SBC();
+    bool ADC(); //Add Memory to Accumulator with Carr
+    bool CMP(); //Compare Memory and Accumulator
+    bool CPX(); //Compare Index Register X To Memory
+    bool CPY(); //Compare Index Register Y To Memory
+    bool SBC(); //Subtract Memory from Accumulator with Borrow
     
     //inc
-    bool DEC();
-    bool DEX();
-    bool DEY();
-    bool INC();
-    bool INX();
-    bool INY();
+    bool DEC(); //Decrement Memory By One
+    bool DEX(); //Decrement Index Register X By One
+    bool DEY(); //Decrement Index Register Y By One
+    bool INC(); //Increment Memory By One
+    bool INX(); //Increment Index Register X By One
+    bool INY(); //Increment Index Register Y By One
     
     //ctrl
-    bool BRK();
-    bool JMP();
-    bool JSR();
-    bool RTI();
-    bool RTS();
+    bool BRK(); //Break Command
+    bool JMP(); //JMP Indirect
+    bool JSR(); //Jump To Subroutine
+    bool RTI(); //Return From Interrupt
+    bool RTS(); //Return From Subroutme
     
     //bra
-    bool BCC();
-    bool BCS();
-    bool BEQ();
-    bool BMI();
-    bool BNE();
-    bool BPL();
-    bool BVC();
-    bool BVS();
+    bool BCC(); //Branch on Carry Clear
+    bool BCS(); //Branch on Carry Set
+    bool BEQ(); //Branch on Result Zero
+    bool BMI(); //Branch on Result Minus
+    bool BNE(); //Branch on Result Not Zero
+    bool BPL(); //Branch on Result Plus
+    bool BVC(); //Branch on Overflow Clear
+    bool BVS(); //Branch on Overflow Set
     
     //flags
-    bool CLC();
-    bool CLD();
-    bool CLI();
-    bool CLV();
-    bool SEC();
-    bool SED();
-    bool SEI();
+    bool CLC(); //Clear Carry Flag
+    bool CLD(); //Clear Decimal Mode
+    bool CLI(); //Clear Interrupt Disable
+    bool CLV(); //Clear Overflow Flag
+    bool SEC(); //Set Carry Flag
+    bool SED(); //Set Decimal Mode
+    bool SEI(); //Set Interrupt Disable
     
     //nop
-    bool nop();
+    bool nop(); //No Operation
     
     
     

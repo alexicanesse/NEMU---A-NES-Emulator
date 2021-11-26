@@ -37,6 +37,7 @@
 		1A3C433D274B86B600DD181D /* nes.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = nes.cpp; path = "NES-Emulator/src/nes.cpp"; sourceTree = "<group>"; };
 		1A3C433E274B86B600DD181D /* cpu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = cpu.cpp; path = "NES-Emulator/src/cpu.cpp"; sourceTree = "<group>"; };
 		1A3C433F274B86B600DD181D /* debug.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = debug.cpp; path = "NES-Emulator/src/debug.cpp"; sourceTree = "<group>"; };
+		1A3C43422751165E00DD181D /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +76,7 @@
 		1A3C43292747D94700DD181D /* NES-Emulator */ = {
 			isa = PBXGroup;
 			children = (
+				1A3C43422751165E00DD181D /* tests */,
 				1A3C43312747D99500DD181D /* obj */,
 				1A3C43322747D99500DD181D /* ressources.md */,
 				1A3C43332747D99500DD181D /* src */,
