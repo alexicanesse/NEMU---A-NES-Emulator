@@ -46,12 +46,30 @@ Address CPU::get_register_PC(){
 #warning todo
 //Emulate one cycle
 void CPU::clock(){
+    this->cycles++; //increase total number of cycles
+    if(this->rem_cycles != 0){
+        this->rem_cycles--;
+        return;
+    }
+    
     //fetch opcode
     this->opcode = this->nes.read(this->registers.r_PC);
     //the pc register is incremented to be prepared for the next read.
     this->registers.r_PC++;
     
+    instruction instr = (*this->instructions)[opcode]; //get the instruction
     
+    this->rem_cycles = instr.cycles - 1; //-1 because this cycle is the first cycle
+    
+    //run addr_mode and add an additionnal cycle if requiered
+    bool add_cycle1 = instr.addressing_mode(); //(page)
+    
+    //run instruction and add an additionnal cycle if requiered
+    bool add_cycle2 = instr.function(); //branch cycle is directly added by functions 
+    
+    
+    if(add_cycle1 & add_cycle2)
+        this->rem_cycles++;
     
 # warning TODO Handle number of cycles + use addrmode + opperate
 }
@@ -226,6 +244,7 @@ bool CPU::REL(){
         return false;
     else
         return true;
+#warning t branch cycle
 }
 
 

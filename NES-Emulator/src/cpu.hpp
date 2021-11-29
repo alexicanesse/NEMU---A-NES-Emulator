@@ -8,7 +8,7 @@
 #ifndef cpu_hpp
 #define cpu_hpp
 
-//#include <stdio.h>
+#include <iostream>
 #include <cstdint>
 #include <map>
 
@@ -23,6 +23,7 @@ class NES;
 
 class CPU{
 
+#warning TODO use singleton
     
 
     
@@ -47,7 +48,7 @@ private:
         Byte r_iX = 0;   //index register X
         Byte r_iY = 0;   //index register Y
         Byte r_SP = 0;   //stack pointer
-        Address r_PC = 0; //program counter (PC)
+        Address r_PC = 0x34; //program counter (PC)
         Byte nv_bdizc = 0b11111111; //Processor status register
                                     //_ = expansion | No CPU effect
     } registers;
@@ -60,12 +61,12 @@ private:
      instructions
     */
     struct instruction { //instructions type
-        bool *function(void) = NULL; //function doing the instructions's job
-        bool *addressing_mode(void) = NULL; // addressing mode function
+        bool (*function)() = NULL; //function doing the instructions's job
+        bool (*addressing_mode)() = NULL; // addressing mode function
         int cycles = 0; //number of necessary cycles
     };
-#warning todo size
-    map<instruction, 256> *instructions = new map<instruction, 256>; //we use an arry even thogh many cases are not used
+
+    std::array<instruction, 256> *instructions = new std::array<instruction, 256>; //we use an arry even though many cases are not used
     
     /*
      Addressing modes
@@ -176,6 +177,7 @@ private:
     Other
     */
     Byte opcode = 0x00;
+    Address data_to_read = 0x0000;
 public:
     /*
      Registers
@@ -197,9 +199,8 @@ public:
      Other
     */
     NES nes;
-    Address data_to_read = 0x0000;
     void clock();
-    
+    int rem_cycles = 0;
 };
 
 
