@@ -171,7 +171,6 @@ private:
     bool JSR(); //Jump To Subroutine
 #warning TODO
     bool RTI(); //Return From Interrupt
-#warning TODO
     bool RTS(); //Return From Subroutme
     
     //bra
@@ -181,9 +180,7 @@ private:
 #warning TODO
     bool BMI(); //Branch on Result Minus
     bool BNE(); //Branch on Result Not Zero
-#warning TODO
     bool BPL(); //Branch on Result Plus
-#warning TODO
     bool BVC(); //Branch on Overflow Clear
     bool BVS(); //Branch on Overflow Set
     

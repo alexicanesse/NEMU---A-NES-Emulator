@@ -251,6 +251,10 @@ bool CPU::REL(){
 
 
 CPU::CPU(){
+    //10 BPL
+    (*this->instructions).at(0x10).function = &CPU::BPL;
+    (*this->instructions).at(0x10).addressing_mode = &CPU::REL;
+    (*this->instructions).at(0x10).cycles = 2;
     //18 CLC
     (*this->instructions).at(0x18).function = &CPU::CLC;
     (*this->instructions).at(0x18).addressing_mode = &CPU::IMP;
@@ -271,6 +275,14 @@ CPU::CPU(){
     (*this->instructions).at(0x4c).function = &CPU::JMP;
     (*this->instructions).at(0x4c).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x4c).cycles = 3;
+    //50 BVC
+    (*this->instructions).at(0x50).function = &CPU::BVC;
+    (*this->instructions).at(0x50).addressing_mode = &CPU::REL;
+    (*this->instructions).at(0x50).cycles = 2;
+    //60 RTS
+    (*this->instructions).at(0x60).function = &CPU::RTS;
+    (*this->instructions).at(0x60).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x60).cycles = 6;
     //70 BVS
     (*this->instructions).at(0x70).function = &CPU::BVS;
     (*this->instructions).at(0x70).addressing_mode = &CPU::REL;
@@ -374,13 +386,24 @@ bool CPU::JMP(){
 }
 //Jump To Subroutine
 bool CPU::JSR(){
-    this->nes.write(this->registers.r_SP, (this->registers.r_PC - 1) << 8); //high
+    this->nes.write(this->registers.r_SP, (this->registers.r_PC - 1) >> 8); //high
     this->registers.r_SP--;
     
     this->nes.write(this->registers.r_SP, (this->registers.r_PC - 1) & 0x00FF); //low
     this->registers.r_SP--;
     
     this->registers.r_PC = this->data_to_read;
+    
+    return false;
+}
+//Return From Subroutme
+bool CPU::RTS(){
+    this->registers.r_PC = this->nes.read(++this->registers.r_SP);//low
+    this->registers.r_PC |= this->nes.read(++this->registers.r_SP) << 8;//add high
+    //SP is incremented twice to be set
+    
+    //The stack pointer is adjusted by incrementing it twice.
+    this->registers.r_SP += 2;
     
     return false;
 }
@@ -413,6 +436,22 @@ bool CPU::BEQ(){
 //Branch on Result Not Zero
 bool CPU::BNE(){
     if(!this->getflag(0x02)){//take branch if zero flag is set
+        this->registers.r_PC = this->data_to_read;
+        return true;
+    }
+    return false;
+}
+//Branch on Result Plus
+bool CPU::BPL(){
+    if(!this->getflag(0x80)){//take branch if zero flag is set
+        this->registers.r_PC = this->data_to_read;
+        return true;
+    }
+    return false;
+}
+//Branch on Overflow Clear
+bool CPU::BVC(){
+    if(!this->getflag(0x40)){//take branch if overflow flag is set
         this->registers.r_PC = this->data_to_read;
         return true;
     }
