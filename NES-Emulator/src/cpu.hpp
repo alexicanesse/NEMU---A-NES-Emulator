@@ -111,11 +111,9 @@ private:
     bool TYA(); //Transfer Index Y To Accumulator
     
     //stack
-#warning TODO
     bool PHA(); //Push Accumulator On Stack
     bool PHP(); //Push Processor Status On Stack
     bool PLA(); //Pull Accumulator From Stack
-#warning TODO
     bool PLP(); //Pull Processor Status From Stack
     
     //shift
@@ -131,15 +129,11 @@ private:
     //logic
     bool AND(); //"AND" Memory with Accumulator
     bool BIT(); //Test Bits in Memory with Accumulator
-#warning TODO
     bool EOR(); //"Exclusive OR" Memory with Accumulator
-#warning TODO
     bool ORA(); //"OR" Memory with Accumulator
     
     //arith
-#warning TODO
     bool ADC(); //Add Memory to Accumulator with Carr
-#warning TODO
     bool CMP(); //Compare Memory and Accumulator
 #warning TODO
     bool CPX(); //Compare Index Register X To Memory
@@ -175,7 +169,6 @@ private:
     bool BCC(); //Branch on Carry Clear
     bool BCS(); //Branch on Carry Set
     bool BEQ(); //Branch on Result Zero
-#warning TODO
     bool BMI(); //Branch on Result Minus
     bool BNE(); //Branch on Result Not Zero
     bool BPL(); //Branch on Result Plus
@@ -184,11 +177,9 @@ private:
     
     //flags
     bool CLC(); //Clear Carry Flag
-#warning TODO
     bool CLD(); //Clear Decimal Mode
 #warning TODO
     bool CLI(); //Clear Interrupt Disable
-#warning TODO
     bool CLV(); //Clear Overflow Flag
     bool SEC(); //Set Carry Flag
     bool SED(); //Set Decimal Mode

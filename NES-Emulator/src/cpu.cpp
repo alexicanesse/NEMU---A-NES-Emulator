@@ -94,7 +94,7 @@ bool CPU::ACC(){
 //immediate
 bool CPU::IMM(){
     //program counter is increamented to be prepared
-    this->data_to_read = this->nes.read(this->registers.r_PC++);
+    this->data_to_read = this->registers.r_PC++;
     return false; //no additionnal cycle requiered
 }
 
@@ -255,6 +255,10 @@ CPU::CPU(){
     (*this->instructions).at(0x08).function = &CPU::PHP;
     (*this->instructions).at(0x08).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x08).cycles = 3;
+    //09 ORA
+    (*this->instructions).at(0x09).function = &CPU::ORA;
+    (*this->instructions).at(0x09).addressing_mode = &CPU::IMM;
+    (*this->instructions).at(0x09).cycles = 2;
     //10 BPL
     (*this->instructions).at(0x10).function = &CPU::BPL;
     (*this->instructions).at(0x10).addressing_mode = &CPU::REL;
@@ -271,10 +275,18 @@ CPU::CPU(){
     (*this->instructions).at(0x24).function = &CPU::BIT;
     (*this->instructions).at(0x24).addressing_mode = &CPU::ZPA;
     (*this->instructions).at(0x24).cycles = 3;
+    //28 PLP
+    (*this->instructions).at(0x28).function = &CPU::PLP;
+    (*this->instructions).at(0x28).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x28).cycles = 4;
     //29 AND
     (*this->instructions).at(0x29).function = &CPU::AND;
     (*this->instructions).at(0x29).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0x29).cycles = 2;
+    //30 BMI
+    (*this->instructions).at(0x30).function = &CPU::BMI;
+    (*this->instructions).at(0x30).addressing_mode = &CPU::REL;
+    (*this->instructions).at(0x30).cycles = 2;
     //38 SEC
     (*this->instructions).at(0x38).function = &CPU::SEC;
     (*this->instructions).at(0x38).addressing_mode = &CPU::IMP;
@@ -283,6 +295,14 @@ CPU::CPU(){
     (*this->instructions).at(0x4c).function = &CPU::JMP;
     (*this->instructions).at(0x4c).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x4c).cycles = 3;
+    //48 PHA
+    (*this->instructions).at(0x48).function = &CPU::PHA;
+    (*this->instructions).at(0x48).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x48).cycles = 3;
+    //49 EOR
+    (*this->instructions).at(0x49).function = &CPU::EOR;
+    (*this->instructions).at(0x49).addressing_mode = &CPU::IMM;
+    (*this->instructions).at(0x49).cycles = 2;
     //50 BVC
     (*this->instructions).at(0x50).function = &CPU::BVC;
     (*this->instructions).at(0x50).addressing_mode = &CPU::REL;
@@ -295,6 +315,10 @@ CPU::CPU(){
     (*this->instructions).at(0x68).function = &CPU::PLA;
     (*this->instructions).at(0x68).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x68).cycles = 4;
+    //69 ADC
+    (*this->instructions).at(0x69).function = &CPU::ADC;
+    (*this->instructions).at(0x69).addressing_mode = &CPU::IMM;
+    (*this->instructions).at(0x69).cycles = 2;
     //70 BVS
     (*this->instructions).at(0x78).function = &CPU::SEI;
     (*this->instructions).at(0x78).addressing_mode = &CPU::IMP;
@@ -327,10 +351,22 @@ CPU::CPU(){
     (*this->instructions).at(0xB0).function = &CPU::BCS;
     (*this->instructions).at(0xB0).addressing_mode = &CPU::REL;
     (*this->instructions).at(0xB0).cycles = 2;
+    //B8 CLV
+    (*this->instructions).at(0xB8).function = &CPU::CLV;
+    (*this->instructions).at(0xB8).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xB8).cycles = 2;
+    //C9 CMP
+    (*this->instructions).at(0xC9).function = &CPU::CMP;
+    (*this->instructions).at(0xC9).addressing_mode = &CPU::IMM;
+    (*this->instructions).at(0xC9).cycles = 2;
     //D0 BNE
     (*this->instructions).at(0xD0).function = &CPU::BNE;
     (*this->instructions).at(0xD0).addressing_mode = &CPU::REL;
     (*this->instructions).at(0xD0).cycles = 2;
+    //D8 CLD
+    (*this->instructions).at(0xD8).function = &CPU::CLD;
+    (*this->instructions).at(0xD8).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xD8).cycles = 2;
     //EA NOP
     (*this->instructions).at(0xEA).function = &CPU::NOP;
     (*this->instructions).at(0xEA).addressing_mode = &CPU::IMP;
@@ -354,7 +390,7 @@ CPU::CPU(){
 //load
 //Load Accumulator with Memory
 bool CPU::LDA(){
-    this->registers.r_A = this->data_to_read;
+    this->registers.r_A = this->nes.read(this->data_to_read);
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
     return false;
@@ -388,6 +424,12 @@ bool CPU::STX(){
 
 //stack
 //In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK)
+//Push Accumulator On Stack
+bool CPU::PHA(){
+    this->nes.write(this->registers.r_SP--,this->registers.r_A);
+    //sp-- because sp needs to point to the nest empty location on the stack
+    return false;
+}
 //Push Processor Status On Stack
 bool CPU::PHP(){
     this->nes.write(this->registers.r_SP, this->registers.nv_bdizc | 0x14);
@@ -397,13 +439,22 @@ bool CPU::PHP(){
 //Pull Accumulator From Stack
 bool CPU::PLA(){
     this->registers.r_A = this->nes.read(++this->registers.r_SP);
+    
+    this->setflag(0x80, this->registers.r_A & 0x80);
+    this->setflag(0x02, this->registers.r_A == 0);
+    return false;
+}
+//Pull Processor Status From Stack
+bool CPU::PLP(){
+    this->registers.nv_bdizc = this->nes.read(++this->registers.r_SP);
+    //stack pointer is incremanted before reading the value
     return false;
 }
 
 //logic
 //"AND" Memory with Accumulator
 bool CPU::AND(){
-    this->registers.r_A &= this->data_to_read;
+    this->registers.r_A &= this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
@@ -418,6 +469,56 @@ bool CPU::BIT(){
     this->setflag(0x80, memtested & 0x80);
     this->setflag(0x40, memtested & 0x40);
     this->setflag(0x02, result == 0);
+    return false;
+}
+//"Exclusive OR" Memory with Accumulator
+bool CPU::EOR(){
+    this->registers.r_A ^= this->nes.read(this->data_to_read);
+    
+    this->setflag(0x80, this->registers.r_A & 0x80);
+    this->setflag(0x02, this->registers.r_A == 0);
+    
+    return false;
+}
+//"OR" Memory with Accumulator
+bool CPU::ORA(){
+    this->registers.r_A |= this->nes.read(this->data_to_read);
+    
+    this->setflag(0x80, this->registers.r_A & 0x80);
+    this->setflag(0x02, this->registers.r_A == 0);
+    
+    return false;
+}
+
+//arith
+//Add Memory to Accumulator with Carry
+bool CPU::ADC(){
+    //allow us to look for carry
+    int result = this->registers.r_A + this->nes.read(this->data_to_read) + (int) this->getflag(0x01);
+    //bool -> int implicit conversion has every byte at one
+    
+    
+    //Thanks internet! This flag killed me
+    //V <- ~(A^M) & A^(A+M+C)
+    this->setflag(0x40,(~(this->registers.r_A^this->nes.read(this->data_to_read)) & (result)) & 0x80);
+        
+    
+    this->registers.r_A = result;
+
+    this->setflag(0x80, (this->registers.r_A & 0x80) == 0x80);
+    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(0x01, result > 255); //there is a carry if the result contains a 1 after the first byte.
+    
+    return false;
+}
+//Compare Memory and Accumulator
+bool CPU::CMP(){
+    Byte result = this->registers.r_A - this->nes.read(this->data_to_read);
+    
+    this->setflag(0x02, result == 0);
+    this->setflag(0x80, result & 0x80);
+    this->setflag(0x01, result <= this->registers.r_A);
+    
     return false;
 }
 
@@ -476,6 +577,14 @@ bool CPU::BEQ(){
     }
     return false;
 }
+//Branch on Result Minus
+bool CPU::BMI(){
+    if(this->getflag(0x80)){//take branch if zero flag is set
+        this->registers.r_PC = this->data_to_read;
+        return true;
+    }
+    return false;
+}
 //Branch on Result Not Zero
 bool CPU::BNE(){
     if(!this->getflag(0x02)){//take branch if zero flag is set
@@ -486,7 +595,7 @@ bool CPU::BNE(){
 }
 //Branch on Result Plus
 bool CPU::BPL(){
-    if(!this->getflag(0x80)){//take branch if zero flag is set
+    if(!this->getflag(0x80)){//take branch if zero flag is reset
         this->registers.r_PC = this->data_to_read;
         return true;
     }
@@ -494,7 +603,7 @@ bool CPU::BPL(){
 }
 //Branch on Overflow Clear
 bool CPU::BVC(){
-    if(!this->getflag(0x40)){//take branch if overflow flag is set
+    if(!this->getflag(0x40)){//take branch if overflow flag is reset
         this->registers.r_PC = this->data_to_read;
         return true;
     }
@@ -513,6 +622,16 @@ bool CPU::BVS(){
 //Clear Carry Flag
 bool CPU::CLC(){
     this->setflag(0x01, false);
+    return false;
+}
+//Clear Decimal Mode
+bool CPU::CLD(){
+    this->setflag(0x08, false);
+    return false;
+}
+//Clear Overflow Flag
+bool CPU::CLV(){
+    this->setflag(0x40, false);
     return false;
 }
 //Set Carry Flag
