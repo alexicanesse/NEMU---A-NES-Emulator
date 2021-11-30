@@ -129,7 +129,6 @@ private:
     bool ROR(); //Rotate Right
     
     //logic
-#warning TODO
     bool AND(); //"AND" Memory with Accumulator
     bool BIT(); //Test Bits in Memory with Accumulator
 #warning TODO

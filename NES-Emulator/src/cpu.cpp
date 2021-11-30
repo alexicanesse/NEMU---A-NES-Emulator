@@ -94,7 +94,7 @@ bool CPU::ACC(){
 //immediate
 bool CPU::IMM(){
     //program counter is increamented to be prepared
-    this->data_to_read = this->registers.r_PC++;
+    this->data_to_read = this->nes.read(this->registers.r_PC++);
     return false; //no additionnal cycle requiered
 }
 
@@ -271,6 +271,10 @@ CPU::CPU(){
     (*this->instructions).at(0x24).function = &CPU::BIT;
     (*this->instructions).at(0x24).addressing_mode = &CPU::ZPA;
     (*this->instructions).at(0x24).cycles = 3;
+    //29 AND
+    (*this->instructions).at(0x29).function = &CPU::AND;
+    (*this->instructions).at(0x29).addressing_mode = &CPU::IMM;
+    (*this->instructions).at(0x29).cycles = 2;
     //38 SEC
     (*this->instructions).at(0x38).function = &CPU::SEC;
     (*this->instructions).at(0x38).addressing_mode = &CPU::IMP;
@@ -350,7 +354,7 @@ CPU::CPU(){
 //load
 //Load Accumulator with Memory
 bool CPU::LDA(){
-    this->registers.r_A = this->nes.read(this->data_to_read);
+    this->registers.r_A = this->data_to_read;
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
     return false;
@@ -397,6 +401,15 @@ bool CPU::PLA(){
 }
 
 //logic
+//"AND" Memory with Accumulator
+bool CPU::AND(){
+    this->registers.r_A &= this->data_to_read;
+    
+    this->setflag(0x80, this->registers.r_A & 0x80);
+    this->setflag(0x02, this->registers.r_A == 0);
+    
+    return false;
+}
 //Test Bits in Memory with Accumulator
 bool CPU::BIT(){
     Byte memtested = this->nes.read(this->data_to_read);
