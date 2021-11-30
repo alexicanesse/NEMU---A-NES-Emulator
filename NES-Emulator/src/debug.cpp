@@ -46,7 +46,6 @@ void show_registers(CPU cpu){
 
 void show_state(CPU cpu, std::array<Byte, 2048> ram){
     move(0,0);
-    
     show_registers(cpu);
     show_ram(ram);
     
@@ -79,8 +78,11 @@ int main(){
     /* Exemple 2 */
     
     std::ifstream testrom;
+    std::ofstream log;
     testrom.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes", std::ios::binary);
-    if(testrom.fail())
+    log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
+    log.close();
+    if(testrom.fail() | log.fail())
         std::cout << "pb";
     else{
         char buffer = 0x00;
@@ -104,18 +106,29 @@ int main(){
         }
     }
     
+    log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
+    log << std::hex << cpu.get_register_PC() << " Cycles:" << cpu.cycles;
+    log.close();
+    
     while(1){
         cpu.clock();
         show_state(cpu, *cpu.nes.ram);
         refresh();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        if(cpu.rem_cycles == 0){
+            log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
+            log << "\n" << std::hex << cpu.get_register_PC() << " Cycles:" << (int) cpu.cycles;
+            log.close();
+        }
+//        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+    
+    testrom.close();
     /* End of exemple 2*/
     
 //    addstr("\npress any key to exit...");
 //
 //    getch();
-
+    
 
     return 0;
 }
