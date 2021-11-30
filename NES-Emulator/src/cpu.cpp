@@ -13,7 +13,10 @@
 
 
 void CPU::setflag(Byte flg, bool value){
-    this->registers.nv_bdizc &= ~flg | (value & flg);
+    if(value)
+        this->registers.nv_bdizc |= flg;
+    else
+        this->registers.nv_bdizc &= ~flg;
 }
 
 
@@ -237,10 +240,10 @@ bool CPU::REL(){
     this->registers.r_PC++;
     
     this->data_to_read = this->registers.r_PC + offset;
-    if((this->registers.r_PC - this->data_to_read) & 0xFF00) //no page crossed
-        return false;
-    else
+    if((this->registers.r_PC - this->data_to_read) & 0xFF00) //page crossed
         return true;
+    else
+        return false;
 #warning t branch cycle
 }
 
@@ -316,7 +319,7 @@ bool CPU::STX(){
 //JMP Indirect
 bool CPU::JMP(){
     this->registers.r_PC = this->data_to_read;
-    return true;
+    return false;
 }
 //Jump To Subroutine
 bool CPU::JSR(){
@@ -336,7 +339,7 @@ bool CPU::JSR(){
 bool CPU::BCS(){
     if(this->getflag(0x01)){//take branch if carry flag is set
         this->registers.r_PC = this->data_to_read;
-        return 1;
+        return true;
     }
     return false;
 }
@@ -344,12 +347,12 @@ bool CPU::BCS(){
 //flags
 //Clear Carry Flag
 bool CPU::CLC(){
-    this->setflag(0x01, 0);
+    this->setflag(0x01, false);
     return false;
 }
 //Set Carry Flag
 bool CPU::SEC(){
-    this->setflag(0x01, 1);
+    this->setflag(0x01, true);
     return false;
 }
 
