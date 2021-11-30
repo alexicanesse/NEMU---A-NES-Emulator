@@ -259,6 +259,10 @@ CPU::CPU(){
     (*this->instructions).at(0x20).function = &CPU::JSR;
     (*this->instructions).at(0x20).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x20).cycles = 6;
+    //24 BIT
+    (*this->instructions).at(0x24).function = &CPU::BIT;
+    (*this->instructions).at(0x24).addressing_mode = &CPU::ZPA;
+    (*this->instructions).at(0x24).cycles = 3;
     //38 SEC
     (*this->instructions).at(0x38).function = &CPU::SEC;
     (*this->instructions).at(0x38).addressing_mode = &CPU::IMP;
@@ -267,6 +271,10 @@ CPU::CPU(){
     (*this->instructions).at(0x4c).function = &CPU::JMP;
     (*this->instructions).at(0x4c).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x4c).cycles = 3;
+    //70 BVS
+    (*this->instructions).at(0x70).function = &CPU::BVS;
+    (*this->instructions).at(0x70).addressing_mode = &CPU::REL;
+    (*this->instructions).at(0x70).cycles = 2;
     //85 STA
     (*this->instructions).at(0x85).function = &CPU::STA;
     (*this->instructions).at(0x85).addressing_mode = &CPU::ZPA;
@@ -346,6 +354,17 @@ bool CPU::STX(){
     return 0;
 }
 
+//logic
+//Test Bits in Memory with Accumulator
+bool CPU::BIT(){
+    Byte memtested = this->nes.read(this->data_to_read);
+    bool result = this->registers.r_A & memtested;
+    
+    this->setflag(0x80, memtested & 0x80);
+    this->setflag(0x40, memtested & 0x40);
+    this->setflag(0x02, result == 0);
+    return false;
+}
 
 //ctrl
 //JMP Indirect
@@ -394,6 +413,14 @@ bool CPU::BEQ(){
 //Branch on Result Not Zero
 bool CPU::BNE(){
     if(!this->getflag(0x02)){//take branch if zero flag is set
+        this->registers.r_PC = this->data_to_read;
+        return true;
+    }
+    return false;
+}
+//Branch on Overflow Set
+bool CPU::BVS(){
+    if(this->getflag(0x40)){//take branch if overflow flag is set
         this->registers.r_PC = this->data_to_read;
         return true;
     }

@@ -132,7 +132,6 @@ private:
     //logic
 #warning TODO
     bool AND(); //"AND" Memory with Accumulator
-#warning TODO
     bool BIT(); //Test Bits in Memory with Accumulator
 #warning TODO
     bool EOR(); //"Exclusive OR" Memory with Accumulator
@@ -186,7 +185,6 @@ private:
     bool BPL(); //Branch on Result Plus
 #warning TODO
     bool BVC(); //Branch on Overflow Clear
-#warning TODO
     bool BVS(); //Branch on Overflow Set
     
     //flags
