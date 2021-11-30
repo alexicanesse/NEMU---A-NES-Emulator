@@ -46,7 +46,7 @@ Address CPU::get_register_PC(){
     return this->registers.r_PC;
 }
 
-#warning todo
+
 //Emulate one cycle
 void CPU::clock(){
     this->cycles++; //increase total number of cycles
@@ -240,7 +240,7 @@ bool CPU::REL(){
     this->registers.r_PC++;
     
     this->data_to_read = this->registers.r_PC + offset;
-    if((this->registers.r_PC - this->data_to_read) & 0xFF00) //page crossed
+    if((this->registers.r_PC ^ this->data_to_read) & 0xFF00) //page crossed
         return true;
     else
         return false;
@@ -267,22 +267,42 @@ CPU::CPU(){
     (*this->instructions).at(0x4c).function = &CPU::JMP;
     (*this->instructions).at(0x4c).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x4c).cycles = 3;
+    //85 STA
+    (*this->instructions).at(0x85).function = &CPU::STA;
+    (*this->instructions).at(0x85).addressing_mode = &CPU::ZPA;
+    (*this->instructions).at(0x85).cycles = 3;
     //86 STX
     (*this->instructions).at(0x86).function = &CPU::STX;
     (*this->instructions).at(0x86).addressing_mode = &CPU::ZPA;
     (*this->instructions).at(0x86).cycles = 3;
+    //90 BCC
+    (*this->instructions).at(0x90).function = &CPU::BCC;
+    (*this->instructions).at(0x90).addressing_mode = &CPU::REL;
+    (*this->instructions).at(0x90).cycles = 2;
     //A2 LDX
     (*this->instructions).at(0xA2).function = &CPU::LDX;
     (*this->instructions).at(0xA2).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xA2).cycles = 2;
+    //A9 LDA
+    (*this->instructions).at(0xA9).function = &CPU::LDA;
+    (*this->instructions).at(0xA9).addressing_mode = &CPU::IMM;
+    (*this->instructions).at(0xA9).cycles = 2;
     //B0 BCS
     (*this->instructions).at(0xB0).function = &CPU::BCS;
     (*this->instructions).at(0xB0).addressing_mode = &CPU::REL;
     (*this->instructions).at(0xB0).cycles = 2;
+    //D0 BNE
+    (*this->instructions).at(0xD0).function = &CPU::BNE;
+    (*this->instructions).at(0xD0).addressing_mode = &CPU::REL;
+    (*this->instructions).at(0xD0).cycles = 2;
     //EA NOP
     (*this->instructions).at(0xEA).function = &CPU::NOP;
     (*this->instructions).at(0xEA).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0xEA).cycles = 2;
+    //F0 BEQ
+    (*this->instructions).at(0xF0).function = &CPU::BEQ;
+    (*this->instructions).at(0xF0).addressing_mode = &CPU::REL;
+    (*this->instructions).at(0xF0).cycles = 2;
 }
 
 /* instructions */
@@ -292,6 +312,13 @@ CPU::CPU(){
 //*instructions[0x4c].cycles = 3;
 
 //load
+//Load Accumulator with Memory
+bool CPU::LDA(){
+    this->registers.r_A = this->nes.read(this->data_to_read);
+    this->setflag(0x80, this->registers.r_A & 0x80);
+    this->setflag(0x02, this->registers.r_A == 0);
+    return false;
+}
 //Load Index Register X From Memory
 bool CPU::LDX(){
     this->registers.r_iX = this->nes.read(this->data_to_read);
@@ -306,6 +333,11 @@ bool CPU::LDX(){
     else
         this->setflag(0x02, 0);
     
+    return false;
+}
+//Store Accumulator in Memory
+bool CPU::STA(){
+    this->nes.write(this->data_to_read, this->registers.r_A);
     return false;
 }
 //Store Index Register X In Memory
@@ -335,9 +367,33 @@ bool CPU::JSR(){
 }
 
 //bra
+//Branch on Carry Clear
+bool CPU::BCC(){
+    if(!this->getflag(0x01)){//take branch if carry flag is set
+        this->registers.r_PC = this->data_to_read;
+        return true;
+    }
+    return false;
+}
 //Branch on Carry Set
 bool CPU::BCS(){
     if(this->getflag(0x01)){//take branch if carry flag is set
+        this->registers.r_PC = this->data_to_read;
+        return true;
+    }
+    return false;
+}
+//Branch on Result Zero
+bool CPU::BEQ(){
+    if(this->getflag(0x02)){//take branch if zero flag is set
+        this->registers.r_PC = this->data_to_read;
+        return true;
+    }
+    return false;
+}
+//Branch on Result Not Zero
+bool CPU::BNE(){
+    if(!this->getflag(0x02)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
         return true;
     }

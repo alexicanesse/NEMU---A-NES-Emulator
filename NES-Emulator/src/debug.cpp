@@ -40,7 +40,7 @@ void show_registers(CPU cpu){
            << "\nY : 0x" << std::hex << (int) cpu.get_register_Y()
            << "\nStack pointer : 0x" << std::hex << (int) cpu.get_register_SP()
            << "\nProgram counter : 0x" << std::hex << (int) cpu.get_register_PC()
-           << "\nCycles : " << (int) cpu.cycles;
+           << "\nCycles : " << std::dec << cpu.cycles;
     addstr(buffer.str().c_str());
 }
 
@@ -50,6 +50,13 @@ void show_state(CPU cpu, std::array<Byte, 2048> ram){
     show_ram(ram);
     
     refresh();
+}
+
+void logging(CPU cpu){
+    std::ofstream log;
+    log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
+    log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y();
+    log.close();
 }
 
 int main(){
@@ -106,18 +113,14 @@ int main(){
         }
     }
     
-    log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
-    log << std::hex << cpu.get_register_PC() << " Cycles:" << cpu.cycles;
-    log.close();
+    logging(cpu);
     
     while(1){
         cpu.clock();
         show_state(cpu, *cpu.nes.ram);
         refresh();
         if(cpu.rem_cycles == 0){
-            log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
-            log << "\n" << std::hex << cpu.get_register_PC() << " Cycles:" << (int) cpu.cycles;
-            log.close();
+            logging(cpu);
         }
 //        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }

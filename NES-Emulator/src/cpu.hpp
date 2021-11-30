@@ -86,12 +86,10 @@ private:
      https://www.pagetable.com/c64ref/6502/?tab=2
     */
     //load
-#warning TODO
     bool LDA(); //Load Accumulator with Memory
     bool LDX(); //Load Index Register X From Memory
 #warning TODO
     bool LDY(); //Load Index Register Y From Memory
-#warning TODO
     bool STA(); //Store Accumulator in Memory
     bool STX(); //Store Index Register X In Memory
 #warning TODO
@@ -178,14 +176,11 @@ private:
     bool RTS(); //Return From Subroutme
     
     //bra
-#warning TODO
     bool BCC(); //Branch on Carry Clear
     bool BCS(); //Branch on Carry Set
-#warning TODO
     bool BEQ(); //Branch on Result Zero
 #warning TODO
     bool BMI(); //Branch on Result Minus
-#warning TODO
     bool BNE(); //Branch on Result Not Zero
 #warning TODO
     bool BPL(); //Branch on Result Plus
