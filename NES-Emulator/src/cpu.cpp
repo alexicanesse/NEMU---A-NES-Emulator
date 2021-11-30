@@ -498,8 +498,7 @@ bool CPU::ADC(){
     //bool -> int implicit conversion has every byte at one
     
     
-    //Thanks internet! This flag killed me
-    //V <- ~(A^M) & A^(A+M+C)
+    //Thanks internet! This flag was killing me
     this->setflag(0x40,(~(this->registers.r_A^this->nes.read(this->data_to_read)) & (result)) & 0x80);
         
     
