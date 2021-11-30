@@ -53,7 +53,8 @@ private:
         //It grows from top to bottom
         Address r_SP = 0x0FF;   //stack pointer
         Address r_PC = 0xC000; //program counter (PC)
-        Byte nv_bdizc = 0b0010000; //Processor status register
+        //While there are only six flags in the processor status register within the CPU, when transferred to the stack, there are two additional bits. These do not represent a register that can hold a value but can be used to distinguish how the flags were pushed.
+        Byte nv_bdizc = 0b00100000; //Processor status register
                                     //_ = expansion | No CPU effect
     } registers;
   
@@ -112,9 +113,7 @@ private:
     //stack
 #warning TODO
     bool PHA(); //Push Accumulator On Stack
-#warning TODO
     bool PHP(); //Push Processor Status On Stack
-#warning TODO
     bool PLA(); //Pull Accumulator From Stack
 #warning TODO
     bool PLP(); //Pull Processor Status From Stack
@@ -193,9 +192,7 @@ private:
 #warning TODO
     bool CLV(); //Clear Overflow Flag
     bool SEC(); //Set Carry Flag
-#warning TODO
     bool SED(); //Set Decimal Mode
-#warning TODO
     bool SEI(); //Set Interrupt Disable
     
     //nop

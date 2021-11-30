@@ -251,6 +251,10 @@ bool CPU::REL(){
 
 
 CPU::CPU(){
+    //08 PHP
+    (*this->instructions).at(0x08).function = &CPU::PHP;
+    (*this->instructions).at(0x08).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x08).cycles = 3;
     //10 BPL
     (*this->instructions).at(0x10).function = &CPU::BPL;
     (*this->instructions).at(0x10).addressing_mode = &CPU::REL;
@@ -283,7 +287,15 @@ CPU::CPU(){
     (*this->instructions).at(0x60).function = &CPU::RTS;
     (*this->instructions).at(0x60).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x60).cycles = 6;
+    //68 PLA
+    (*this->instructions).at(0x68).function = &CPU::PLA;
+    (*this->instructions).at(0x68).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x68).cycles = 4;
     //70 BVS
+    (*this->instructions).at(0x78).function = &CPU::SEI;
+    (*this->instructions).at(0x78).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x78).cycles = 2;
+    //78 SEI
     (*this->instructions).at(0x70).function = &CPU::BVS;
     (*this->instructions).at(0x70).addressing_mode = &CPU::REL;
     (*this->instructions).at(0x70).cycles = 2;
@@ -323,6 +335,10 @@ CPU::CPU(){
     (*this->instructions).at(0xF0).function = &CPU::BEQ;
     (*this->instructions).at(0xF0).addressing_mode = &CPU::REL;
     (*this->instructions).at(0xF0).cycles = 2;
+    //F8 SED
+    (*this->instructions).at(0xF8).function = &CPU::SED;
+    (*this->instructions).at(0xF8).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xF8).cycles = 2;
 }
 
 /* instructions */
@@ -364,6 +380,20 @@ bool CPU::STA(){
 bool CPU::STX(){
     this->nes.write(this->data_to_read, this->registers.r_iX);
     return 0;
+}
+
+//stack
+//In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK)
+//Push Processor Status On Stack
+bool CPU::PHP(){
+    this->nes.write(this->registers.r_SP, this->registers.nv_bdizc | 0x14);
+    this->registers.r_SP--; //always point to next address
+    return false;
+}
+//Pull Accumulator From Stack
+bool CPU::PLA(){
+    this->registers.r_A = this->nes.read(++this->registers.r_SP);
+    return false;
 }
 
 //logic
@@ -475,6 +505,16 @@ bool CPU::CLC(){
 //Set Carry Flag
 bool CPU::SEC(){
     this->setflag(0x01, true);
+    return false;
+}
+//Set Decimal Mode
+bool CPU::SED(){
+    this->registers.nv_bdizc |= 0x08;
+    return false;
+}
+//Set Interrupt Disable
+bool CPU::SEI(){
+    this->registers.nv_bdizc |= 0x04;
     return false;
 }
 
