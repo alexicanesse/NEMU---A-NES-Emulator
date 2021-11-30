@@ -39,7 +39,8 @@ void show_registers(CPU cpu){
            << "\nX : 0x" << std::hex << (int) cpu.get_register_X()
            << "\nY : 0x" << std::hex << (int) cpu.get_register_Y()
            << "\nStack pointer : 0x" << std::hex << (int) cpu.get_register_SP()
-           << "\nProgram counter : 0x" << std::hex << (int) cpu.get_register_PC();
+           << "\nProgram counter : 0x" << std::hex << (int) cpu.get_register_PC()
+           << "\nCycles : " << (int) cpu.cycles;
     addstr(buffer.str().c_str());
 }
 
@@ -83,21 +84,30 @@ int main(){
         std::cout << "pb";
     else{
         char buffer = 0x00;
-        Address pos = 0x34;
-        while (1 & (pos < 2048)) {
+        Address pos = 0x8000;
+        Address pos1 = 0xC000;
+//        Address pos2 = 0x0000;
+        for(int i = 0; i < 0x0010; i++) testrom.read(&buffer,1); //skip header
+        while (pos < (0xBFFF)) {
             testrom.read(&buffer,1);
             cpu.nes.write(pos, (Byte) buffer);
+            cpu.nes.write(pos1, (Byte) buffer);
+//            if(pos2 < 2048) cpu.nes.write(pos2, (Byte) buffer);
             pos++;
+            pos1++;
+//            pos2++;
             if (testrom.eof())
                 break;
             show_state(cpu, *cpu.nes.ram);
             refresh();
-            std::this_thread::sleep_for(std::chrono::milliseconds(3));
+//            std::this_thread::sleep_for(std::chrono::milliseconds(3));
         }
     }
     
     while(1){
         cpu.clock();
+        show_state(cpu, *cpu.nes.ram);
+        refresh();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     /* End of exemple 2*/

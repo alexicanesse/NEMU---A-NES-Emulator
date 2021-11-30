@@ -19,8 +19,8 @@ void CPU::setflag(Byte flg, bool value){
 
 //We change all byte to 0 except the one that interest us which is not modyfied. Then we know it's value.
 bool CPU::getflag(Byte flg){
-//    return (this->registers.nv_bdizc & flg) != 0;
-    return true;
+    return (this->registers.nv_bdizc & flg) != 0;
+
 }
 
 Byte CPU::get_register_A(){
@@ -62,16 +62,13 @@ void CPU::clock(){
     this->rem_cycles = instr.cycles - 1; //-1 because this cycle is the first cycle
     
     //run addr_mode and add an additionnal cycle if requiered
-    bool add_cycle1 = instr.addressing_mode(); //(page)
-    
-    //run instruction and add an additionnal cycle if requiered
-    bool add_cycle2 = instr.function(); //branch cycle is directly added by functions 
-    
-    
-    if(add_cycle1 & add_cycle2)
+    if((this->*instr.addressing_mode)()) //(page)
         this->rem_cycles++;
     
-# warning TODO Handle number of cycles + use addrmode + opperate
+    //run instruction and add an additionnal cycle if requiered
+    if((this->*instr.function)()) //branch cycle is directly added by functions
+        this->rem_cycles++;
+    
 }
 
 
@@ -245,6 +242,121 @@ bool CPU::REL(){
     else
         return true;
 #warning t branch cycle
+}
+
+
+
+
+CPU::CPU(){
+    //18 CLC
+    (*this->instructions).at(0x18).function = &CPU::CLC;
+    (*this->instructions).at(0x18).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x18).cycles = 2;
+    //20 JSR
+    (*this->instructions).at(0x20).function = &CPU::JSR;
+    (*this->instructions).at(0x20).addressing_mode = &CPU::ABS;
+    (*this->instructions).at(0x20).cycles = 6;
+    //38 SEC
+    (*this->instructions).at(0x38).function = &CPU::SEC;
+    (*this->instructions).at(0x38).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x38).cycles = 2;
+    //4C JMP
+    (*this->instructions).at(0x4c).function = &CPU::JMP;
+    (*this->instructions).at(0x4c).addressing_mode = &CPU::ABS;
+    (*this->instructions).at(0x4c).cycles = 3;
+    //86 STX
+    (*this->instructions).at(0x86).function = &CPU::STX;
+    (*this->instructions).at(0x86).addressing_mode = &CPU::ZPA;
+    (*this->instructions).at(0x86).cycles = 3;
+    //A2 LDX
+    (*this->instructions).at(0xA2).function = &CPU::LDX;
+    (*this->instructions).at(0xA2).addressing_mode = &CPU::IMM;
+    (*this->instructions).at(0xA2).cycles = 2;
+    //B0 BCS
+    (*this->instructions).at(0xB0).function = &CPU::BCS;
+    (*this->instructions).at(0xB0).addressing_mode = &CPU::REL;
+    (*this->instructions).at(0xB0).cycles = 2;
+    //EA NOP
+    (*this->instructions).at(0xEA).function = &CPU::NOP;
+    (*this->instructions).at(0xEA).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xEA).cycles = 2;
+}
+
+/* instructions */
+
+//(*this->instructions).at(0x4c).function = JMP();
+//*instructions[0x4c].addressing_mode = ABS();
+//*instructions[0x4c].cycles = 3;
+
+//load
+//Load Index Register X From Memory
+bool CPU::LDX(){
+    this->registers.r_iX = this->nes.read(this->data_to_read);
+    
+    if(this->registers.r_iX & 0x80)//handle N flag
+        this->setflag(0x80, 1);
+    else
+        this->setflag(0x80, 0);
+    
+    if(this->registers.r_iX == 0)
+        this->setflag(0x02, 1);
+    else
+        this->setflag(0x02, 0);
+    
+    return false;
+}
+//Store Index Register X In Memory
+bool CPU::STX(){
+    this->nes.write(this->data_to_read, this->registers.r_iX);
+    return 0;
+}
+
+
+//ctrl
+//JMP Indirect
+bool CPU::JMP(){
+    this->registers.r_PC = this->data_to_read;
+    return true;
+}
+//Jump To Subroutine
+bool CPU::JSR(){
+    this->nes.write(this->registers.r_SP, (this->registers.r_PC - 1) << 8); //high
+    this->registers.r_SP--;
+    
+    this->nes.write(this->registers.r_SP, (this->registers.r_PC - 1) & 0x00FF); //low
+    this->registers.r_SP--;
+    
+    this->registers.r_PC = this->data_to_read;
+    
+    return false;
+}
+
+//bra
+//Branch on Carry Set
+bool CPU::BCS(){
+    if(this->getflag(0x01)){//take branch if carry flag is set
+        this->registers.r_PC = this->data_to_read;
+        return 1;
+    }
+    return false;
+}
+
+//flags
+//Clear Carry Flag
+bool CPU::CLC(){
+    this->setflag(0x01, 0);
+    return false;
+}
+//Set Carry Flag
+bool CPU::SEC(){
+    this->setflag(0x01, 1);
+    return false;
+}
+
+//nop
+//No Operation
+bool CPU::NOP(){
+    return false;
 }
 
 

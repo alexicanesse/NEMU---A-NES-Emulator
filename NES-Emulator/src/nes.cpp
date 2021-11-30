@@ -16,6 +16,7 @@
 /*
     Read/Write Memory
 */
+#warning bool useless
 bool NES::write(Address adr, Byte content){
     if(adr <= 0x1FFF){
         //Si on essaye d'écrire sur les miroirs, on ecrit simplement sur la ram.
@@ -30,7 +31,9 @@ bool NES::write(Address adr, Byte content){
     #warning TODO write APU/IO
         return true;
     }
-    return false;
+    //adr >= 0x800
+    this->rom->at(adr) = content;
+    return true;
 }
 
 
@@ -48,8 +51,8 @@ Byte NES::read(Address adr){
         return 0x00;
         
     }
-    //Failed
-    return 0x00;
+    //adr >= 0x800
+    return this->rom->at(adr);
 }
 
 
