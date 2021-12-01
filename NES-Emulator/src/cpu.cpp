@@ -172,6 +172,7 @@ bool CPU::IND(){
     return false;
 }
 
+#warning changing everything
 //zero page
 bool CPU::ZPA(){
     this->data_to_read = (0x00FF) & this->nes.read(this->registers.r_PC);
@@ -183,7 +184,7 @@ bool CPU::ZPA(){
 //X-indexed zero page
 bool CPU::XZP(){
     //like ZPA but we must add an offset
-    this->data_to_read = (0x00FF) & (this->nes.read(this->registers.r_PC) + this->registers.r_iX);
+    this->data_to_read = (0x00FF) & (this->nes.read(this->registers.r_PC + this->registers.r_iX));
     this->registers.r_PC++;
     
     return false;
@@ -244,7 +245,6 @@ bool CPU::REL(){
         return true;
     else
         return false;
-#warning t branch cycle
 }
 
 
@@ -379,6 +379,14 @@ CPU::CPU(){
     (*this->instructions).at(0xAA).function = &CPU::TAX;
     (*this->instructions).at(0xAA).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0xAA).cycles = 2;
+    //AD LDA
+    (*this->instructions).at(0xAD).function = &CPU::LDA;
+    (*this->instructions).at(0xAD).addressing_mode = &CPU::ABS;
+    (*this->instructions).at(0xAD).cycles = 4;
+    //AE LDX
+    (*this->instructions).at(0xAE).function = &CPU::LDX;
+    (*this->instructions).at(0xAE).addressing_mode = &CPU::ABS;
+    (*this->instructions).at(0xAE).cycles = 4;
     //B0 BCS
     (*this->instructions).at(0xB0).function = &CPU::BCS;
     (*this->instructions).at(0xB0).addressing_mode = &CPU::REL;
@@ -442,10 +450,6 @@ CPU::CPU(){
 }
 
 /* instructions */
-
-//(*this->instructions).at(0x4c).function = JMP();
-//*instructions[0x4c].addressing_mode = ABS();
-//*instructions[0x4c].cycles = 3;
 
 //load
 //Load Accumulator with Memory
@@ -523,24 +527,27 @@ void CPU::TYA(){
 //In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK)
 //Push Accumulator On Stack
 void CPU::PHA(){
-    this->nes.write(this->registers.r_SP--,this->registers.r_A);
+    //0x0100 to offset
+    this->nes.write(0x0100 + this->registers.r_SP--,this->registers.r_A);
     //sp-- because sp needs to point to the nest empty location on the stack
 }
 //Push Processor Status On Stack
 void CPU::PHP(){
-    this->nes.write(this->registers.r_SP, this->registers.nv_bdizc | 0x14);
+    //0x0100 to offset
+    this->nes.write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x14);
     this->registers.r_SP--; //always point to next address
 }
 //Pull Accumulator From Stack
 void CPU::PLA(){
-    this->registers.r_A = this->nes.read(++this->registers.r_SP);
+    //0x0100 to offset
+    this->registers.r_A = this->nes.read(0x0100 + ++this->registers.r_SP);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
 }
 //Pull Processor Status From Stack
 void CPU::PLP(){
-    this->registers.nv_bdizc = this->nes.read(++this->registers.r_SP);
+    this->registers.nv_bdizc = this->nes.read(0x0100 + ++this->registers.r_SP);
     //stack pointer is incremanted before reading the value
 }
 
@@ -674,19 +681,21 @@ void CPU::JMP(){
 }
 //Jump To Subroutine
 void CPU::JSR(){
-    this->nes.write(this->registers.r_SP, (this->registers.r_PC) >> 8); //high
+    //0x0100 to offset
+    this->nes.write(0x0100 + this->registers.r_SP, (this->registers.r_PC-1) >> 8); //high
     this->registers.r_SP--;
     
-    this->nes.write(this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
+    this->nes.write(0x0100 + this->registers.r_SP, (this->registers.r_PC-1) & 0x00FF); //low
     this->registers.r_SP--;
     
     this->registers.r_PC = this->data_to_read;
 }
 //Return From Subroutme
 void CPU::RTS(){
-    this->registers.r_PC = this->nes.read(++this->registers.r_SP);//low
-    this->registers.r_PC |= this->nes.read(++this->registers.r_SP) << 8;//add high
+    this->registers.r_PC = this->nes.read(0x0100 + ++this->registers.r_SP);//low
+    this->registers.r_PC |= this->nes.read(0x0100 + ++this->registers.r_SP) << 8;//add high
     //SP is incremented twice to be set
+    this->registers.r_PC++; //point to next instruction
 }
 
 //bra
