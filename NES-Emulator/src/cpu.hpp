@@ -51,7 +51,7 @@ private:
         Byte r_iY = 0;   //index register Y
         //Memory space [0x0100 - 0x01FF] is used for stack. The stack pointer holds the address of the top of that space
         //It grows from top to bottom
-        Address r_SP = 0x0FF;   //stack pointer
+        Address r_SP = 0x0FD;   //stack pointer
         Address r_PC = 0xC000; //program counter (PC)
         //While there are only six flags in the processor status register within the CPU, when transferred to the stack, there are two additional bits. These do not represent a register that can hold a value but can be used to distinguish how the flags were pushed.
         Byte nv_bdizc = 0b00100000; //Processor status register
@@ -96,17 +96,11 @@ private:
     void STY(); //Store Index Register Y In Memory
     
     //trans
-#warning TODO
     void TAX(); //Transfer Accumulator To Index X
-#warning TODO
     void TAY(); //Transfer Accumula Tor To Index Y
-#warning TODO
     void TSX(); //Transfer Stack Pointer To Index X
-#warning TODO
     void TXA(); //Transfer Index X To Accumulator
-#warning TODO
     void TXS(); //Transfer Index X To Stack Pointer
-#warning TODO
     void TYA(); //Transfer Index Y To Accumulator
     
     //stack
@@ -141,13 +135,10 @@ private:
     //inc
 #warning TODO
     void DEC(); //Decrement Memory By One
-#warning TODO
     void DEX(); //Decrement Index Register X By One
-#warning TODO
     void DEY(); //Decrement Index Register Y By One
 #warning TODO
     void INC(); //Increment Memory By One
-#warning TODO
     void INX(); //Increment Index Register X By One
     void INY(); //Increment Index Register Y By One
     

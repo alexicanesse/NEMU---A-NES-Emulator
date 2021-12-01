@@ -103,7 +103,7 @@ bool CPU::ABS(){
     Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
     this->registers.r_PC++;
     
-    Byte high = this->nes.read(this->registers.r_PC++); //read 8 high bits
+    Byte high = this->nes.read(this->registers.r_PC); //read 8 high bits
     this->registers.r_PC++;
     
     this->data_to_read = (high << 8) | low; //concat them
@@ -335,10 +335,30 @@ CPU::CPU(){
     (*this->instructions).at(0x86).function = &CPU::STX;
     (*this->instructions).at(0x86).addressing_mode = &CPU::ZPA;
     (*this->instructions).at(0x86).cycles = 3;
+    //88 DEY
+    (*this->instructions).at(0x88).function = &CPU::DEY;
+    (*this->instructions).at(0x88).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x88).cycles = 2;
+    //8A TXA
+    (*this->instructions).at(0x8A).function = &CPU::TXA;
+    (*this->instructions).at(0x8A).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x8A).cycles = 2;
+    //8E STX
+    (*this->instructions).at(0x8E).function = &CPU::STX;
+    (*this->instructions).at(0x8E).addressing_mode = &CPU::ABS;
+    (*this->instructions).at(0x8E).cycles = 4;
     //90 BCC
     (*this->instructions).at(0x90).function = &CPU::BCC;
     (*this->instructions).at(0x90).addressing_mode = &CPU::REL;
     (*this->instructions).at(0x90).cycles = 2;
+    //98 TYA
+    (*this->instructions).at(0x98).function = &CPU::TYA;
+    (*this->instructions).at(0x98).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x98).cycles = 2;
+    //9A TXS
+    (*this->instructions).at(0x9A).function = &CPU::TXS;
+    (*this->instructions).at(0x9A).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x9A).cycles = 2;
     //A0 LDY
     (*this->instructions).at(0xA0).function = &CPU::LDY;
     (*this->instructions).at(0xA0).addressing_mode = &CPU::IMM;
@@ -347,14 +367,26 @@ CPU::CPU(){
     (*this->instructions).at(0xA2).function = &CPU::LDX;
     (*this->instructions).at(0xA2).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xA2).cycles = 2;
+    //A8 TAY
+    (*this->instructions).at(0xA8).function = &CPU::TAY;
+    (*this->instructions).at(0xA8).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xA8).cycles = 2;
     //A9 LDA
     (*this->instructions).at(0xA9).function = &CPU::LDA;
     (*this->instructions).at(0xA9).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xA9).cycles = 2;
+    //AA TAX
+    (*this->instructions).at(0xAA).function = &CPU::TAX;
+    (*this->instructions).at(0xAA).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xAA).cycles = 2;
     //B0 BCS
     (*this->instructions).at(0xB0).function = &CPU::BCS;
     (*this->instructions).at(0xB0).addressing_mode = &CPU::REL;
     (*this->instructions).at(0xB0).cycles = 2;
+    //BA TSX
+    (*this->instructions).at(0xBA).function = &CPU::TSX;
+    (*this->instructions).at(0xBA).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xBA).cycles = 2;
     //B8 CLV
     (*this->instructions).at(0xB8).function = &CPU::CLV;
     (*this->instructions).at(0xB8).addressing_mode = &CPU::IMP;
@@ -371,6 +403,10 @@ CPU::CPU(){
     (*this->instructions).at(0xC9).function = &CPU::CMP;
     (*this->instructions).at(0xC9).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xC9).cycles = 2;
+    //CA DEX
+    (*this->instructions).at(0xCA).function = &CPU::DEX;
+    (*this->instructions).at(0xCA).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xCA).cycles = 2;
     //D0 BNE
     (*this->instructions).at(0xD0).function = &CPU::BNE;
     (*this->instructions).at(0xD0).addressing_mode = &CPU::REL;
@@ -383,6 +419,10 @@ CPU::CPU(){
     (*this->instructions).at(0xE0).function = &CPU::CPX;
     (*this->instructions).at(0xE0).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xE0).cycles = 2;
+    //E8 INX
+    (*this->instructions).at(0xE8).function = &CPU::INX;
+    (*this->instructions).at(0xE8).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0xE8).cycles = 2;
     //E9 SBC
     (*this->instructions).at(0xE9).function = &CPU::SBC;
     (*this->instructions).at(0xE9).addressing_mode = &CPU::IMM;
@@ -435,6 +475,48 @@ void CPU::STA(){
 //Store Index Register X In Memory
 void CPU::STX(){
     this->nes.write(this->data_to_read, this->registers.r_iX);
+}
+
+//trans
+//Transfer Accumulator To Index X
+void CPU::TAX(){
+    this->registers.r_iX = this->registers.r_A;
+    
+    this->setflag(0x80, this->registers.r_iX & 0x80);
+    this->setflag(0x02, this->registers.r_iX == 0);
+}
+//Transfer Accumula Tor To Index Y
+void CPU::TAY(){
+    this->registers.r_iY = this->registers.r_A;
+    
+    this->setflag(0x80, this->registers.r_iY & 0x80);
+    this->setflag(0x02, this->registers.r_iY == 0);
+}
+//Transfer Stack Pointer To Index X
+void CPU::TSX(){
+    this->registers.r_iX = this->registers.r_SP;
+    
+    this->setflag(0x80, this->registers.r_iX & 0x80);
+    this->setflag(0x02, this->registers.r_iX == 0);
+}
+//Transfer Index X To Accumulator
+void CPU::TXA(){
+    this->registers.r_A = this->registers.r_iX;
+    
+    this->setflag(0x80, this->registers.r_A & 0x80);
+    this->setflag(0x02, this->registers.r_A == 0);
+}
+//Transfer Index X To Stack Pointer
+void CPU::TXS(){
+    this->registers.r_SP = this->registers.r_iX;
+    //does not affect any flag
+}
+//Transfer Index Y To Accumulator
+void CPU::TYA(){
+    this->registers.r_A = this->registers.r_iY;
+    
+    this->setflag(0x80, this->registers.r_A & 0x80);
+    this->setflag(0x02, this->registers.r_A == 0);
 }
 
 //stack
@@ -555,6 +637,27 @@ void CPU::SBC(){
 }
 
 //inc
+//Decrement Index Register X By One
+void CPU::DEX(){
+    this->registers.r_iX--;
+    
+    this->setflag(0x80, this->registers.r_iX & 0x80);
+    this->setflag(0x02, this->registers.r_iX == 0);
+}
+//Decrement Index Register Y By One
+void CPU::DEY(){
+    this->registers.r_iY--;
+    
+    this->setflag(0x80, this->registers.r_iY & 0x80);
+    this->setflag(0x02, this->registers.r_iY == 0);
+}
+//Increment Index Register X By One
+void CPU::INX(){
+    this->registers.r_iX++;
+    
+    this->setflag(0x80, this->registers.r_iX & 0x80);
+    this->setflag(0x02, this->registers.r_iX == 0);
+}
 //Increment Index Register Y By One
 void CPU::INY(){
     this->registers.r_iY++;
@@ -566,14 +669,15 @@ void CPU::INY(){
 //ctrl
 //JMP Indirect
 void CPU::JMP(){
+    this->registers.r_PC++;
     this->registers.r_PC = this->data_to_read;
 }
 //Jump To Subroutine
 void CPU::JSR(){
-    this->nes.write(this->registers.r_SP, (this->registers.r_PC - 1) >> 8); //high
+    this->nes.write(this->registers.r_SP, (this->registers.r_PC) >> 8); //high
     this->registers.r_SP--;
     
-    this->nes.write(this->registers.r_SP, (this->registers.r_PC - 1) & 0x00FF); //low
+    this->nes.write(this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
     this->registers.r_SP--;
     
     this->registers.r_PC = this->data_to_read;
@@ -583,9 +687,6 @@ void CPU::RTS(){
     this->registers.r_PC = this->nes.read(++this->registers.r_SP);//low
     this->registers.r_PC |= this->nes.read(++this->registers.r_SP) << 8;//add high
     //SP is incremented twice to be set
-    
-    //The stack pointer is adjusted by incrementing it twice.
-    this->registers.r_SP += 2;
 }
 
 //bra
