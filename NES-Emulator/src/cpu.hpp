@@ -89,7 +89,6 @@ private:
     //load
     void LDA(); //Load Accumulator with Memory
     void LDX(); //Load Index Register X From Memory
-#warning TODO
     void LDY(); //Load Index Register Y From Memory
     void STA(); //Store Accumulator in Memory
     void STX(); //Store Index Register X In Memory
@@ -135,11 +134,8 @@ private:
     //arith
     void ADC(); //Add Memory to Accumulator with Carr
     void CMP(); //Compare Memory and Accumulator
-#warning TODO
     void CPX(); //Compare Index Register X To Memory
-#warning TODO
     void CPY(); //Compare Index Register Y To Memory
-#warning TODO
     void SBC(); //Subtract Memory from Accumulator with Borrow
     
     //inc
@@ -153,7 +149,6 @@ private:
     void INC(); //Increment Memory By One
 #warning TODO
     void INX(); //Increment Index Register X By One
-#warning TODO
     void INY(); //Increment Index Register Y By One
     
     //ctrl
