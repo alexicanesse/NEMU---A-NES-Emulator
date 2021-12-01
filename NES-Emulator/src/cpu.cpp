@@ -249,6 +249,10 @@ bool CPU::REL(){
 
 
 CPU::CPU(){
+    //01 ORA
+    (*this->instructions).at(0x01).function = &CPU::ORA;
+    (*this->instructions).at(0x01).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0x01).cycles = 6;
     //08 PHP
     (*this->instructions).at(0x08).function = &CPU::PHP;
     (*this->instructions).at(0x08).addressing_mode = &CPU::IMP;
@@ -273,10 +277,10 @@ CPU::CPU(){
     (*this->instructions).at(0x20).function = &CPU::JSR;
     (*this->instructions).at(0x20).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x20).cycles = 6;
-    //2A
-    (*this->instructions).at(0x2A).function = &CPU::ROL;
-    (*this->instructions).at(0x2A).addressing_mode = &CPU::ACC;
-    (*this->instructions).at(0x2A).cycles = 2;
+    //21 AND
+    (*this->instructions).at(0x21).function = &CPU::AND;
+    (*this->instructions).at(0x21).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0x21).cycles = 6;
     //24 BIT
     (*this->instructions).at(0x24).function = &CPU::BIT;
     (*this->instructions).at(0x24).addressing_mode = &CPU::ZPA;
@@ -289,6 +293,10 @@ CPU::CPU(){
     (*this->instructions).at(0x29).function = &CPU::AND;
     (*this->instructions).at(0x29).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0x29).cycles = 2;
+    //2A
+    (*this->instructions).at(0x2A).function = &CPU::ROL;
+    (*this->instructions).at(0x2A).addressing_mode = &CPU::ACC;
+    (*this->instructions).at(0x2A).cycles = 2;
     //30 BMI
     (*this->instructions).at(0x30).function = &CPU::BMI;
     (*this->instructions).at(0x30).addressing_mode = &CPU::REL;
@@ -301,10 +309,10 @@ CPU::CPU(){
     (*this->instructions).at(0x40).function = &CPU::RTI;
     (*this->instructions).at(0x40).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x40).cycles = 6;
-    //4A LSR
-    (*this->instructions).at(0x4A).function = &CPU::LSR;
-    (*this->instructions).at(0x4A).addressing_mode = &CPU::ACC;
-    (*this->instructions).at(0x4A).cycles = 2;
+    //41 EOR
+    (*this->instructions).at(0x41).function = &CPU::EOR;
+    (*this->instructions).at(0x41).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0x41).cycles = 6;
     //48 PHA
     (*this->instructions).at(0x48).function = &CPU::PHA;
     (*this->instructions).at(0x48).addressing_mode = &CPU::IMP;
@@ -313,6 +321,10 @@ CPU::CPU(){
     (*this->instructions).at(0x49).function = &CPU::EOR;
     (*this->instructions).at(0x49).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0x49).cycles = 2;
+    //4A LSR
+    (*this->instructions).at(0x4A).function = &CPU::LSR;
+    (*this->instructions).at(0x4A).addressing_mode = &CPU::ACC;
+    (*this->instructions).at(0x4A).cycles = 2;
     //4C JMP
     (*this->instructions).at(0x4c).function = &CPU::JMP;
     (*this->instructions).at(0x4c).addressing_mode = &CPU::ABS;
@@ -325,6 +337,10 @@ CPU::CPU(){
     (*this->instructions).at(0x60).function = &CPU::RTS;
     (*this->instructions).at(0x60).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x60).cycles = 6;
+    //61 ADC
+    (*this->instructions).at(0x61).function = &CPU::ADC;
+    (*this->instructions).at(0x61).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0x61).cycles = 6;
     //68 PLA
     (*this->instructions).at(0x68).function = &CPU::PLA;
     (*this->instructions).at(0x68).addressing_mode = &CPU::IMP;
@@ -437,6 +453,10 @@ CPU::CPU(){
     (*this->instructions).at(0xC0).function = &CPU::CPY;
     (*this->instructions).at(0xC0).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xC0).cycles = 2;
+    //C1 CMP
+    (*this->instructions).at(0xC1).function = &CPU::CMP;
+    (*this->instructions).at(0xC1).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0xC1).cycles = 6;
     //C8 INY
     (*this->instructions).at(0xC8).function = &CPU::INY;
     (*this->instructions).at(0xC8).addressing_mode = &CPU::IMP;
@@ -461,6 +481,10 @@ CPU::CPU(){
     (*this->instructions).at(0xE0).function = &CPU::CPX;
     (*this->instructions).at(0xE0).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xE0).cycles = 2;
+    //E1 SBC
+    (*this->instructions).at(0xE1).function = &CPU::SBC;
+    (*this->instructions).at(0xE1).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0xE1).cycles = 6;
     //E8 INX
     (*this->instructions).at(0xE8).function = &CPU::INX;
     (*this->instructions).at(0xE8).addressing_mode = &CPU::IMP;
