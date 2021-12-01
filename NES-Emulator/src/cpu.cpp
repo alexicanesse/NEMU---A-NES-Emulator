@@ -64,18 +64,14 @@ void CPU::clock(){
     
     this->rem_cycles = instr.cycles - 1; //-1 because this cycle is the first cycle
     
-    //only branch instructions return true. Page crossed cycles are added only if branch is taken. For other instructions, page crossed cycle is always added
+
     
-    bool addr = (this->*instr.addressing_mode)();
-    bool func = (this->*instr.function)();
+    if((this->*instr.addressing_mode)())
+        this->rem_cycles++;
     
-    if(func){
-        this->rem_cycles++;
-        if(addr)
-            this->rem_cycles++;
-    }
-    else if(addr)
-        this->rem_cycles++;
+    //branch instructions handle cycles themseles
+    (this->*instr.function)();
+
 }
 
 
@@ -560,64 +556,96 @@ bool CPU::RTS(){
 bool CPU::BCC(){
     if(!this->getflag(0x01)){//take branch if carry flag is set
         this->registers.r_PC = this->data_to_read;
+        this->rem_cycles ++;
         return true;
     }
+    //if page was crossed but the branch is not taken, no additionnal cycle is requiered
+    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+        this->rem_cycles--;
     return false;
 }
 //Branch on Carry Set
 bool CPU::BCS(){
     if(this->getflag(0x01)){//take branch if carry flag is set
         this->registers.r_PC = this->data_to_read;
+        this->rem_cycles ++;
         return true;
     }
+    //if page was crossed but the branch is not taken, no additionnal cycle is requiered
+    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+        this->rem_cycles--;
     return false;
 }
 //Branch on Result Zero
 bool CPU::BEQ(){
     if(this->getflag(0x02)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
+        this->rem_cycles ++;
         return true;
     }
+    //if page was crossed but the branch is not taken, no additionnal cycle is requiered
+    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+        this->rem_cycles--;
     return false;
 }
 //Branch on Result Minus
 bool CPU::BMI(){
     if(this->getflag(0x80)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
+        this->rem_cycles ++;
         return true;
     }
+    //if page was crossed but the branch is not taken, no additionnal cycle is requiered
+    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+        this->rem_cycles--;
     return false;
 }
 //Branch on Result Not Zero
 bool CPU::BNE(){
     if(!this->getflag(0x02)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
+        this->rem_cycles ++;
         return true;
     }
+    //if page was crossed but the branch is not taken, no additionnal cycle is requiered
+    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+        this->rem_cycles--;
     return false;
 }
 //Branch on Result Plus
 bool CPU::BPL(){
     if(!this->getflag(0x80)){//take branch if zero flag is reset
         this->registers.r_PC = this->data_to_read;
+        this->rem_cycles ++;
         return true;
     }
+    //if page was crossed but the branch is not taken, no additionnal cycle is requiered
+    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+        this->rem_cycles--;
     return false;
 }
 //Branch on Overflow Clear
 bool CPU::BVC(){
     if(!this->getflag(0x40)){//take branch if overflow flag is reset
         this->registers.r_PC = this->data_to_read;
+        this->rem_cycles ++;
         return true;
     }
+    //if page was crossed but the branch is not taken, no additionnal cycle is requiered
+    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+        this->rem_cycles--;
     return false;
 }
 //Branch on Overflow Set
 bool CPU::BVS(){
     if(this->getflag(0x40)){//take branch if overflow flag is set
         this->registers.r_PC = this->data_to_read;
+        this->rem_cycles ++;
         return true;
     }
+    //if page was crossed but the branch is not taken, no additionnal cycle is requiered
+    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+        this->rem_cycles--;
     return false;
 }
 
