@@ -200,11 +200,10 @@ bool CPU::YZP(){
 
 //X-indexed zero page indirect
 bool CPU::XZI(){
-    Byte low = this->nes.read((this->registers.r_PC + this->registers.r_iX) & 0x00FF); //discard carry
-    this->registers.r_PC++;
+    Byte add = this->nes.read(this->registers.r_PC++);
+    Byte low = this->nes.read((add + this->registers.r_iX) & 0x00FF); //discard carry
     
-    Byte high = this->nes.read((this->registers.r_PC + this->registers.r_iX) & 0x00FF);
-    this->registers.r_PC++;
+    Byte high = this->nes.read((add + 0x01 + this->registers.r_iX) & 0x00FF);
 
     this->data_to_read = (high << 8) | low; //concat them
 
@@ -258,6 +257,10 @@ CPU::CPU(){
     (*this->instructions).at(0x09).function = &CPU::ORA;
     (*this->instructions).at(0x09).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0x09).cycles = 2;
+    //0A ASL
+    (*this->instructions).at(0x0A).function = &CPU::ASL;
+    (*this->instructions).at(0x0A).addressing_mode = &CPU::ACC;
+    (*this->instructions).at(0x0A).cycles = 2;
     //10 BPL
     (*this->instructions).at(0x10).function = &CPU::BPL;
     (*this->instructions).at(0x10).addressing_mode = &CPU::REL;
@@ -270,6 +273,10 @@ CPU::CPU(){
     (*this->instructions).at(0x20).function = &CPU::JSR;
     (*this->instructions).at(0x20).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x20).cycles = 6;
+    //2A
+    (*this->instructions).at(0x2A).function = &CPU::ROL;
+    (*this->instructions).at(0x2A).addressing_mode = &CPU::ACC;
+    (*this->instructions).at(0x2A).cycles = 2;
     //24 BIT
     (*this->instructions).at(0x24).function = &CPU::BIT;
     (*this->instructions).at(0x24).addressing_mode = &CPU::ZPA;
@@ -294,6 +301,10 @@ CPU::CPU(){
     (*this->instructions).at(0x40).function = &CPU::RTI;
     (*this->instructions).at(0x40).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x40).cycles = 6;
+    //4A LSR
+    (*this->instructions).at(0x4A).function = &CPU::LSR;
+    (*this->instructions).at(0x4A).addressing_mode = &CPU::ACC;
+    (*this->instructions).at(0x4A).cycles = 2;
     //48 PHA
     (*this->instructions).at(0x48).function = &CPU::PHA;
     (*this->instructions).at(0x48).addressing_mode = &CPU::IMP;
@@ -322,6 +333,10 @@ CPU::CPU(){
     (*this->instructions).at(0x69).function = &CPU::ADC;
     (*this->instructions).at(0x69).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0x69).cycles = 2;
+    //6A ROR
+    (*this->instructions).at(0x6A).function = &CPU::ROR;
+    (*this->instructions).at(0x6A).addressing_mode = &CPU::ACC;
+    (*this->instructions).at(0x6A).cycles = 2;
     //70 BVS
     (*this->instructions).at(0x70).function = &CPU::BVS;
     (*this->instructions).at(0x70).addressing_mode = &CPU::REL;
@@ -330,6 +345,10 @@ CPU::CPU(){
     (*this->instructions).at(0x78).function = &CPU::SEI;
     (*this->instructions).at(0x78).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x78).cycles = 2;
+    //81 STA
+    (*this->instructions).at(0x81).function = &CPU::STA;
+    (*this->instructions).at(0x81).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0x81).cycles = 6;
     //85 STA
     (*this->instructions).at(0x85).function = &CPU::STA;
     (*this->instructions).at(0x85).addressing_mode = &CPU::ZPA;
@@ -346,6 +365,10 @@ CPU::CPU(){
     (*this->instructions).at(0x8A).function = &CPU::TXA;
     (*this->instructions).at(0x8A).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x8A).cycles = 2;
+    //8D STA
+    (*this->instructions).at(0x8D).function = &CPU::STA;
+    (*this->instructions).at(0x8D).addressing_mode = &CPU::ABS;
+    (*this->instructions).at(0x8D).cycles = 4;
     //8E STX
     (*this->instructions).at(0x8E).function = &CPU::STX;
     (*this->instructions).at(0x8E).addressing_mode = &CPU::ABS;
@@ -366,10 +389,18 @@ CPU::CPU(){
     (*this->instructions).at(0xA0).function = &CPU::LDY;
     (*this->instructions).at(0xA0).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xA0).cycles = 2;
+    //A1 LDA
+    (*this->instructions).at(0xA1).function = &CPU::LDA;
+    (*this->instructions).at(0xA1).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0xA1).cycles = 6;
     //A2 LDX
     (*this->instructions).at(0xA2).function = &CPU::LDX;
     (*this->instructions).at(0xA2).addressing_mode = &CPU::IMM;
     (*this->instructions).at(0xA2).cycles = 2;
+    //A5 LDA
+    (*this->instructions).at(0xA5).function = &CPU::LDA;
+    (*this->instructions).at(0xA5).addressing_mode = &CPU::ZPA;
+    (*this->instructions).at(0xA5).cycles = 3;
     //A8 TAY
     (*this->instructions).at(0xA8).function = &CPU::TAY;
     (*this->instructions).at(0xA8).addressing_mode = &CPU::IMP;
@@ -552,6 +583,72 @@ void CPU::PLA(){
 void CPU::PLP(){
     this->registers.nv_bdizc = this->nes.read(0x0100 + ++this->registers.r_SP);
     //stack pointer is incremanted before reading the value
+}
+
+//shift
+//Arithmetic Shift Left
+void CPU::ASL(){
+    Byte data = 0x00;
+    if(this->opcode == 0x0A){
+        data = this->registers.r_A;
+        this->registers.r_A = data << 1;
+    }
+    else{
+        data = this->nes.read(this->data_to_read);
+        this->nes.write(this->data_to_read, data << 1);
+    }
+    
+    this->setflag(0x80, data & 0x40);
+    this->setflag(0x02, (data & 0x7F) == 0);
+    this->setflag(0x01, data & 0x80);
+}
+//Logical Shift Right
+void CPU::LSR(){
+    Byte data = 0x00;
+    if(this->opcode == 0x4A){
+        data = this->registers.r_A;
+        this->registers.r_A = data >> 1;
+    }
+    else{
+        data = this->nes.read(this->data_to_read);
+        this->nes.write(this->data_to_read, data >> 1);
+    }
+    
+    this->setflag(0x80, false);
+    this->setflag(0x02, (data & 0xFE) == 0);
+    this->setflag(0x01, data & 0x01);
+}
+//Rotate Left
+void CPU::ROL(){
+    Byte data = 0x00;
+    if(this->opcode == 0x2A){
+        data = this->registers.r_A;
+        this->registers.r_A = data << 1 | (this->getflag(0x01) & 0x01);
+    }
+    else{
+        data = this->nes.read(this->data_to_read);
+        this->nes.write(this->data_to_read, data << 1 | (this->getflag(0x01) & 0x01));
+    }
+    
+    this->setflag(0x80, data & 0x40);
+    this->setflag(0x02, ((data & 0x7F) == 0) & (this->getflag(0x01) == 0));
+    this->setflag(0x01, data & 0x80);
+}
+//Rotate Right
+void CPU::ROR(){
+    Byte data = 0x00;
+    if(this->opcode == 0x6A){
+        data = this->registers.r_A;
+        this->registers.r_A = data >> 1 | this->getflag(0x01) << 7;
+    }
+    else{
+        data = this->nes.read(this->data_to_read);
+        this->nes.write(this->data_to_read, data >> 1 | this->getflag(0x01) << 7);
+    }
+    
+    this->setflag(0x80, this->getflag(0x01));
+    this->setflag(0x02, ((data & 0xFE) == 0) & (this->getflag(0x01) == 0));
+    this->setflag(0x01, data & 0x01);
 }
 
 //logic

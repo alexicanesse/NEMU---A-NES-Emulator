@@ -110,13 +110,9 @@ private:
     void PLP(); //Pull Processor Status From Stack
     
     //shift
-#warning TODO
     void ASL(); //Arithmetic Shift Left
-#warning TODO
     void LSR(); //Logical Shift Right
-#warning TODO
     void ROL(); //Rotate Left
-#warning TODO
     void ROR(); //Rotate Right
     
     //logic
