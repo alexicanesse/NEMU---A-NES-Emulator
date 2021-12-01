@@ -64,14 +64,18 @@ void CPU::clock(){
     
     this->rem_cycles = instr.cycles - 1; //-1 because this cycle is the first cycle
     
-    //run addr_mode and add an additionnal cycle if requiered
-    if((this->*instr.addressing_mode)()) //(page)
-        this->rem_cycles++;
+    //only branch instructions return true. Page crossed cycles are added only if branch is taken. For other instructions, page crossed cycle is always added
     
-    //run instruction and add an additionnal cycle if requiered
-    if((this->*instr.function)()) //branch cycle is directly added by functions
-        this->rem_cycles++;
+    bool addr = (this->*instr.addressing_mode)();
+    bool func = (this->*instr.function)();
     
+    if(func){
+        this->rem_cycles++;
+        if(addr)
+            this->rem_cycles++;
+    }
+    else if(addr)
+        this->rem_cycles++;
 }
 
 
@@ -419,7 +423,7 @@ bool CPU::STA(){
 //Store Index Register X In Memory
 bool CPU::STX(){
     this->nes.write(this->data_to_read, this->registers.r_iX);
-    return 0;
+    return false;
 }
 
 //stack
