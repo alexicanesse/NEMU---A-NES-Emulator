@@ -55,10 +55,10 @@ void show_state(CPU cpu, std::array<Byte, 2048> ram){
 void logging(CPU cpu){
     std::ofstream log;
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
-    log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y() << " Stack:" << std::hex << (int) cpu.get_register_SP();
+    log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y() << "  Stack:" << std::hex << (int) cpu.get_register_SP();
     
 #warning debug of debug
-    log << " " << std::dec << (int) cpu.get_register_SP();
+//    log << " " << std::dec << (int) cpu.get_register_SP();
     log.close();
 }
 

@@ -172,7 +172,6 @@ bool CPU::IND(){
     return false;
 }
 
-#warning changing everything
 //zero page
 bool CPU::ZPA(){
     this->data_to_read = (0x00FF) & this->nes.read(this->registers.r_PC);
@@ -291,6 +290,10 @@ CPU::CPU(){
     (*this->instructions).at(0x38).function = &CPU::SEC;
     (*this->instructions).at(0x38).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x38).cycles = 2;
+    //40 RTI
+    (*this->instructions).at(0x40).function = &CPU::RTI;
+    (*this->instructions).at(0x40).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x40).cycles = 6;
     //48 PHA
     (*this->instructions).at(0x48).function = &CPU::PHA;
     (*this->instructions).at(0x48).addressing_mode = &CPU::IMP;
@@ -689,6 +692,16 @@ void CPU::JSR(){
     this->registers.r_SP--;
     
     this->registers.r_PC = this->data_to_read;
+}
+//Return From Interrupt
+void CPU::RTI(){
+    //get processor statue
+    this->registers.nv_bdizc = this->nes.read(0x0100 + ++this->registers.r_SP);
+    
+    //get program counter
+    this->registers.r_PC = this->nes.read(0x0100 + ++this->registers.r_SP);//low
+    this->registers.r_PC |= this->nes.read(0x0100 + ++this->registers.r_SP) << 8;//add high
+    //SP is incremented twice to be set
 }
 //Return From Subroutme
 void CPU::RTS(){
