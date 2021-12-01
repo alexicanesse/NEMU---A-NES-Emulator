@@ -87,113 +87,113 @@ private:
      https://www.pagetable.com/c64ref/6502/?tab=2
     */
     //load
-    bool LDA(); //Load Accumulator with Memory
-    bool LDX(); //Load Index Register X From Memory
+    void LDA(); //Load Accumulator with Memory
+    void LDX(); //Load Index Register X From Memory
 #warning TODO
-    bool LDY(); //Load Index Register Y From Memory
-    bool STA(); //Store Accumulator in Memory
-    bool STX(); //Store Index Register X In Memory
+    void LDY(); //Load Index Register Y From Memory
+    void STA(); //Store Accumulator in Memory
+    void STX(); //Store Index Register X In Memory
 #warning TODO
-    bool STY(); //Store Index Register Y In Memory
+    void STY(); //Store Index Register Y In Memory
     
     //trans
 #warning TODO
-    bool TAX(); //Transfer Accumulator To Index X
+    void TAX(); //Transfer Accumulator To Index X
 #warning TODO
-    bool TAY(); //Transfer Accumula Tor To Index Y
+    void TAY(); //Transfer Accumula Tor To Index Y
 #warning TODO
-    bool TSX(); //Transfer Stack Pointer To Index X
+    void TSX(); //Transfer Stack Pointer To Index X
 #warning TODO
-    bool TXA(); //Transfer Index X To Accumulator
+    void TXA(); //Transfer Index X To Accumulator
 #warning TODO
-    bool TXS(); //Transfer Index X To Stack Pointer
+    void TXS(); //Transfer Index X To Stack Pointer
 #warning TODO
-    bool TYA(); //Transfer Index Y To Accumulator
+    void TYA(); //Transfer Index Y To Accumulator
     
     //stack
-    bool PHA(); //Push Accumulator On Stack
-    bool PHP(); //Push Processor Status On Stack
-    bool PLA(); //Pull Accumulator From Stack
-    bool PLP(); //Pull Processor Status From Stack
+    void PHA(); //Push Accumulator On Stack
+    void PHP(); //Push Processor Status On Stack
+    void PLA(); //Pull Accumulator From Stack
+    void PLP(); //Pull Processor Status From Stack
     
     //shift
 #warning TODO
-    bool ASL(); //Arithmetic Shift Left
+    void ASL(); //Arithmetic Shift Left
 #warning TODO
-    bool LSR(); //Logical Shift Right
+    void LSR(); //Logical Shift Right
 #warning TODO
-    bool ROL(); //Rotate Left
+    void ROL(); //Rotate Left
 #warning TODO
-    bool ROR(); //Rotate Right
+    void ROR(); //Rotate Right
     
     //logic
-    bool AND(); //"AND" Memory with Accumulator
-    bool BIT(); //Test Bits in Memory with Accumulator
-    bool EOR(); //"Exclusive OR" Memory with Accumulator
-    bool ORA(); //"OR" Memory with Accumulator
+    void AND(); //"AND" Memory with Accumulator
+    void BIT(); //Test Bits in Memory with Accumulator
+    void EOR(); //"Exclusive OR" Memory with Accumulator
+    void ORA(); //"OR" Memory with Accumulator
     
     //arith
-    bool ADC(); //Add Memory to Accumulator with Carr
-    bool CMP(); //Compare Memory and Accumulator
+    void ADC(); //Add Memory to Accumulator with Carr
+    void CMP(); //Compare Memory and Accumulator
 #warning TODO
-    bool CPX(); //Compare Index Register X To Memory
+    void CPX(); //Compare Index Register X To Memory
 #warning TODO
-    bool CPY(); //Compare Index Register Y To Memory
+    void CPY(); //Compare Index Register Y To Memory
 #warning TODO
-    bool SBC(); //Subtract Memory from Accumulator with Borrow
+    void SBC(); //Subtract Memory from Accumulator with Borrow
     
     //inc
 #warning TODO
-    bool DEC(); //Decrement Memory By One
+    void DEC(); //Decrement Memory By One
 #warning TODO
-    bool DEX(); //Decrement Index Register X By One
+    void DEX(); //Decrement Index Register X By One
 #warning TODO
-    bool DEY(); //Decrement Index Register Y By One
+    void DEY(); //Decrement Index Register Y By One
 #warning TODO
-    bool INC(); //Increment Memory By One
+    void INC(); //Increment Memory By One
 #warning TODO
-    bool INX(); //Increment Index Register X By One
+    void INX(); //Increment Index Register X By One
 #warning TODO
-    bool INY(); //Increment Index Register Y By One
+    void INY(); //Increment Index Register Y By One
     
     //ctrl
 #warning TODO
-    bool BRK(); //Break Command
-    bool JMP(); //JMP Indirect
-    bool JSR(); //Jump To Subroutine
+    void BRK(); //Break Command
+    void JMP(); //JMP Indirect
+    void JSR(); //Jump To Subroutine
 #warning TODO
-    bool RTI(); //Return From Interrupt
-    bool RTS(); //Return From Subroutme
+    void RTI(); //Return From Interrupt
+    void RTS(); //Return From Subroutme
     
     //bra
-    bool BCC(); //Branch on Carry Clear
-    bool BCS(); //Branch on Carry Set
-    bool BEQ(); //Branch on Result Zero
-    bool BMI(); //Branch on Result Minus
-    bool BNE(); //Branch on Result Not Zero
-    bool BPL(); //Branch on Result Plus
-    bool BVC(); //Branch on Overflow Clear
-    bool BVS(); //Branch on Overflow Set
+    void BCC(); //Branch on Carry Clear
+    void BCS(); //Branch on Carry Set
+    void BEQ(); //Branch on Result Zero
+    void BMI(); //Branch on Result Minus
+    void BNE(); //Branch on Result Not Zero
+    void BPL(); //Branch on Result Plus
+    void BVC(); //Branch on Overflow Clear
+    void BVS(); //Branch on Overflow Set
     
     //flags
-    bool CLC(); //Clear Carry Flag
-    bool CLD(); //Clear Decimal Mode
+    void CLC(); //Clear Carry Flag
+    void CLD(); //Clear Decimal Mode
 #warning TODO
-    bool CLI(); //Clear Interrupt Disable
-    bool CLV(); //Clear Overflow Flag
-    bool SEC(); //Set Carry Flag
-    bool SED(); //Set Decimal Mode
-    bool SEI(); //Set Interrupt Disable
+    void CLI(); //Clear Interrupt Disable
+    void CLV(); //Clear Overflow Flag
+    void SEC(); //Set Carry Flag
+    void SED(); //Set Decimal Mode
+    void SEI(); //Set Interrupt Disable
     
     //nop
-    bool NOP(); //No Operation
+    void NOP(); //No Operation
     
     
     /*
      instructions
     */
     struct instruction { //instructions type
-        bool (CPU::*function)(void) = NULL; //function doing the instructions's job
+        void (CPU::*function)(void) = NULL; //function doing the instructions's job
         bool (CPU::*addressing_mode)() = NULL; // addressing mode function
         int cycles = 0; //number of necessary cycles
     };

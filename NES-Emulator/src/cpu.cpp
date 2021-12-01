@@ -389,14 +389,13 @@ CPU::CPU(){
 
 //load
 //Load Accumulator with Memory
-bool CPU::LDA(){
+void CPU::LDA(){
     this->registers.r_A = this->nes.read(this->data_to_read);
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
-    return false;
 }
 //Load Index Register X From Memory
-bool CPU::LDX(){
+void CPU::LDX(){
     this->registers.r_iX = this->nes.read(this->data_to_read);
     
     if(this->registers.r_iX & 0x80)//handle N flag
@@ -408,91 +407,76 @@ bool CPU::LDX(){
         this->setflag(0x02, 1);
     else
         this->setflag(0x02, 0);
-    
-    return false;
 }
 //Store Accumulator in Memory
-bool CPU::STA(){
+void CPU::STA(){
     this->nes.write(this->data_to_read, this->registers.r_A);
-    return false;
 }
 //Store Index Register X In Memory
-bool CPU::STX(){
+void CPU::STX(){
     this->nes.write(this->data_to_read, this->registers.r_iX);
-    return false;
 }
 
 //stack
 //In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK)
 //Push Accumulator On Stack
-bool CPU::PHA(){
+void CPU::PHA(){
     this->nes.write(this->registers.r_SP--,this->registers.r_A);
     //sp-- because sp needs to point to the nest empty location on the stack
-    return false;
 }
 //Push Processor Status On Stack
-bool CPU::PHP(){
+void CPU::PHP(){
     this->nes.write(this->registers.r_SP, this->registers.nv_bdizc | 0x14);
     this->registers.r_SP--; //always point to next address
-    return false;
 }
 //Pull Accumulator From Stack
-bool CPU::PLA(){
+void CPU::PLA(){
     this->registers.r_A = this->nes.read(++this->registers.r_SP);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
-    return false;
 }
 //Pull Processor Status From Stack
-bool CPU::PLP(){
+void CPU::PLP(){
     this->registers.nv_bdizc = this->nes.read(++this->registers.r_SP);
     //stack pointer is incremanted before reading the value
-    return false;
 }
 
 //logic
 //"AND" Memory with Accumulator
-bool CPU::AND(){
+void CPU::AND(){
     this->registers.r_A &= this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
-    
-    return false;
 }
 //Test Bits in Memory with Accumulator
-bool CPU::BIT(){
+void CPU::BIT(){
     Byte memtested = this->nes.read(this->data_to_read);
     bool result = this->registers.r_A & memtested;
     
     this->setflag(0x80, memtested & 0x80);
     this->setflag(0x40, memtested & 0x40);
     this->setflag(0x02, result == 0);
-    return false;
 }
 //"Exclusive OR" Memory with Accumulator
-bool CPU::EOR(){
+void CPU::EOR(){
     this->registers.r_A ^= this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
-    
-    return false;
 }
 //"OR" Memory with Accumulator
-bool CPU::ORA(){
+void CPU::ORA(){
     this->registers.r_A |= this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
-    
-    return false;
 }
 
 //arith
 //Add Memory to Accumulator with Carry
-bool CPU::ADC(){
+void CPU::ADC(){
     //allow us to look for carry
     int result = this->registers.r_A + this->nes.read(this->data_to_read) + (int) this->getflag(0x01);
     //bool -> int implicit conversion has every byte at one
@@ -507,28 +491,23 @@ bool CPU::ADC(){
     this->setflag(0x80, (this->registers.r_A & 0x80) == 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
     this->setflag(0x01, result > 255); //there is a carry if the result contains a 1 after the first byte.
-    
-    return false;
 }
 //Compare Memory and Accumulator
-bool CPU::CMP(){
+void CPU::CMP(){
     Byte result = this->registers.r_A - this->nes.read(this->data_to_read);
     
     this->setflag(0x02, result == 0);
     this->setflag(0x80, result & 0x80);
     this->setflag(0x01, result <= this->registers.r_A);
-    
-    return false;
 }
 
 //ctrl
 //JMP Indirect
-bool CPU::JMP(){
+void CPU::JMP(){
     this->registers.r_PC = this->data_to_read;
-    return false;
 }
 //Jump To Subroutine
-bool CPU::JSR(){
+void CPU::JSR(){
     this->nes.write(this->registers.r_SP, (this->registers.r_PC - 1) >> 8); //high
     this->registers.r_SP--;
     
@@ -536,155 +515,127 @@ bool CPU::JSR(){
     this->registers.r_SP--;
     
     this->registers.r_PC = this->data_to_read;
-    
-    return false;
 }
 //Return From Subroutme
-bool CPU::RTS(){
+void CPU::RTS(){
     this->registers.r_PC = this->nes.read(++this->registers.r_SP);//low
     this->registers.r_PC |= this->nes.read(++this->registers.r_SP) << 8;//add high
     //SP is incremented twice to be set
     
     //The stack pointer is adjusted by incrementing it twice.
     this->registers.r_SP += 2;
-    
-    return false;
 }
 
 //bra
 //Branch on Carry Clear
-bool CPU::BCC(){
+void CPU::BCC(){
     if(!this->getflag(0x01)){//take branch if carry flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
-        return true;
     }
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
-    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+    else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
-    return false;
 }
 //Branch on Carry Set
-bool CPU::BCS(){
+void CPU::BCS(){
     if(this->getflag(0x01)){//take branch if carry flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
-        return true;
     }
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
-    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+    else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
-    return false;
 }
 //Branch on Result Zero
-bool CPU::BEQ(){
+void CPU::BEQ(){
     if(this->getflag(0x02)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
-        return true;
     }
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
-    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+    else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
-    return false;
 }
 //Branch on Result Minus
-bool CPU::BMI(){
+void CPU::BMI(){
     if(this->getflag(0x80)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
-        return true;
     }
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
-    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+    else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
-    return false;
 }
 //Branch on Result Not Zero
-bool CPU::BNE(){
+void CPU::BNE(){
     if(!this->getflag(0x02)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
-        return true;
     }
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
-    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+    else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
-    return false;
 }
 //Branch on Result Plus
-bool CPU::BPL(){
+void CPU::BPL(){
     if(!this->getflag(0x80)){//take branch if zero flag is reset
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
-        return true;
     }
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
-    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+    else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
-    return false;
 }
 //Branch on Overflow Clear
-bool CPU::BVC(){
+void CPU::BVC(){
     if(!this->getflag(0x40)){//take branch if overflow flag is reset
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
-        return true;
     }
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
-    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+    else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
-    return false;
 }
 //Branch on Overflow Set
-bool CPU::BVS(){
+void CPU::BVS(){
     if(this->getflag(0x40)){//take branch if overflow flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
-        return true;
     }
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
-    if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
+    else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
-    return false;
 }
 
 //flags
 //Clear Carry Flag
-bool CPU::CLC(){
+void CPU::CLC(){
     this->setflag(0x01, false);
-    return false;
 }
 //Clear Decimal Mode
-bool CPU::CLD(){
+void CPU::CLD(){
     this->setflag(0x08, false);
-    return false;
 }
 //Clear Overflow Flag
-bool CPU::CLV(){
+void CPU::CLV(){
     this->setflag(0x40, false);
-    return false;
 }
 //Set Carry Flag
-bool CPU::SEC(){
+void CPU::SEC(){
     this->setflag(0x01, true);
-    return false;
 }
 //Set Decimal Mode
-bool CPU::SED(){
+void CPU::SED(){
     this->registers.nv_bdizc |= 0x08;
-    return false;
 }
 //Set Interrupt Disable
-bool CPU::SEI(){
+void CPU::SEI(){
     this->registers.nv_bdizc |= 0x04;
-    return false;
 }
 
 //nop
 //No Operation
-bool CPU::NOP(){
-    return false;
-}
+void CPU::NOP(){}
 
 
