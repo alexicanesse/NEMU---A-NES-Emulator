@@ -86,92 +86,94 @@ private:
      OPCODES
      https://www.pagetable.com/c64ref/6502/?tab=2
     */
+    //Returns true iff is may requiere an additional cycle
+    
     //load
-    void LDA(); //Load Accumulator with Memory
-    void LDX(); //Load Index Register X From Memory
-    void LDY(); //Load Index Register Y From Memory
-    void STA(); //Store Accumulator in Memory
-    void STX(); //Store Index Register X In Memory
-    void STY(); //Store Index Register Y In Memory
+    bool LDA(); //Load Accumulator with Memory
+    bool LDX(); //Load Index Register X From Memory
+    bool LDY(); //Load Index Register Y From Memory
+    bool STA(); //Store Accumulator in Memory
+    bool STX(); //Store Index Register X In Memory
+    bool STY(); //Store Index Register Y In Memory
     
     //trans
-    void TAX(); //Transfer Accumulator To Index X
-    void TAY(); //Transfer Accumula Tor To Index Y
-    void TSX(); //Transfer Stack Pointer To Index X
-    void TXA(); //Transfer Index X To Accumulator
-    void TXS(); //Transfer Index X To Stack Pointer
-    void TYA(); //Transfer Index Y To Accumulator
+    bool TAX(); //Transfer Accumulator To Index X
+    bool TAY(); //Transfer Accumula Tor To Index Y
+    bool TSX(); //Transfer Stack Pointer To Index X
+    bool TXA(); //Transfer Index X To Accumulator
+    bool TXS(); //Transfer Index X To Stack Pointer
+    bool TYA(); //Transfer Index Y To Accumulator
     
     //stack
-    void PHA(); //Push Accumulator On Stack
-    void PHP(); //Push Processor Status On Stack
-    void PLA(); //Pull Accumulator From Stack
-    void PLP(); //Pull Processor Status From Stack
+    bool PHA(); //Push Accumulator On Stack
+    bool PHP(); //Push Processor Status On Stack
+    bool PLA(); //Pull Accumulator From Stack
+    bool PLP(); //Pull Processor Status From Stack
     
     //shift
-    void ASL(); //Arithmetic Shift Left
-    void LSR(); //Logical Shift Right
-    void ROL(); //Rotate Left
-    void ROR(); //Rotate Right
+    bool ASL(); //Arithmetic Shift Left
+    bool LSR(); //Logical Shift Right
+    bool ROL(); //Rotate Left
+    bool ROR(); //Rotate Right
     
     //logic
-    void AND(); //"AND" Memory with Accumulator
-    void BIT(); //Test Bits in Memory with Accumulator
-    void EOR(); //"Exclusive OR" Memory with Accumulator
-    void ORA(); //"OR" Memory with Accumulator
+    bool AND(); //"AND" Memory with Accumulator
+    bool BIT(); //Test Bits in Memory with Accumulator
+    bool EOR(); //"Exclusive OR" Memory with Accumulator
+    bool ORA(); //"OR" Memory with Accumulator
     
     //arith
-    void ADC(); //Add Memory to Accumulator with Carr
-    void CMP(); //Compare Memory and Accumulator
-    void CPX(); //Compare Index Register X To Memory
-    void CPY(); //Compare Index Register Y To Memory
-    void SBC(); //Subtract Memory from Accumulator with Borrow
+    bool ADC(); //Add Memory to Accumulator with Carr
+    bool CMP(); //Compare Memory and Accumulator
+    bool CPX(); //Compare Index Register X To Memory
+    bool CPY(); //Compare Index Register Y To Memory
+    bool SBC(); //Subtract Memory from Accumulator with Borrow
     
     //inc
-    void DEC(); //Decrement Memory By One
-    void DEX(); //Decrement Index Register X By One
-    void DEY(); //Decrement Index Register Y By One
-    void INC(); //Increment Memory By One
-    void INX(); //Increment Index Register X By One
-    void INY(); //Increment Index Register Y By One
+    bool DEC(); //Decrement Memory By One
+    bool DEX(); //Decrement Index Register X By One
+    bool DEY(); //Decrement Index Register Y By One
+    bool INC(); //Increment Memory By One
+    bool INX(); //Increment Index Register X By One
+    bool INY(); //Increment Index Register Y By One
     
     //ctrl
 #warning TODO
-    void BRK(); //Break Command
-    void JMP(); //JMP Indirect
-    void JSR(); //Jump To Subroutine
-    void RTI(); //Return From Interrupt
-    void RTS(); //Return From Subroutme
+    bool BRK(); //Break Command
+    bool JMP(); //JMP Indirect
+    bool JSR(); //Jump To Subroutine
+    bool RTI(); //Return From Interrupt
+    bool RTS(); //Return From Subroutme
     
     //bra
-    void BCC(); //Branch on Carry Clear
-    void BCS(); //Branch on Carry Set
-    void BEQ(); //Branch on Result Zero
-    void BMI(); //Branch on Result Minus
-    void BNE(); //Branch on Result Not Zero
-    void BPL(); //Branch on Result Plus
-    void BVC(); //Branch on Overflow Clear
-    void BVS(); //Branch on Overflow Set
+    bool BCC(); //Branch on Carry Clear
+    bool BCS(); //Branch on Carry Set
+    bool BEQ(); //Branch on Result Zero
+    bool BMI(); //Branch on Result Minus
+    bool BNE(); //Branch on Result Not Zero
+    bool BPL(); //Branch on Result Plus
+    bool BVC(); //Branch on Overflow Clear
+    bool BVS(); //Branch on Overflow Set
     
     //flags
-    void CLC(); //Clear Carry Flag
-    void CLD(); //Clear Decimal Mode
+    bool CLC(); //Clear Carry Flag
+    bool CLD(); //Clear Decimal Mode
 #warning TODO
-    void CLI(); //Clear Interrupt Disable
-    void CLV(); //Clear Overflow Flag
-    void SEC(); //Set Carry Flag
-    void SED(); //Set Decimal Mode
-    void SEI(); //Set Interrupt Disable
+    bool CLI(); //Clear Interrupt Disable
+    bool CLV(); //Clear Overflow Flag
+    bool SEC(); //Set Carry Flag
+    bool SED(); //Set Decimal Mode
+    bool SEI(); //Set Interrupt Disable
     
     //nop
-    void NOP(); //No Operation
+    bool NOP(); //No Operation
     
     
     /*
      instructions
     */
     struct instruction { //instructions type
-        void (CPU::*function)(void) = NULL; //function doing the instructions's job
+        bool (CPU::*function)(void) = NULL; //function doing the instructions's job
         bool (CPU::*addressing_mode)() = NULL; // addressing mode function
         int cycles = 0; //number of necessary cycles
     };

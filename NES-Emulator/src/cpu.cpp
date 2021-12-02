@@ -64,13 +64,14 @@ void CPU::clock(){
     
     this->rem_cycles = instr.cycles - 1; //-1 because this cycle is the first cycle
     
-
-    
-    if((this->*instr.addressing_mode)())
+    bool addr = (this->*instr.addressing_mode)();
+    bool func = (this->*instr.function)();
+    //branch instructions handle cycles themseles
+    if(addr & func) //add an additional cycle if both addr_mode and function requiere it. ie if opcode requiere it
         this->rem_cycles++;
     
     //branch instructions handle cycles themseles
-    (this->*instr.function)();
+    ;
 
 }
 
@@ -283,6 +284,10 @@ CPU::CPU(){
     (*this->instructions).at(0x10).function = &CPU::BPL;
     (*this->instructions).at(0x10).addressing_mode = &CPU::REL;
     (*this->instructions).at(0x10).cycles = 2;
+    //11 YZI
+    (*this->instructions).at(0x11).function = &CPU::ORA;
+    (*this->instructions).at(0x11).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0x11).cycles = 5;
     //18 CLC
     (*this->instructions).at(0x18).function = &CPU::CLC;
     (*this->instructions).at(0x18).addressing_mode = &CPU::IMP;
@@ -335,6 +340,10 @@ CPU::CPU(){
     (*this->instructions).at(0x30).function = &CPU::BMI;
     (*this->instructions).at(0x30).addressing_mode = &CPU::REL;
     (*this->instructions).at(0x30).cycles = 2;
+    //31 AND
+    (*this->instructions).at(0x31).function = &CPU::AND;
+    (*this->instructions).at(0x31).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0x31).cycles = 5;
     //38 SEC
     (*this->instructions).at(0x38).function = &CPU::SEC;
     (*this->instructions).at(0x38).addressing_mode = &CPU::IMP;
@@ -383,6 +392,10 @@ CPU::CPU(){
     (*this->instructions).at(0x50).function = &CPU::BVC;
     (*this->instructions).at(0x50).addressing_mode = &CPU::REL;
     (*this->instructions).at(0x50).cycles = 2;
+    //51 EOR
+    (*this->instructions).at(0x51).function = &CPU::EOR;
+    (*this->instructions).at(0x51).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0x51).cycles = 5;
     //60 RTS
     (*this->instructions).at(0x60).function = &CPU::RTS;
     (*this->instructions).at(0x60).addressing_mode = &CPU::IMP;
@@ -411,6 +424,10 @@ CPU::CPU(){
     (*this->instructions).at(0x6A).function = &CPU::ROR;
     (*this->instructions).at(0x6A).addressing_mode = &CPU::ACC;
     (*this->instructions).at(0x6A).cycles = 2;
+    //6C JMP
+    (*this->instructions).at(0x6C).function = &CPU::JMP;
+    (*this->instructions).at(0x6C).addressing_mode = &CPU::IND;
+    (*this->instructions).at(0x6C).cycles = 5;
     //6D ADC
     (*this->instructions).at(0x6D).function = &CPU::ADC;
     (*this->instructions).at(0x6D).addressing_mode = &CPU::ABS;
@@ -423,6 +440,10 @@ CPU::CPU(){
     (*this->instructions).at(0x70).function = &CPU::BVS;
     (*this->instructions).at(0x70).addressing_mode = &CPU::REL;
     (*this->instructions).at(0x70).cycles = 2;
+    //71 ADC
+    (*this->instructions).at(0x71).function = &CPU::ADC;
+    (*this->instructions).at(0x71).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0x71).cycles = 5;
     //78 SEI
     (*this->instructions).at(0x78).function = &CPU::SEI;
     (*this->instructions).at(0x78).addressing_mode = &CPU::IMP;
@@ -467,6 +488,10 @@ CPU::CPU(){
     (*this->instructions).at(0x90).function = &CPU::BCC;
     (*this->instructions).at(0x90).addressing_mode = &CPU::REL;
     (*this->instructions).at(0x90).cycles = 2;
+    //91 STA
+    (*this->instructions).at(0x91).function = &CPU::STA;
+    (*this->instructions).at(0x91).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0x91).cycles = 6;
     //98 TYA
     (*this->instructions).at(0x98).function = &CPU::TYA;
     (*this->instructions).at(0x98).addressing_mode = &CPU::IMP;
@@ -587,6 +612,10 @@ CPU::CPU(){
     (*this->instructions).at(0xD0).function = &CPU::BNE;
     (*this->instructions).at(0xD0).addressing_mode = &CPU::REL;
     (*this->instructions).at(0xD0).cycles = 2;
+    //D1 CMP
+    (*this->instructions).at(0xD1).function = &CPU::CMP;
+    (*this->instructions).at(0xD1).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0xD1).cycles = 5;
     //D8 CLD
     (*this->instructions).at(0xD8).function = &CPU::CLD;
     (*this->instructions).at(0xD8).addressing_mode = &CPU::IMP;
@@ -639,6 +668,10 @@ CPU::CPU(){
     (*this->instructions).at(0xF0).function = &CPU::BEQ;
     (*this->instructions).at(0xF0).addressing_mode = &CPU::REL;
     (*this->instructions).at(0xF0).cycles = 2;
+    //F1 SBC
+    (*this->instructions).at(0xF1).function = &CPU::SBC;
+    (*this->instructions).at(0xF1).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0xF1).cycles = 5;
     //F8 SED
     (*this->instructions).at(0xF8).function = &CPU::SED;
     (*this->instructions).at(0xF8).addressing_mode = &CPU::IMP;
@@ -649,111 +682,127 @@ CPU::CPU(){
 
 //load
 //Load Accumulator with Memory
-void CPU::LDA(){
+bool CPU::LDA(){
     this->registers.r_A = this->nes.read(this->data_to_read);
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
+    return true;
 }
 //Load Index Register X From Memory
-void CPU::LDX(){
+bool CPU::LDX(){
     this->registers.r_iX = this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_iX & 0x80);
     this->setflag(0x02, this->registers.r_iX == 0);
+    return true;
 }
 //Load Index Register Y From Memory
-void CPU::LDY(){
+bool CPU::LDY(){
     this->registers.r_iY = this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_iY & 0x80);
     this->setflag(0x02, this->registers.r_iY == 0);
+    return true;
 }
 //Store Accumulator in Memory
-void CPU::STA(){
+bool CPU::STA(){
     this->nes.write(this->data_to_read, this->registers.r_A);
+    return false;
 }
 //Store Index Register X In Memory
-void CPU::STX(){
+bool CPU::STX(){
     this->nes.write(this->data_to_read, this->registers.r_iX);
+    return false;
 }
 //Store Index Register Y In Memory
-void CPU::STY(){
+bool CPU::STY(){
     this->nes.write(this->data_to_read, this->registers.r_iY);
+    return false;
 }
 
 //trans
 //Transfer Accumulator To Index X
-void CPU::TAX(){
+bool CPU::TAX(){
     this->registers.r_iX = this->registers.r_A;
     
     this->setflag(0x80, this->registers.r_iX & 0x80);
     this->setflag(0x02, this->registers.r_iX == 0);
+    return false;
 }
 //Transfer Accumula Tor To Index Y
-void CPU::TAY(){
+bool CPU::TAY(){
     this->registers.r_iY = this->registers.r_A;
     
     this->setflag(0x80, this->registers.r_iY & 0x80);
     this->setflag(0x02, this->registers.r_iY == 0);
+    return false;
 }
 //Transfer Stack Pointer To Index X
-void CPU::TSX(){
+bool CPU::TSX(){
     this->registers.r_iX = this->registers.r_SP;
     
     this->setflag(0x80, this->registers.r_iX & 0x80);
     this->setflag(0x02, this->registers.r_iX == 0);
+    return false;
 }
 //Transfer Index X To Accumulator
-void CPU::TXA(){
+bool CPU::TXA(){
     this->registers.r_A = this->registers.r_iX;
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
+    return false;
 }
 //Transfer Index X To Stack Pointer
-void CPU::TXS(){
+bool CPU::TXS(){
     this->registers.r_SP = this->registers.r_iX;
     //does not affect any flag
+    return false;
 }
 //Transfer Index Y To Accumulator
-void CPU::TYA(){
+bool CPU::TYA(){
     this->registers.r_A = this->registers.r_iY;
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
+    return false;
 }
 
 //stack
 //In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK)
 //Push Accumulator On Stack
-void CPU::PHA(){
+bool CPU::PHA(){
     //0x0100 to offset
     this->nes.write(0x0100 + this->registers.r_SP--,this->registers.r_A);
     //sp-- because sp needs to point to the nest empty location on the stack
+    return false;
 }
 //Push Processor Status On Stack
-void CPU::PHP(){
+bool CPU::PHP(){
     //0x0100 to offset
     this->nes.write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x14);
     this->registers.r_SP--; //always point to next address
+    return false;
 }
 //Pull Accumulator From Stack
-void CPU::PLA(){
+bool CPU::PLA(){
     //0x0100 to offset
     this->registers.r_A = this->nes.read(0x0100 + ++this->registers.r_SP);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
+    return false;
 }
 //Pull Processor Status From Stack
-void CPU::PLP(){
+bool CPU::PLP(){
     this->registers.nv_bdizc = this->nes.read(0x0100 + ++this->registers.r_SP);
     //stack pointer is incremanted before reading the value
+    return false;
 }
 
 //shift
 //Arithmetic Shift Left
-void CPU::ASL(){
+bool CPU::ASL(){
     Byte data = 0x00;
     if(this->opcode == 0x0A){
         data = this->registers.r_A;
@@ -767,9 +816,10 @@ void CPU::ASL(){
     this->setflag(0x80, data & 0x40);
     this->setflag(0x02, (data & 0x7F) == 0);
     this->setflag(0x01, data & 0x80);
+    return false;
 }
 //Logical Shift Right
-void CPU::LSR(){
+bool CPU::LSR(){
     Byte data = 0x00;
     if(this->opcode == 0x4A){
         data = this->registers.r_A;
@@ -783,9 +833,10 @@ void CPU::LSR(){
     this->setflag(0x80, false);
     this->setflag(0x02, (data & 0xFE) == 0);
     this->setflag(0x01, data & 0x01);
+    return false;
 }
 //Rotate Left
-void CPU::ROL(){
+bool CPU::ROL(){
     Byte data = 0x00;
     if(this->opcode == 0x2A){
         data = this->registers.r_A;
@@ -799,9 +850,10 @@ void CPU::ROL(){
     this->setflag(0x80, data & 0x40);
     this->setflag(0x02, ((data & 0x7F) == 0) & (this->getflag(0x01) == 0));
     this->setflag(0x01, data & 0x80);
+    return false;
 }
 //Rotate Right
-void CPU::ROR(){
+bool CPU::ROR(){
     Byte data = 0x00;
     if(this->opcode == 0x6A){
         data = this->registers.r_A;
@@ -815,43 +867,48 @@ void CPU::ROR(){
     this->setflag(0x80, this->getflag(0x01));
     this->setflag(0x02, ((data & 0xFE) == 0) & (this->getflag(0x01) == 0));
     this->setflag(0x01, data & 0x01);
+    return false;
 }
 
 //logic
 //"AND" Memory with Accumulator
-void CPU::AND(){
+bool CPU::AND(){
     this->registers.r_A &= this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
+    return true;
 }
 //Test Bits in Memory with Accumulator
-void CPU::BIT(){
+bool CPU::BIT(){
     Byte memtested = this->nes.read(this->data_to_read);
     bool result = this->registers.r_A & memtested;
     
     this->setflag(0x80, memtested & 0x80);
     this->setflag(0x40, memtested & 0x40);
     this->setflag(0x02, result == 0);
+    return false;
 }
 //"Exclusive OR" Memory with Accumulator
-void CPU::EOR(){
+bool CPU::EOR(){
     this->registers.r_A ^= this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
+    return true;
 }
 //"OR" Memory with Accumulator
-void CPU::ORA(){
+bool CPU::ORA(){
     this->registers.r_A |= this->nes.read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
+    return true;
 }
 
 //arith
 //Add Memory to Accumulator with Carry
-void CPU::ADC(){
+bool CPU::ADC(){
     //allow us to look for carry
     int result = this->registers.r_A + this->nes.read(this->data_to_read) + (int) this->getflag(0x01);
     //bool -> int implicit conversion has every byte at one
@@ -866,33 +923,37 @@ void CPU::ADC(){
     this->setflag(0x80, (this->registers.r_A & 0x80) == 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
     this->setflag(0x01, result > 255); //there is a carry if the result contains a 1 after the first byte.
+    return true;
 }
 //Compare Memory and Accumulator
-void CPU::CMP(){
+bool CPU::CMP(){
     Byte result = this->registers.r_A - this->nes.read(this->data_to_read);
     
     this->setflag(0x02, result == 0);
     this->setflag(0x80, (result & 0x80) == 0x80);
     this->setflag(0x01, this->nes.read(this->data_to_read) <= this->registers.r_A);
+    return true;
 }
 //Compare Index Register X To Memory
-void CPU::CPX(){
+bool CPU::CPX(){
     int result = this->registers.r_iX - this->nes.read(this->data_to_read);
     
     this->setflag(0x02, result == 0);
     this->setflag(0x80, (result & 0x80) == 0x80);
     this->setflag(0x01, this->nes.read(this->data_to_read) <= this->registers.r_iX);
+    return false;
 }
 //Compare Index Register Y To Memory
-void CPU::CPY(){
+bool CPU::CPY(){
     Byte result = this->registers.r_iY - this->nes.read(this->data_to_read);
     
     this->setflag(0x02, result == 0);
     this->setflag(0x80, (result & 0x80) == 0x80);
     this->setflag(0x01, this->nes.read(this->data_to_read) <= this->registers.r_iY);
+    return false;
 }
 //Subtract Memory from Accumulator with Borrow
-void CPU::SBC(){
+bool CPU::SBC(){
     //thanks internet, this function was killing me
     Byte value = this->nes.read(this->data_to_read) ^ 0xFF;
     
@@ -907,62 +968,78 @@ void CPU::SBC(){
     this->setflag(0x80, (this->registers.r_A & 0x80) == 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
     this->setflag(0x01, result & 0xFF00);
+    
+    return true;
 }
 
 //inc
 //Decrement Memory By One
-void CPU::DEC(){
+bool CPU::DEC(){
     Byte result = this->nes.read(this->data_to_read) - 1;
     this->nes.write(this->data_to_read, result);
     
     this->setflag(0x80, result & 0x80);
     this->setflag(0x02, result == 0);
+    
+    return false;
 }
 //Decrement Index Register X By One
-void CPU::DEX(){
+bool CPU::DEX(){
     this->registers.r_iX--;
     
     this->setflag(0x80, this->registers.r_iX & 0x80);
     this->setflag(0x02, this->registers.r_iX == 0);
+    
+    return false;
 }
 //Decrement Index Register Y By One
-void CPU::DEY(){
+bool CPU::DEY(){
     this->registers.r_iY--;
     
     this->setflag(0x80, this->registers.r_iY & 0x80);
     this->setflag(0x02, this->registers.r_iY == 0);
+    
+    return false;
 }
 //Increment Memory By One
-void CPU::INC(){
+bool CPU::INC(){
     Byte result = this->nes.read(this->data_to_read) + 1;
     this->nes.write(this->data_to_read, result);
     
     this->setflag(0x80, result & 0x80);
     this->setflag(0x02, result == 0);
+    
+    return false;
 }
 //Increment Index Register X By One
-void CPU::INX(){
+bool CPU::INX(){
     this->registers.r_iX++;
     
     this->setflag(0x80, this->registers.r_iX & 0x80);
     this->setflag(0x02, this->registers.r_iX == 0);
+    
+    return false;
 }
 //Increment Index Register Y By One
-void CPU::INY(){
+bool CPU::INY(){
     this->registers.r_iY++;
     
     this->setflag(0x80, this->registers.r_iY & 0x80);
     this->setflag(0x02, this->registers.r_iY == 0);
+    
+    return false;
 }
 
 //ctrl
 //JMP Indirect
-void CPU::JMP(){
+bool CPU::JMP(){
     this->registers.r_PC++;
     this->registers.r_PC = this->data_to_read;
+    
+    return false;
 }
 //Jump To Subroutine
-void CPU::JSR(){
+bool CPU::JSR(){
     //0x0100 to offset
     this->nes.write(0x0100 + this->registers.r_SP, (this->registers.r_PC-1) >> 8); //high
     this->registers.r_SP--;
@@ -971,9 +1048,11 @@ void CPU::JSR(){
     this->registers.r_SP--;
     
     this->registers.r_PC = this->data_to_read;
+    
+    return false;
 }
 //Return From Interrupt
-void CPU::RTI(){
+bool CPU::RTI(){
     //get processor statue
     this->registers.nv_bdizc = this->nes.read(0x0100 + ++this->registers.r_SP);
     
@@ -981,18 +1060,22 @@ void CPU::RTI(){
     this->registers.r_PC = this->nes.read(0x0100 + ++this->registers.r_SP);//low
     this->registers.r_PC |= this->nes.read(0x0100 + ++this->registers.r_SP) << 8;//add high
     //SP is incremented twice to be set
+    
+    return false;
 }
 //Return From Subroutme
-void CPU::RTS(){
+bool CPU::RTS(){
     this->registers.r_PC = this->nes.read(0x0100 + ++this->registers.r_SP);//low
     this->registers.r_PC |= this->nes.read(0x0100 + ++this->registers.r_SP) << 8;//add high
     //SP is incremented twice to be set
     this->registers.r_PC++; //point to next instruction
+    
+    return false;
 }
 
 //bra
 //Branch on Carry Clear
-void CPU::BCC(){
+bool CPU::BCC(){
     if(!this->getflag(0x01)){//take branch if carry flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
@@ -1000,9 +1083,11 @@ void CPU::BCC(){
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
     else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
+    
+    return true;
 }
 //Branch on Carry Set
-void CPU::BCS(){
+bool CPU::BCS(){
     if(this->getflag(0x01)){//take branch if carry flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
@@ -1010,9 +1095,11 @@ void CPU::BCS(){
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
     else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
+    
+    return true;
 }
 //Branch on Result Zero
-void CPU::BEQ(){
+bool CPU::BEQ(){
     if(this->getflag(0x02)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
@@ -1020,9 +1107,11 @@ void CPU::BEQ(){
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
     else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
+    
+    return true;
 }
 //Branch on Result Minus
-void CPU::BMI(){
+bool CPU::BMI(){
     if(this->getflag(0x80)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
@@ -1030,9 +1119,11 @@ void CPU::BMI(){
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
     else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
+    
+    return true;
 }
 //Branch on Result Not Zero
-void CPU::BNE(){
+bool CPU::BNE(){
     if(!this->getflag(0x02)){//take branch if zero flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
@@ -1040,9 +1131,11 @@ void CPU::BNE(){
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
     else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
+    
+    return true;
 }
 //Branch on Result Plus
-void CPU::BPL(){
+bool CPU::BPL(){
     if(!this->getflag(0x80)){//take branch if N flag is reset
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
@@ -1050,9 +1143,11 @@ void CPU::BPL(){
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
     else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
+    
+    return true;
 }
 //Branch on Overflow Clear
-void CPU::BVC(){
+bool CPU::BVC(){
     if(!this->getflag(0x40)){//take branch if overflow flag is reset
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
@@ -1060,9 +1155,11 @@ void CPU::BVC(){
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
     else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
+    
+    return true;
 }
 //Branch on Overflow Set
-void CPU::BVS(){
+bool CPU::BVS(){
     if(this->getflag(0x40)){//take branch if overflow flag is set
         this->registers.r_PC = this->data_to_read;
         this->rem_cycles ++;
@@ -1070,36 +1167,46 @@ void CPU::BVS(){
     //if page was crossed but the branch is not taken, no additionnal cycle is requiered
     else if((this->registers.r_PC & 0xFF00) != (this->data_to_read & 0xFF00))
         this->rem_cycles--;
+    
+    return true;
 }
 
 //flags
 //Clear Carry Flag
-void CPU::CLC(){
+bool CPU::CLC(){
     this->setflag(0x01, false);
+    return false;
 }
 //Clear Decimal Mode
-void CPU::CLD(){
+bool CPU::CLD(){
     this->setflag(0x08, false);
+    return false;
 }
 //Clear Overflow Flag
-void CPU::CLV(){
+bool CPU::CLV(){
     this->setflag(0x40, false);
+    return false;
 }
 //Set Carry Flag
-void CPU::SEC(){
+bool CPU::SEC(){
     this->setflag(0x01, true);
+    return false;
 }
 //Set Decimal Mode
-void CPU::SED(){
+bool CPU::SED(){
     this->registers.nv_bdizc |= 0x08;
+    return false;
 }
 //Set Interrupt Disable
-void CPU::SEI(){
+bool CPU::SEI(){
     this->registers.nv_bdizc |= 0x04;
+    return false;
 }
 
 //nop
 //No Operation
-void CPU::NOP(){}
+bool CPU::NOP(){
+    return false;
+}
 
 
