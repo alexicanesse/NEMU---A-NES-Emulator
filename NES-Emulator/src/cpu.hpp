@@ -43,8 +43,6 @@ private:
         Byte C = 0x01; //carry
     };
     
-    
-    #warning TODO adr_pc
     struct registers {
         Byte r_A = 0;    //accumulator register (A)
         Byte r_iX = 0;   //index register X
