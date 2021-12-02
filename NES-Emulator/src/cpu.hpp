@@ -92,7 +92,6 @@ private:
     void LDY(); //Load Index Register Y From Memory
     void STA(); //Store Accumulator in Memory
     void STX(); //Store Index Register X In Memory
-#warning TODO
     void STY(); //Store Index Register Y In Memory
     
     //trans
@@ -129,11 +128,9 @@ private:
     void SBC(); //Subtract Memory from Accumulator with Borrow
     
     //inc
-#warning TODO
     void DEC(); //Decrement Memory By One
     void DEX(); //Decrement Index Register X By One
     void DEY(); //Decrement Index Register Y By One
-#warning TODO
     void INC(); //Increment Memory By One
     void INX(); //Increment Index Register X By One
     void INY(); //Increment Index Register Y By One

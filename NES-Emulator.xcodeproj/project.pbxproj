@@ -38,6 +38,7 @@
 		1A3C433E274B86B600DD181D /* cpu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = cpu.cpp; path = "NES-Emulator/src/cpu.cpp"; sourceTree = "<group>"; };
 		1A3C433F274B86B600DD181D /* debug.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = debug.cpp; path = "NES-Emulator/src/debug.cpp"; sourceTree = "<group>"; };
 		1A3C43422751165E00DD181D /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
+		1A879EE72758D2B900D7919F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +61,7 @@
 				1A3C433D274B86B600DD181D /* nes.cpp */,
 				1A3C43342747D99500DD181D /* README.md */,
 				1A3C43292747D94700DD181D /* NES-Emulator */,
+				1A879EE62758D2B900D7919F /* debug */,
 				1A3C43282747D94700DD181D /* Products */,
 				1A3C43382747EF4F00DD181D /* Frameworks */,
 			);
@@ -92,6 +94,14 @@
 				1A3C43392747EF5000DD181D /* libncurses.tbd */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		1A879EE62758D2B900D7919F /* debug */ = {
+			isa = PBXGroup;
+			children = (
+				1A879EE72758D2B900D7919F /* main.cpp */,
+			);
+			path = debug;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -277,6 +287,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 27S37U5VQM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -289,6 +300,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 27S37U5VQM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
