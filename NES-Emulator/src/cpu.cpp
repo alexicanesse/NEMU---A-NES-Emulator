@@ -216,10 +216,8 @@ bool CPU::XZI(){
 //low order eight bits of the effective address. The carry from this addition is added to the contents of the next
 //page zero memory location, the result being the high order eight bits of the effective address.
 bool CPU:: YZI(){
-    Byte low = this->nes.read(this->registers.r_PC) & 0x00FF;
-    this->registers.r_PC++;
-    
-    Byte high = this->nes.read(this->registers.r_PC) & 0x00FF;
+    Byte low = this->nes.read(this->nes.read(this->registers.r_PC));
+    Byte high = this->nes.read((this->nes.read(this->registers.r_PC) + 1) & 0x00FF); //zeropage addressing
     this->registers.r_PC++;
     
     Address without_offset = (high << 8) | low; //concat them;
@@ -529,6 +527,10 @@ CPU::CPU(){
     (*this->instructions).at(0xB0).function = &CPU::BCS;
     (*this->instructions).at(0xB0).addressing_mode = &CPU::REL;
     (*this->instructions).at(0xB0).cycles = 2;
+    //B1 LDA
+    (*this->instructions).at(0xB1).function = &CPU::LDA;
+    (*this->instructions).at(0xB1).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0xB1).cycles = 5;
     //BA TSX
     (*this->instructions).at(0xBA).function = &CPU::TSX;
     (*this->instructions).at(0xBA).addressing_mode = &CPU::IMP;
