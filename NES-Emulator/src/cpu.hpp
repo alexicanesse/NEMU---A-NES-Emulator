@@ -87,14 +87,28 @@ private:
     //Returns true iff is may requiere an additional cycle
     
     //load
+#warning TODO
+    bool LAS(); //"AND" Memory with Stack Pointer                              undocumented
+#warning TODO
+    bool LAX(); //Load Accumulator and Index Register X From Memory            undocumented
     bool LDA(); //Load Accumulator with Memory
     bool LDX(); //Load Index Register X From Memory
     bool LDY(); //Load Index Register Y From Memory
+#warning TODO
+    bool SAX(); //Store Accumulator "AND" Index Register X in Memory           undocumented
+#warning TODO
+    bool SHA(); //Store Accumulator "AND" Index Register X "AND" Value         undocumented
+#warning TODO
+    bool SHX(); //Store Index Register X "AND" Value                           undocumented
+#warning TODO
+    bool SHY(); //Store Index Register Y "AND" Value                           undocumented
     bool STA(); //Store Accumulator in Memory
     bool STX(); //Store Index Register X In Memory
     bool STY(); //Store Index Register Y In Memory
     
     //trans
+#warning TODO
+    bool SHS(); //Transfer Accumulator "AND" Index Register X to Stack Pointer then Store Stack Pointer "AND" Hi-Byte In Memory            undocumented
     bool TAX(); //Transfer Accumulator To Index X
     bool TAY(); //Transfer Accumula Tor To Index Y
     bool TSX(); //Transfer Stack Pointer To Index X
@@ -122,10 +136,32 @@ private:
     
     //arith
     bool ADC(); //Add Memory to Accumulator with Carr
+#warning TODO
+    bool ANC(); //"AND" Memory with Accumulator then Move Negative Flag to Carry Flag       undocumented
+#warning TODO
+    bool ARR(); //"AND" Accumulator then Rotate Right                          undocumented
+#warning TODO
+    bool ASR(); //"AND" then Logical Shift Right                               undocumented
     bool CMP(); //Compare Memory and Accumulator
     bool CPX(); //Compare Index Register X To Memory
     bool CPY(); //Compare Index Register Y To Memory
+#warning TODO
+    bool DCP(); //Decrement Memory By One then Compare with Accumulator        undocumented
+#warning TODO
+    bool ISC(); //Increment Memory By One then SBC then Subtract Memory from Accumulator with Borrow       undocumented
+#warning TODO
+    bool RLA(); //Rotate Left then "AND" with Accumulator                      undocumented
+#warning TODO
+    bool RRA(); //Rotate Right and Add Memory to Accumulator                   undocumented
     bool SBC(); //Subtract Memory from Accumulator with Borrow
+#warning TODO
+    bool SBX(); //Subtract Memory from Accumulator "AND" Index Register X      undocumented
+#warning TODO
+    bool SLO(); //Arithmetic Shift Left then "OR" Memory with Accumulator      undocumented
+#warning TODO
+    bool SRE(); //Logical Shift Right then "Exclusive OR" Memory with Accumulator      undocumented
+#warning TODO
+    bool XAA(); //Non-deterministic Operation of Accumulator, Index Register X, Memory and Bus Contents      undocumented
     
     //inc
     bool DEC(); //Decrement Memory By One
@@ -162,6 +198,10 @@ private:
     bool SEC(); //Set Carry Flag
     bool SED(); //Set Decimal Mode
     bool SEI(); //Set Interrupt Disable
+    
+    //kill
+#warning TODO
+    bool JAM(); //Halt the CPU                                                 undocumented
     
     //nop
     bool NOP(); //No Operation
