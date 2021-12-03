@@ -58,7 +58,7 @@ void logging(CPU cpu){
     log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y() << "  Stack:" << std::hex << (int) cpu.get_register_SP();
     
 #warning debug of debug
-//    log << " " << std::dec << (int) cpu.get_register_SP();
+//    log << " " << std::hex << (int) cpu.nes.ram->at(0x49) << "  " << (cpu.get_register_X() & cpu.get_register_A());
     log.close();
 }
 
