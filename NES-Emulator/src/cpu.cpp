@@ -237,7 +237,8 @@ bool CPU::REL(){
     Byte offset = this->nes.read(this->registers.r_PC);
     this->registers.r_PC++;
     
-    this->data_to_read = this->registers.r_PC + offset;
+    //an “Offset" added to the contents of the lower eight bits of the program counter
+    this->data_to_read = ((this->registers.r_PC + offset) & 0x00FF) | (this->registers.r_PC & 0xFF00);
     if((this->registers.r_PC ^ this->data_to_read) & 0xFF00) //page crossed
         return true;
     else
