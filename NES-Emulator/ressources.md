@@ -9,6 +9,7 @@ https://github.com/Klaus2m5/6502_65C02_functional_tests
 
 BEST SITE EVER
 https://www.pagetable.com/c64ref/6502/
+https://bugzmanov.github.io/nes_ebook/chapter_6_1.html
 http://archive.6502.org/books/mcs6500_family_programming_manual.pdf
 http://www.6502.org/tools/emu/
 https://www.youtube.com/watch?v=8XmxKPJDGU0&t=0s

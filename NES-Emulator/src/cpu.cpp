@@ -509,7 +509,10 @@ CPU::CPU(){
     (*this->instructions).at(0x46).function = &CPU::LSR;
     (*this->instructions).at(0x46).addressing_mode = &CPU::ZPA;
     (*this->instructions).at(0x46).cycles = 5;
-    //47
+    //47 SRE                                                   undocumented
+    (*this->instructions).at(0x47).function = &CPU::SRE;
+    (*this->instructions).at(0x47).addressing_mode = &CPU::ZPA;
+    (*this->instructions).at(0x47).cycles = 5;
     //48 PHA
     (*this->instructions).at(0x48).function = &CPU::PHA;
     (*this->instructions).at(0x48).addressing_mode = &CPU::IMP;
@@ -535,7 +538,10 @@ CPU::CPU(){
     (*this->instructions).at(0x4E).function = &CPU::LSR;
     (*this->instructions).at(0x4E).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x4E).cycles = 6;
-    //4F
+    //4F SRE                                                   undocumented
+    (*this->instructions).at(0x4F).function = &CPU::SRE;
+    (*this->instructions).at(0x4F).addressing_mode = &CPU::ABS;
+    (*this->instructions).at(0x4F).cycles = 6;
     //50 BVC
     (*this->instructions).at(0x50).function = &CPU::BVC;
     (*this->instructions).at(0x50).addressing_mode = &CPU::REL;
@@ -545,7 +551,10 @@ CPU::CPU(){
     (*this->instructions).at(0x51).addressing_mode = &CPU::YZI;
     (*this->instructions).at(0x51).cycles = 5;
     //52
-    //53
+    //53 SRE                                                   undocumented
+    (*this->instructions).at(0x53).function = &CPU::SRE;
+    (*this->instructions).at(0x53).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0x53).cycles = 8;
     //54 NOP                                                   undocumented
     (*this->instructions).at(0x54).function = &CPU::NOP;
     (*this->instructions).at(0x54).addressing_mode = &CPU::XZP;
@@ -558,7 +567,10 @@ CPU::CPU(){
     (*this->instructions).at(0x56).function = &CPU::LSR;
     (*this->instructions).at(0x56).addressing_mode = &CPU::XZP;
     (*this->instructions).at(0x56).cycles = 6;
-    //57
+    //57 SRE                                                   undocumented
+    (*this->instructions).at(0x57).function = &CPU::SRE;
+    (*this->instructions).at(0x57).addressing_mode = &CPU::XZP;
+    (*this->instructions).at(0x57).cycles = 6;
     //58
     //59 EOR
     (*this->instructions).at(0x59).function = &CPU::EOR;
@@ -568,7 +580,10 @@ CPU::CPU(){
     (*this->instructions).at(0x5A).function = &CPU::NOP;
     (*this->instructions).at(0x5A).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x5A).cycles = 2;
-    //5B
+    //5B SRE                                                   undocumented
+    (*this->instructions).at(0x5B).function = &CPU::SRE;
+    (*this->instructions).at(0x5B).addressing_mode = &CPU::YIA;
+    (*this->instructions).at(0x5B).cycles = 7;
     //5C NOP                                                   undocumented
     (*this->instructions).at(0x5C).function = &CPU::NOP;
     (*this->instructions).at(0x5C).addressing_mode = &CPU::XIA;
@@ -581,7 +596,10 @@ CPU::CPU(){
     (*this->instructions).at(0x5E).function = &CPU::LSR;
     (*this->instructions).at(0x5E).addressing_mode = &CPU::XIA;
     (*this->instructions).at(0x5E).cycles = 7;
-    //5F
+    //5F SRE                                                   undocumented
+    (*this->instructions).at(0x5F).function = &CPU::SRE;
+    (*this->instructions).at(0x5F).addressing_mode = &CPU::XIA;
+    (*this->instructions).at(0x5F).cycles = 7;
     //60 RTS
     (*this->instructions).at(0x60).function = &CPU::RTS;
     (*this->instructions).at(0x60).addressing_mode = &CPU::IMP;
@@ -591,7 +609,10 @@ CPU::CPU(){
     (*this->instructions).at(0x61).addressing_mode = &CPU::XZI;
     (*this->instructions).at(0x61).cycles = 6;
     //62
-    //63
+    //63 RRA                                                   undocumented
+    (*this->instructions).at(0x63).function = &CPU::RRA;
+    (*this->instructions).at(0x63).addressing_mode = &CPU::XZI;
+    (*this->instructions).at(0x63).cycles = 8;
     //64 NOP                                                   undocumented
     (*this->instructions).at(0x64).function = &CPU::NOP;
     (*this->instructions).at(0x64).addressing_mode = &CPU::ZPA;
@@ -604,7 +625,10 @@ CPU::CPU(){
     (*this->instructions).at(0x66).function = &CPU::ROR;
     (*this->instructions).at(0x66).addressing_mode = &CPU::ZPA;
     (*this->instructions).at(0x66).cycles = 5;
-    //67
+    //67 RRA                                                   undocumented
+    (*this->instructions).at(0x67).function = &CPU::RRA;
+    (*this->instructions).at(0x67).addressing_mode = &CPU::ZPA;
+    (*this->instructions).at(0x67).cycles = 5;
     //68 PLA
     (*this->instructions).at(0x68).function = &CPU::PLA;
     (*this->instructions).at(0x68).addressing_mode = &CPU::IMP;
@@ -630,7 +654,10 @@ CPU::CPU(){
     (*this->instructions).at(0x6E).function = &CPU::ROR;
     (*this->instructions).at(0x6E).addressing_mode = &CPU::ABS;
     (*this->instructions).at(0x6E).cycles = 6;
-    //6F
+    //6F RRA                                                   undocumented
+    (*this->instructions).at(0x6F).function = &CPU::RRA;
+    (*this->instructions).at(0x6F).addressing_mode = &CPU::ABS;
+    (*this->instructions).at(0x6F).cycles = 6;
     //70 BVS
     (*this->instructions).at(0x70).function = &CPU::BVS;
     (*this->instructions).at(0x70).addressing_mode = &CPU::REL;
@@ -640,7 +667,10 @@ CPU::CPU(){
     (*this->instructions).at(0x71).addressing_mode = &CPU::YZI;
     (*this->instructions).at(0x71).cycles = 5;
     //72
-    //73
+    //73 RRA                                                   undocumented
+    (*this->instructions).at(0x73).function = &CPU::RRA;
+    (*this->instructions).at(0x73).addressing_mode = &CPU::YZI;
+    (*this->instructions).at(0x73).cycles = 8;
     //74 NOP                                                   undocumented
     (*this->instructions).at(0x74).function = &CPU::NOP;
     (*this->instructions).at(0x74).addressing_mode = &CPU::XZP;
@@ -653,7 +683,10 @@ CPU::CPU(){
     (*this->instructions).at(0x76).function = &CPU::ROR;
     (*this->instructions).at(0x76).addressing_mode = &CPU::XZP;
     (*this->instructions).at(0x76).cycles = 6;
-    //77
+    //77 RRA                                                   undocumented
+    (*this->instructions).at(0x77).function = &CPU::RRA;
+    (*this->instructions).at(0x77).addressing_mode = &CPU::XZP;
+    (*this->instructions).at(0x77).cycles = 6;
     //78 SEI
     (*this->instructions).at(0x78).function = &CPU::SEI;
     (*this->instructions).at(0x78).addressing_mode = &CPU::IMP;
@@ -666,7 +699,10 @@ CPU::CPU(){
     (*this->instructions).at(0x7A).function = &CPU::NOP;
     (*this->instructions).at(0x7A).addressing_mode = &CPU::IMP;
     (*this->instructions).at(0x7A).cycles = 2;
-    //7B
+    //7B RRA                                                   undocumented
+    (*this->instructions).at(0x7B).function = &CPU::RRA;
+    (*this->instructions).at(0x7B).addressing_mode = &CPU::YIA;
+    (*this->instructions).at(0x7B).cycles = 7;
     //7C NOP                                                   undocumented
     (*this->instructions).at(0x7C).function = &CPU::NOP;
     (*this->instructions).at(0x7C).addressing_mode = &CPU::XIA;
@@ -679,7 +715,10 @@ CPU::CPU(){
     (*this->instructions).at(0x7E).function = &CPU::ROR;
     (*this->instructions).at(0x7E).addressing_mode = &CPU::XIA;
     (*this->instructions).at(0x7E).cycles = 7;
-    //7F
+    //7F RRA                                                   undocumented
+    (*this->instructions).at(0x7F).function = &CPU::RRA;
+    (*this->instructions).at(0x7F).addressing_mode = &CPU::XIA;
+    (*this->instructions).at(0x7F).cycles = 7;
     //80 NOP                                                   undocumented
     (*this->instructions).at(0x80).function = &CPU::NOP;
     (*this->instructions).at(0x80).addressing_mode = &CPU::IMM;
@@ -1447,6 +1486,12 @@ bool CPU::ISC(){
 bool CPU::RLA(){
     ROL();
     AND();
+    return false;
+}
+//Rotate Right and Add Memory to Accumulator                   undocumented
+bool CPU::RRA(){
+    ROR();
+    ADC();
     return false;
 }
 //Subtract Memory from Accumulator with Borrow

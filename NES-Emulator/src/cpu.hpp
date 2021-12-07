@@ -22,17 +22,12 @@ class NES;
 
 
 class CPU{
-
-#warning TODO use singleton
-    
-
     
 private:
     /*
      Registers
     */
     
-#warning useless
     struct flgs {
         Byte N = 0x80; //negative result | After most instructions that have a value result, this flag will contain bit 7 of that result.
         Byte V = 0x40; //overflow
@@ -146,7 +141,6 @@ private:
     bool DCP(); //Decrement Memory By One then Compare with Accumulator        undocumented
     bool ISC(); //Increment Memory By One then SBC then Subtract Memory from Accumulator with Borrow       undocumented
     bool RLA(); //Rotate Left then "AND" with Accumulator                      undocumented
-#warning TODO
     bool RRA(); //Rotate Right and Add Memory to Accumulator                   undocumented
     bool SBC(); //Subtract Memory from Accumulator with Borrow
 #warning TODO
