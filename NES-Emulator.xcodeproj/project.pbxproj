@@ -11,6 +11,7 @@
 		1A3C433A2747EF5000DD181D /* libncurses.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A3C43392747EF5000DD181D /* libncurses.tbd */; };
 		1A3C4340274B86B600DD181D /* nes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C433D274B86B600DD181D /* nes.cpp */; };
 		1A3C4341274B86B600DD181D /* cpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C433E274B86B600DD181D /* cpu.cpp */; };
+		1A879EEE275F98A600D7919F /* ppu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A879EEC275F98A600D7919F /* ppu.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -39,6 +40,8 @@
 		1A3C433F274B86B600DD181D /* debug.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = debug.cpp; path = "NES-Emulator/src/debug.cpp"; sourceTree = "<group>"; };
 		1A3C43422751165E00DD181D /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
 		1A879EE72758D2B900D7919F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		1A879EEC275F98A600D7919F /* ppu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ppu.cpp; path = src/ppu.cpp; sourceTree = "<group>"; };
+		1A879EED275F98A600D7919F /* ppu.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ppu.hpp; path = src/ppu.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +87,8 @@
 				1A3C43332747D99500DD181D /* src */,
 				1A3C43352747DF3A00DD181D /* debug.cpp */,
 				1A3C43362747DF3A00DD181D /* debug.hpp */,
+				1A879EEC275F98A600D7919F /* ppu.cpp */,
+				1A879EED275F98A600D7919F /* ppu.hpp */,
 			);
 			path = "NES-Emulator";
 			sourceTree = "<group>";
@@ -162,6 +167,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A3C4340274B86B600DD181D /* nes.cpp in Sources */,
+				1A879EEE275F98A600D7919F /* ppu.cpp in Sources */,
 				1A3C4341274B86B600DD181D /* cpu.cpp in Sources */,
 				1A3C43372747DF3A00DD181D /* debug.cpp in Sources */,
 			);

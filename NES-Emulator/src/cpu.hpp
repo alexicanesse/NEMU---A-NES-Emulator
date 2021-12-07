@@ -18,6 +18,7 @@
 typedef uint8_t Byte;
 typedef uint16_t Address;
 
+#warning useless ?
 class NES;
 
 

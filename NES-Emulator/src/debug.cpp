@@ -9,6 +9,7 @@
 #include "cpu.hpp"
 #include "nes.hpp"
 #include "debug.hpp"
+#include "ppu.hpp"
 
 
 
@@ -56,9 +57,6 @@ void logging(CPU cpu){
     std::ofstream log;
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
     log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y() << "  Stack:" << std::hex << (int) cpu.get_register_SP();
-    
-#warning debug of debug
-//    log << " " << std::hex << (int) cpu.nes.ram->at(0x49) << "  " << (cpu.get_register_X() & cpu.get_register_A());
     log.close();
 }
 
