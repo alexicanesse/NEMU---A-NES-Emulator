@@ -11,14 +11,12 @@
 #include <iostream>
 #include <cstdint>
 #include <map>
-
-#include "nes.hpp"
+#include <array>
 
 
 typedef uint8_t Byte;
 typedef uint16_t Address;
 
-#warning useless ?
 class NES;
 
 
@@ -212,7 +210,7 @@ private:
     uint64_t opcode = 0x00;
     Address data_to_read = 0x0000;
 public:
-    CPU(); //constructor 
+    CPU(NES *nes); //constructor 
     
     /*
      Registers
@@ -233,7 +231,7 @@ public:
     /*
      Other
     */
-    NES nes;
+    NES *nes;
     void clock();
     int rem_cycles = 0;
     int cycles = 7; //Total number of cycles start at 7 because of init

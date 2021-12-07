@@ -9,6 +9,7 @@
 #include <array>
 
 #include "cpu.hpp"
+#include "nes.hpp"
 
 
 
@@ -56,7 +57,7 @@ void CPU::clock(){
     }
     
     //fetch opcode
-    this->opcode = this->nes.read(this->registers.r_PC);
+    this->opcode = this->nes->read(this->registers.r_PC);
     //the pc register is incremented to be prepared for the next read.
     this->registers.r_PC++;
     
@@ -101,10 +102,10 @@ bool CPU::IMM(){
 
 //absolute
 bool CPU::ABS(){
-    Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
+    Byte low = this->nes->read(this->registers.r_PC); //read 8 low bits
     this->registers.r_PC++;
     
-    Byte high = this->nes.read(this->registers.r_PC); //read 8 high bits
+    Byte high = this->nes->read(this->registers.r_PC); //read 8 high bits
     this->registers.r_PC++;
     
     this->data_to_read = (high << 8) | low; //concat them
@@ -114,10 +115,10 @@ bool CPU::ABS(){
 
 //X indexed absolute
 bool CPU::XIA(){
-    Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
+    Byte low = this->nes->read(this->registers.r_PC); //read 8 low bits
     this->registers.r_PC++;
     
-    Byte high = this->nes.read(this->registers.r_PC); //read 8 high bits
+    Byte high = this->nes->read(this->registers.r_PC); //read 8 high bits
     this->registers.r_PC++;
     
     this->data_to_read = (high << 8) | low; //concat them
@@ -133,10 +134,10 @@ bool CPU::XIA(){
 
 //Y indexed absolute
 bool CPU::YIA(){
-    Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
+    Byte low = this->nes->read(this->registers.r_PC); //read 8 low bits
     this->registers.r_PC++;
     
-    Byte high = this->nes.read(this->registers.r_PC); //read 8 high bits
+    Byte high = this->nes->read(this->registers.r_PC); //read 8 high bits
     this->registers.r_PC++;
     
     this->data_to_read = (high << 8) | low; //concat them
@@ -152,10 +153,10 @@ bool CPU::YIA(){
 
 //absolute indirect
 bool CPU::IND(){
-    Byte low = this->nes.read(this->registers.r_PC); //read 8 low bits
+    Byte low = this->nes->read(this->registers.r_PC); //read 8 low bits
     this->registers.r_PC++;
     
-    Byte high = this->nes.read(this->registers.r_PC); //read 8 high bits
+    Byte high = this->nes->read(this->registers.r_PC); //read 8 high bits
     this->registers.r_PC++;
     
     Address temp = (high << 8) | low; //concat them
@@ -165,9 +166,9 @@ bool CPU::IND(){
     //the indirect pointer crosses a page boundary.
     //JMP ($xxFF) will fetch the address from $xxFF and $xx00.
     if(low != 0x00FF)
-        this->data_to_read = this->nes.read(temp) | (this->nes.read(temp + 1) << 8);
+        this->data_to_read = this->nes->read(temp) | (this->nes->read(temp + 1) << 8);
     else
-        this->data_to_read = this->nes.read(temp) | (this->nes.read(temp & 0xFF00) << 8);
+        this->data_to_read = this->nes->read(temp) | (this->nes->read(temp & 0xFF00) << 8);
         
 
     return false;
@@ -175,7 +176,7 @@ bool CPU::IND(){
 
 //zero page
 bool CPU::ZPA(){
-    this->data_to_read = (0x00FF) & this->nes.read(this->registers.r_PC);
+    this->data_to_read = (0x00FF) & this->nes->read(this->registers.r_PC);
     this->registers.r_PC++;
     
     return false;
@@ -184,7 +185,7 @@ bool CPU::ZPA(){
 //X-indexed zero page
 bool CPU::XZP(){
     //like ZPA but we must add an offset
-    this->data_to_read = (0x00FF) & (this->nes.read(this->registers.r_PC) + this->registers.r_iX);
+    this->data_to_read = (0x00FF) & (this->nes->read(this->registers.r_PC) + this->registers.r_iX);
     this->registers.r_PC++;
     
     return false;
@@ -193,7 +194,7 @@ bool CPU::XZP(){
 //Y-indexed zero page
 bool CPU::YZP(){
     //like ZPA but we must add an offset
-    this->data_to_read = (0x00FF) & (this->nes.read(this->registers.r_PC) + this->registers.r_iY);
+    this->data_to_read = (0x00FF) & (this->nes->read(this->registers.r_PC) + this->registers.r_iY);
     this->registers.r_PC++;
     
     return false;
@@ -201,10 +202,10 @@ bool CPU::YZP(){
 
 //X-indexed zero page indirect
 bool CPU::XZI(){
-    Byte add = this->nes.read(this->registers.r_PC++);
-    Byte low = this->nes.read((add + this->registers.r_iX) & 0x00FF); //discard carry
+    Byte add = this->nes->read(this->registers.r_PC++);
+    Byte low = this->nes->read((add + this->registers.r_iX) & 0x00FF); //discard carry
     
-    Byte high = this->nes.read((add + 0x01 + this->registers.r_iX) & 0x00FF);
+    Byte high = this->nes->read((add + 0x01 + this->registers.r_iX) & 0x00FF);
 
     this->data_to_read = (high << 8) | low; //concat them
 
@@ -217,8 +218,8 @@ bool CPU::XZI(){
 //low order eight bits of the effective address. The carry from this addition is added to the contents of the next
 //page zero memory location, the result being the high order eight bits of the effective address.
 bool CPU:: YZI(){
-    Byte low = this->nes.read(this->nes.read(this->registers.r_PC));
-    Byte high = this->nes.read((this->nes.read(this->registers.r_PC) + 1) & 0x00FF); //zeropage addressing
+    Byte low = this->nes->read(this->nes->read(this->registers.r_PC));
+    Byte high = this->nes->read((this->nes->read(this->registers.r_PC) + 1) & 0x00FF); //zeropage addressing
     this->registers.r_PC++;
     
     Address without_offset = (high << 8) | low; //concat them;
@@ -234,7 +235,7 @@ bool CPU:: YZI(){
 //relative
 //instructions will handle the t additionnal cycle
 bool CPU::REL(){
-    Byte offset = this->nes.read(this->registers.r_PC);
+    Byte offset = this->nes->read(this->registers.r_PC);
     this->registers.r_PC++;
     
     //an “Offset" added to the contents of the lower eight bits of the program counter
@@ -248,7 +249,9 @@ bool CPU::REL(){
 
 
 
-CPU::CPU(){
+CPU::CPU(NES *nes){
+    this->nes = nes;
+    
     //00
     //01 ORA
     (*this->instructions).at(0x01).function = &CPU::ORA;
@@ -1187,22 +1190,22 @@ CPU::CPU(){
 //load
 //Load Accumulator and Index Register X From Memory            undocumented
 bool CPU::LAX(){
-    this->registers.r_A = this->nes.read(this->data_to_read);
-    this->registers.r_iX = this->nes.read(this->data_to_read);
+    this->registers.r_A = this->nes->read(this->data_to_read);
+    this->registers.r_iX = this->nes->read(this->data_to_read);
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
     return true;
 }
 //Load Accumulator with Memory
 bool CPU::LDA(){
-    this->registers.r_A = this->nes.read(this->data_to_read);
+    this->registers.r_A = this->nes->read(this->data_to_read);
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
     return true;
 }
 //Load Index Register X From Memory
 bool CPU::LDX(){
-    this->registers.r_iX = this->nes.read(this->data_to_read);
+    this->registers.r_iX = this->nes->read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_iX & 0x80);
     this->setflag(0x02, this->registers.r_iX == 0);
@@ -1210,7 +1213,7 @@ bool CPU::LDX(){
 }
 //Load Index Register Y From Memory
 bool CPU::LDY(){
-    this->registers.r_iY = this->nes.read(this->data_to_read);
+    this->registers.r_iY = this->nes->read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_iY & 0x80);
     this->setflag(0x02, this->registers.r_iY == 0);
@@ -1218,22 +1221,22 @@ bool CPU::LDY(){
 }
 //Store Accumulator "AND" Index Register X in Memory           undocumented
 bool CPU::SAX(){
-    this->nes.write(this->data_to_read, (this->registers.r_iX & this->registers.r_A));
+    this->nes->write(this->data_to_read, (this->registers.r_iX & this->registers.r_A));
     return false;
 }
 //Store Accumulator in Memory
 bool CPU::STA(){
-    this->nes.write(this->data_to_read, this->registers.r_A);
+    this->nes->write(this->data_to_read, this->registers.r_A);
     return false;
 }
 //Store Index Register X In Memory
 bool CPU::STX(){
-    this->nes.write(this->data_to_read, this->registers.r_iX);
+    this->nes->write(this->data_to_read, this->registers.r_iX);
     return false;
 }
 //Store Index Register Y In Memory
 bool CPU::STY(){
-    this->nes.write(this->data_to_read, this->registers.r_iY);
+    this->nes->write(this->data_to_read, this->registers.r_iY);
     return false;
 }
 
@@ -1290,21 +1293,21 @@ bool CPU::TYA(){
 //Push Accumulator On Stack
 bool CPU::PHA(){
     //0x0100 to offset
-    this->nes.write(0x0100 + this->registers.r_SP--,this->registers.r_A);
+    this->nes->write(0x0100 + this->registers.r_SP--,this->registers.r_A);
     //sp-- because sp needs to point to the nest empty location on the stack
     return false;
 }
 //Push Processor Status On Stack
 bool CPU::PHP(){
     //0x0100 to offset
-    this->nes.write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x14);
+    this->nes->write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x14);
     this->registers.r_SP--; //always point to next address
     return false;
 }
 //Pull Accumulator From Stack
 bool CPU::PLA(){
     //0x0100 to offset
-    this->registers.r_A = this->nes.read(0x0100 + ++this->registers.r_SP);
+    this->registers.r_A = this->nes->read(0x0100 + ++this->registers.r_SP);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
@@ -1312,7 +1315,7 @@ bool CPU::PLA(){
 }
 //Pull Processor Status From Stack
 bool CPU::PLP(){
-    this->registers.nv_bdizc = this->nes.read(0x0100 + ++this->registers.r_SP);
+    this->registers.nv_bdizc = this->nes->read(0x0100 + ++this->registers.r_SP);
     //stack pointer is incremanted before reading the value
     return false;
 }
@@ -1326,8 +1329,8 @@ bool CPU::ASL(){
         this->registers.r_A = data << 1;
     }
     else{
-        data = this->nes.read(this->data_to_read);
-        this->nes.write(this->data_to_read, data << 1);
+        data = this->nes->read(this->data_to_read);
+        this->nes->write(this->data_to_read, data << 1);
     }
     
     this->setflag(0x80, data & 0x40);
@@ -1343,8 +1346,8 @@ bool CPU::LSR(){
         this->registers.r_A = data >> 1;
     }
     else{
-        data = this->nes.read(this->data_to_read);
-        this->nes.write(this->data_to_read, data >> 1);
+        data = this->nes->read(this->data_to_read);
+        this->nes->write(this->data_to_read, data >> 1);
     }
     
     this->setflag(0x80, false);
@@ -1360,8 +1363,8 @@ bool CPU::ROL(){
         this->registers.r_A = data << 1 | (this->getflag(0x01) & 0x01);
     }
     else{
-        data = this->nes.read(this->data_to_read);
-        this->nes.write(this->data_to_read, data << 1 | (this->getflag(0x01) & 0x01));
+        data = this->nes->read(this->data_to_read);
+        this->nes->write(this->data_to_read, data << 1 | (this->getflag(0x01) & 0x01));
     }
     
     this->setflag(0x80, data & 0x40);
@@ -1377,8 +1380,8 @@ bool CPU::ROR(){
         this->registers.r_A = data >> 1 | this->getflag(0x01) << 7;
     }
     else{
-        data = this->nes.read(this->data_to_read);
-        this->nes.write(this->data_to_read, data >> 1 | this->getflag(0x01) << 7);
+        data = this->nes->read(this->data_to_read);
+        this->nes->write(this->data_to_read, data >> 1 | this->getflag(0x01) << 7);
     }
     
     this->setflag(0x80, this->getflag(0x01));
@@ -1390,7 +1393,7 @@ bool CPU::ROR(){
 //logic
 //"AND" Memory with Accumulator
 bool CPU::AND(){
-    this->registers.r_A &= this->nes.read(this->data_to_read);
+    this->registers.r_A &= this->nes->read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
@@ -1398,7 +1401,7 @@ bool CPU::AND(){
 }
 //Test Bits in Memory with Accumulator
 bool CPU::BIT(){
-    Byte memtested = this->nes.read(this->data_to_read);
+    Byte memtested = this->nes->read(this->data_to_read);
     bool result = this->registers.r_A & memtested;
     
     this->setflag(0x80, memtested & 0x80);
@@ -1408,7 +1411,7 @@ bool CPU::BIT(){
 }
 //"Exclusive OR" Memory with Accumulator
 bool CPU::EOR(){
-    this->registers.r_A ^= this->nes.read(this->data_to_read);
+    this->registers.r_A ^= this->nes->read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
@@ -1416,7 +1419,7 @@ bool CPU::EOR(){
 }
 //"OR" Memory with Accumulator
 bool CPU::ORA(){
-    this->registers.r_A |= this->nes.read(this->data_to_read);
+    this->registers.r_A |= this->nes->read(this->data_to_read);
     
     this->setflag(0x80, this->registers.r_A & 0x80);
     this->setflag(0x02, this->registers.r_A == 0);
@@ -1427,12 +1430,12 @@ bool CPU::ORA(){
 //Add Memory to Accumulator with Carry
 bool CPU::ADC(){
     //allow us to look for carry
-    int result = this->registers.r_A + this->nes.read(this->data_to_read) + (int) this->getflag(0x01);
+    int result = this->registers.r_A + this->nes->read(this->data_to_read) + (int) this->getflag(0x01);
     //bool -> int implicit conversion has every byte at one
     
     
     //Thanks internet! This flag was killing me
-    this->setflag(0x40,(~(this->registers.r_A^this->nes.read(this->data_to_read)) & (result)) & 0x80);
+    this->setflag(0x40,(~(this->registers.r_A^this->nes->read(this->data_to_read)) & (result)) & 0x80);
         
     
     this->registers.r_A = result;
@@ -1444,29 +1447,29 @@ bool CPU::ADC(){
 }
 //Compare Memory and Accumulator
 bool CPU::CMP(){
-    Byte result = this->registers.r_A - this->nes.read(this->data_to_read);
+    Byte result = this->registers.r_A - this->nes->read(this->data_to_read);
     
     this->setflag(0x02, result == 0);
     this->setflag(0x80, (result & 0x80) == 0x80);
-    this->setflag(0x01, this->nes.read(this->data_to_read) <= this->registers.r_A);
+    this->setflag(0x01, this->nes->read(this->data_to_read) <= this->registers.r_A);
     return true;
 }
 //Compare Index Register X To Memory
 bool CPU::CPX(){
-    int result = this->registers.r_iX - this->nes.read(this->data_to_read);
+    int result = this->registers.r_iX - this->nes->read(this->data_to_read);
     
     this->setflag(0x02, result == 0);
     this->setflag(0x80, (result & 0x80) == 0x80);
-    this->setflag(0x01, this->nes.read(this->data_to_read) <= this->registers.r_iX);
+    this->setflag(0x01, this->nes->read(this->data_to_read) <= this->registers.r_iX);
     return false;
 }
 //Compare Index Register Y To Memory
 bool CPU::CPY(){
-    Byte result = this->registers.r_iY - this->nes.read(this->data_to_read);
+    Byte result = this->registers.r_iY - this->nes->read(this->data_to_read);
     
     this->setflag(0x02, result == 0);
     this->setflag(0x80, (result & 0x80) == 0x80);
-    this->setflag(0x01, this->nes.read(this->data_to_read) <= this->registers.r_iY);
+    this->setflag(0x01, this->nes->read(this->data_to_read) <= this->registers.r_iY);
     return false;
 }
 //Decrement Memory By One then Compare with Accumulator        undocumented
@@ -1497,7 +1500,7 @@ bool CPU::RRA(){
 //Subtract Memory from Accumulator with Borrow
 bool CPU::SBC(){
     //thanks internet, this function was killing me
-    Byte value = this->nes.read(this->data_to_read) ^ 0xFF;
+    Byte value = this->nes->read(this->data_to_read) ^ 0xFF;
     
     int result = this->registers.r_A + value + (int) this->getflag(0x01);
     //bool -> int implicit conversion has every byte at one
@@ -1529,8 +1532,8 @@ bool CPU::SRE(){
 //inc
 //Decrement Memory By One
 bool CPU::DEC(){
-    Byte result = this->nes.read(this->data_to_read) - 1;
-    this->nes.write(this->data_to_read, result);
+    Byte result = this->nes->read(this->data_to_read) - 1;
+    this->nes->write(this->data_to_read, result);
     
     this->setflag(0x80, result & 0x80);
     this->setflag(0x02, result == 0);
@@ -1557,8 +1560,8 @@ bool CPU::DEY(){
 }
 //Increment Memory By One
 bool CPU::INC(){
-    Byte result = this->nes.read(this->data_to_read) + 1;
-    this->nes.write(this->data_to_read, result);
+    Byte result = this->nes->read(this->data_to_read) + 1;
+    this->nes->write(this->data_to_read, result);
     
     this->setflag(0x80, result & 0x80);
     this->setflag(0x02, result == 0);
@@ -1595,10 +1598,10 @@ bool CPU::JMP(){
 //Jump To Subroutine
 bool CPU::JSR(){
     //0x0100 to offset
-    this->nes.write(0x0100 + this->registers.r_SP, (this->registers.r_PC-1) >> 8); //high
+    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC-1) >> 8); //high
     this->registers.r_SP--;
     
-    this->nes.write(0x0100 + this->registers.r_SP, (this->registers.r_PC-1) & 0x00FF); //low
+    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC-1) & 0x00FF); //low
     this->registers.r_SP--;
     
     this->registers.r_PC = this->data_to_read;
@@ -1608,19 +1611,19 @@ bool CPU::JSR(){
 //Return From Interrupt
 bool CPU::RTI(){
     //get processor statue
-    this->registers.nv_bdizc = this->nes.read(0x0100 + ++this->registers.r_SP);
+    this->registers.nv_bdizc = this->nes->read(0x0100 + ++this->registers.r_SP);
     
     //get program counter
-    this->registers.r_PC = this->nes.read(0x0100 + ++this->registers.r_SP);//low
-    this->registers.r_PC |= this->nes.read(0x0100 + ++this->registers.r_SP) << 8;//add high
+    this->registers.r_PC = this->nes->read(0x0100 + ++this->registers.r_SP);//low
+    this->registers.r_PC |= this->nes->read(0x0100 + ++this->registers.r_SP) << 8;//add high
     //SP is incremented twice to be set
     
     return false;
 }
 //Return From Subroutme
 bool CPU::RTS(){
-    this->registers.r_PC = this->nes.read(0x0100 + ++this->registers.r_SP);//low
-    this->registers.r_PC |= this->nes.read(0x0100 + ++this->registers.r_SP) << 8;//add high
+    this->registers.r_PC = this->nes->read(0x0100 + ++this->registers.r_SP);//low
+    this->registers.r_PC |= this->nes->read(0x0100 + ++this->registers.r_SP) << 8;//add high
     //SP is incremented twice to be set
     this->registers.r_PC++; //point to next instruction
     

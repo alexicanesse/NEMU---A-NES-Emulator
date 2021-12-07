@@ -8,11 +8,13 @@
 #ifndef ppu_hpp
 #define ppu_hpp
 
-#include "nes.hpp"
+#include <iostream>
 
 
 typedef uint8_t Byte;
 typedef uint16_t Address;
+
+class NES;
 
 class PPU{
 private:
@@ -33,6 +35,11 @@ private:
     } registers;
 public:
     /*
+        Constructor
+    */
+    PPU(NES*);
+    
+    /*
      Registers
     */
     Byte getPPUCTRL();    //get PPU control register
@@ -45,12 +52,22 @@ public:
     Byte getPPUDATA();    //get PPU data port
     Byte getOAMDMA();     //get OAM DMA register (high byte)
     
+    void setPPUCTRL(Byte);    //get PPU control register
+    void setPPUMASK(Byte);    //get PPU mask register
+    void setPPUSTATUS(Byte);  //get PPU status register
+    void setOAMADDR(Byte);    //OAM address port
+    void setOAMDATA(Byte);    //get OAM data port
+    void setPPUSCROLL(Byte);  //get scrolling position register
+    void setPPUADDR(Byte);    //get address register
+    void setPPUDATA(Byte);    //get PPU data port
+    void setOAMDMA(Byte);     //get OAM DMA register (high byte)
+    
     
     
     /*
      Other
     */
-    NES nes;
+    NES *nes;
     void clock();
 };
 

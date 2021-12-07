@@ -8,50 +8,136 @@
 #include <array>
 
 #include "nes.hpp"
+#include "ppu.hpp"
 
 
- 
 
+/*
+    Constructor
+*/
+NES::NES(){
+    this->cpu = new CPU(this);
+    this->ppu = new PPU(this);
+}
 
 /*
     Read/Write Memory
 */
 #warning bool useless
-bool NES::write(Address adr, Byte content){
+void NES::write(Address adr, Byte content){
     if(adr <= 0x1FFF){
-        //Si on essaye d'écrire sur les miroirs, on ecrit simplement sur la ram.
+        //if we try to write the mirros, we juste write there
         this->ram->at(adr & 0x07FF) = content;
-        return true;
     }
     else if(adr <= 0x3FFF){
-    #warning TODO write PPU registers
-        return true;
+        //if we try to write the mirros we juste write there
+        switch (adr % 8) {
+            case 0:
+                this->ppu->setPPUCTRL(content);
+                break;
+                
+            case 1:
+                this->ppu->setPPUMASK(content);
+                break;
+                
+            case 2:
+                this->ppu->setPPUSTATUS(content);
+                break;
+                
+            case 3:
+                this->ppu->setOAMADDR(content);
+                break;
+               
+            case 4:
+                this->ppu->setOAMDATA(content);
+                break;
+                
+            case 5:
+                this->ppu->setPPUSCROLL(content);
+                break;
+                
+            case 6:
+                this->ppu->setPPUADDR(content);
+                break;
+                
+            case 7:
+                this->ppu->setPPUDATA(content);
+                break;
+                
+            //just in case something goes terribly wrong
+            default:
+                break;
+        }
     }
-    else if (adr <= 4017){
+    else if (adr <= 0x4020){
     #warning TODO write APU/IO
-        return true;
     }
-    //adr >= 0x800
+#warning TODO need proper rom
+    //adr >= 0x4020
     this->rom->at(adr) = content;
-    return true;
 }
 
 
 Byte NES::read(Address adr){
     if(adr <= 0x1FFF){
-        //Si on essaye de lire sur les miroirs, on lit simplement sur la ram.
+        //if we try to read the mirrors, we just read there
         return this->ram->at(adr & 0x07FF);
     }
     else if(adr <= 0x3FFF){
-    #warning TODO read PPU registers
-        return 0x00;
+        //if we try to read the mirros, we just read there
+        switch (adr % 8) {
+            case 0:
+                return this->ppu->getPPUCTRL();
+                break;
+                
+            case 1:
+                return this->ppu->getPPUMASK();
+                break;
+                
+            case 2:
+                return this->ppu->getPPUSTATUS();
+                break;
+                
+            case 3:
+                return this->ppu->getOAMADDR();
+                break;
+               
+            case 4:
+                return this->ppu->getOAMDATA();
+                break;
+                
+            case 5:
+                return this->ppu->getPPUSCROLL();
+                break;
+                
+            case 6:
+                return this->ppu->getPPUADDR();
+                break;
+                
+            case 7:
+                return this->ppu->getPPUDATA();
+                break;
+                
+            //just in case something goes terribly wrong
+            default:
+                return 0x00;
+                break;
+        }
     }
-    else if (adr <= 4017){
+    else if (adr <= 4020){
     #warning TODO read APU/IO
-        return 0x00;
-        
+        switch (adr) {
+            case 0x4014:
+                return this->ppu->getOAMDMA();
+                break;
+                
+            default:
+                return 0x00;
+                break;
+        }
     }
-    //adr >= 0x800
+#warning TODO need proper rom
+    //adr >= 0x4020
     return this->rom->at(adr);
 }
 

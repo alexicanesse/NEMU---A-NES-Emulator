@@ -45,11 +45,27 @@ void show_registers(CPU cpu){
     addstr(buffer.str().c_str());
 }
 
-void show_state(CPU cpu, std::array<Byte, 2048> ram){
+//Show the ppu register statue
+void show_ppu_register(PPU ppu){
+    move(0,30);
+    std::stringstream buffer;
+    buffer << "PPU Registers:"; addstr(buffer.str().c_str()); move(1,30); buffer.str("");
+    buffer << std::hex << "PPUCTRL:   0x" << (int) ppu.getPPUCTRL(); addstr(buffer.str().c_str()); move(2,30); buffer.str("");
+    buffer << std::hex << "PPUMASK:   0x" << (int) ppu.getPPUMASK(); addstr(buffer.str().c_str()); move(3,30); buffer.str("");
+    buffer << std::hex << "PPUSTATUS: 0x" << (int) ppu.getPPUSTATUS(); addstr(buffer.str().c_str()); move(4,30); buffer.str("");
+    buffer << std::hex << "OAMADDR:   0x" << (int) ppu.getOAMADDR(); addstr(buffer.str().c_str()); move(5,30); buffer.str("");
+    buffer << std::hex << "OAMDATA:   0x" << (int) ppu.getOAMDATA(); addstr(buffer.str().c_str()); move(6,30); buffer.str("");
+    buffer << std::hex << "PPUSCROLL: 0x" << (int) ppu.getPPUSCROLL(); addstr(buffer.str().c_str()); move(7,30); buffer.str("");
+    buffer << std::hex << "PPUADDR:   0x" << (int) ppu.getPPUADDR(); addstr(buffer.str().c_str()); move(8,30); buffer.str("");
+    buffer << std::hex << "PPUDATA:   0x" << (int) ppu.getPPUDATA(); addstr(buffer.str().c_str()); move(9,30); buffer.str("");
+    buffer << std::hex << "OAMDMA:    0x" << (int) ppu.getOAMDMA(); addstr(buffer.str().c_str());
+}
+
+void show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu){
     move(0,0);
     show_registers(cpu);
     show_ram(ram);
-    
+    show_ppu_register(ppu);
     refresh();
 }
 
@@ -62,32 +78,17 @@ void logging(CPU cpu){
 
 int main(){
     initscr();
-    CPU cpu;
-
-    /* Exemple 1 */
-//    std::array<Byte, 2048> *ram = new std::array<Byte, 2048>;
-//    ram->fill(13);
-//    show_ram(*ram);
-//    refresh();
-//    show_registers(cpu);
-//    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//
-//
-//    int i = 0;
-//    while(1) {
-//        i++;
-//        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//        ram->fill(i);
-//        show_state(cpu, *ram);
-//    }
-    /* End of exemple 1*/
+    NES nes;
+    CPU *cpu = nes.cpu;
+    PPU *ppu = nes.ppu;
     
     
-    /* Exemple 2 */
+    /* Exemple */
     
     std::ifstream testrom;
     std::ofstream log;
-    testrom.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes", std::ios::binary);
+    testrom.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/color_test.nes", std::ios::binary);
+//    testrom.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes", std::ios::binary);
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
     log.close();
     if(testrom.fail() | log.fail())
@@ -100,38 +101,35 @@ int main(){
         for(int i = 0; i < 0x0010; i++) testrom.read(&buffer,1); //skip header
         while (pos < (0xBFFF)) {
             testrom.read(&buffer,1);
-            cpu.nes.write(pos, (Byte) buffer);
-            cpu.nes.write(pos1, (Byte) buffer);
+            cpu->nes->write(pos, (Byte) buffer);
+            cpu->nes->write(pos1, (Byte) buffer);
 //            if(pos2 < 2048) cpu.nes.write(pos2, (Byte) buffer);
             pos++;
             pos1++;
 //            pos2++;
             if (testrom.eof())
                 break;
-            show_state(cpu, *cpu.nes.ram);
+            show_state(*cpu, *nes.ram, *ppu);
             refresh();
 //            std::this_thread::sleep_for(std::chrono::milliseconds(3));
         }
     }
     
-    logging(cpu);
+    logging(*cpu);
     
     while(1){
-        cpu.clock();
-        show_state(cpu, *cpu.nes.ram);
+        cpu->clock();
+        show_state(*cpu, *nes.ram, *ppu);
         refresh();
-        if(cpu.rem_cycles == 0){
-            logging(cpu);
+        if(cpu->rem_cycles == 0){
+            logging(*cpu);
         }
 //        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     
     testrom.close();
-    /* End of exemple 2*/
+    /* End of exemple */
     
-//    addstr("\npress any key to exit...");
-//
-//    getch();
     
 
     return 0;
