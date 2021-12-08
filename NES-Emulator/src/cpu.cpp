@@ -252,7 +252,10 @@ bool CPU::REL(){
 CPU::CPU(NES *nes){
     this->nes = nes;
     
-    //00
+    //00 BRK
+    (*this->instructions).at(0x00).function = &CPU::BRK;
+    (*this->instructions).at(0x00).addressing_mode = &CPU::IMP;
+    (*this->instructions).at(0x00).cycles = 7;
     //01 ORA
     (*this->instructions).at(0x01).function = &CPU::ORA;
     (*this->instructions).at(0x01).addressing_mode = &CPU::XZI;
@@ -1588,9 +1591,24 @@ bool CPU::INY(){
 }
 
 //ctrl
+#warning NOT TESTED I DO NOT KNOW IF IT IS WORKING PROPERLY
+//Break Command
+bool CPU::BRK(){
+    //0x0100 to offset
+    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) >> 8); //high
+    this->registers.r_SP--;
+    
+    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) & 0x00FF); //low
+    this->registers.r_SP--;
+    
+    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc | 0x14);
+    
+    this->registers.r_PC = this->nes->read(0xFFFE) | (this->nes->read(0xFFFF) << 8);
+    
+    return false;
+}
 //JMP Indirect
 bool CPU::JMP(){
-    this->registers.r_PC++;
     this->registers.r_PC = this->data_to_read;
     
     return false;

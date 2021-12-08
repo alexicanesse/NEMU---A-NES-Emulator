@@ -13,6 +13,7 @@
 
 #include "cpu.hpp"
 #include "ppu.hpp"
+#include "cartridge.hpp"
 
 typedef uint8_t Byte;
 typedef uint16_t Address;
@@ -22,6 +23,7 @@ class NES{
 public:
     CPU *cpu;
     PPU *ppu;
+    CARTRIDGE *cartridge;
     
     /*
         Constructor

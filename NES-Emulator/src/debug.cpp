@@ -10,6 +10,7 @@
 #include "nes.hpp"
 #include "debug.hpp"
 #include "ppu.hpp"
+#include "cartridge.hpp"
 
 
 
@@ -72,7 +73,10 @@ void show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu){
 void logging(CPU cpu){
     std::ofstream log;
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
-    log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y() << "  Stack:" << std::hex << (int) cpu.get_register_SP();
+    log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y() << "  Stack:" << std::hex << (int) cpu.get_register_SP() << "  opcode: 0x" << (int) cpu.opcode;
+    
+#warning debug
+    log << " 0x6000: " << std::hex << (int) cpu.nes->read(0x6000);
     log.close();
 }
 
@@ -81,42 +85,20 @@ int main(){
     NES nes;
     CPU *cpu = nes.cpu;
     PPU *ppu = nes.ppu;
-    
+    CARTRIDGE *cartridge = nes.cartridge;
     
     /* Exemple */
-    
-    std::ifstream testrom;
+    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
+        std::cout << "AHHHHHHHHH";
+        return 0;
+    }
     std::ofstream log;
-    testrom.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/color_test.nes", std::ios::binary);
-//    testrom.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes", std::ios::binary);
+
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
     log.close();
-    if(testrom.fail() | log.fail())
-        std::cout << "pb";
-    else{
-        char buffer = 0x00;
-        Address pos = 0x8000;
-        Address pos1 = 0xC000;
-//        Address pos2 = 0x0000;
-        for(int i = 0; i < 0x0010; i++) testrom.read(&buffer,1); //skip header
-        while (pos < (0xBFFF)) {
-            testrom.read(&buffer,1);
-            cpu->nes->write(pos, (Byte) buffer);
-            cpu->nes->write(pos1, (Byte) buffer);
-//            if(pos2 < 2048) cpu.nes.write(pos2, (Byte) buffer);
-            pos++;
-            pos1++;
-//            pos2++;
-            if (testrom.eof())
-                break;
-            show_state(*cpu, *nes.ram, *ppu);
-            refresh();
-//            std::this_thread::sleep_for(std::chrono::milliseconds(3));
-        }
-    }
+
     
     logging(*cpu);
-    
     while(1){
         cpu->clock();
         show_state(*cpu, *nes.ram, *ppu);
@@ -126,11 +108,7 @@ int main(){
         }
 //        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
-    
-    testrom.close();
     /* End of exemple */
-    
-    
 
     return 0;
 }

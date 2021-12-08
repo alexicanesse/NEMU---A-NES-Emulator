@@ -18,6 +18,7 @@
 NES::NES(){
     this->cpu = new CPU(this);
     this->ppu = new PPU(this);
+    this->cartridge = new CARTRIDGE;
 }
 
 /*
@@ -72,20 +73,19 @@ void NES::write(Address adr, Byte content){
     else if (adr <= 0x4020){
     #warning TODO write APU/IO
     }
-#warning TODO need proper rom
-    //adr >= 0x4020
-    this->rom->at(adr) = content;
+#warning DO NOT WRITE ROM
+    
 }
 
 
-Byte NES::read(Address adr){
-    if(adr <= 0x1FFF){
+Byte NES::read(Address addr){
+    if(addr <= 0x1FFF){
         //if we try to read the mirrors, we just read there
-        return this->ram->at(adr & 0x07FF);
+        return this->ram->at(addr & 0x07FF);
     }
-    else if(adr <= 0x3FFF){
+    else if(addr <= 0x3FFF){
         //if we try to read the mirros, we just read there
-        switch (adr % 8) {
+        switch (addr % 8) {
             case 0:
                 return this->ppu->getPPUCTRL();
                 break;
@@ -124,9 +124,9 @@ Byte NES::read(Address adr){
                 break;
         }
     }
-    else if (adr <= 4020){
+    else if (addr <= 4020){
     #warning TODO read APU/IO
-        switch (adr) {
+        switch (addr) {
             case 0x4014:
                 return this->ppu->getOAMDMA();
                 break;
@@ -136,9 +136,12 @@ Byte NES::read(Address adr){
                 break;
         }
     }
-#warning TODO need proper rom
-    //adr >= 0x4020
-    return this->rom->at(adr);
+#warning TODO fill blank there
+    else if(addr >= 0x8000) return this->cartridge->readROM(addr);
+    
+    
+    //should not happend
+    return 0x00;
 }
 
 

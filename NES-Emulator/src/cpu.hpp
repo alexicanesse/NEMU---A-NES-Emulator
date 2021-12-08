@@ -207,7 +207,6 @@ private:
     /*
     Other
     */
-    uint64_t opcode = 0x00;
     Address data_to_read = 0x0000;
 public:
     CPU(NES *nes); //constructor 
@@ -232,6 +231,7 @@ public:
      Other
     */
     NES *nes;
+    uint64_t opcode = 0x00;
     void clock();
     int rem_cycles = 0;
     int cycles = 7; //Total number of cycles start at 7 because of init
