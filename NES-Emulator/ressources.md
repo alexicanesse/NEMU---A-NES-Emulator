@@ -16,3 +16,5 @@ http://www.6502.org/tools/emu/
 https://www.youtube.com/watch?v=8XmxKPJDGU0&t=0s
 https://bugzmanov.github.io/nes_ebook/chapter_6_1.html
 http://archive.nes.science/nesdev-forums/f3/t12605.xhtml
+
+https://github.com/amhndu/SimpleNES/blob/master/include/VirtualScreen.h

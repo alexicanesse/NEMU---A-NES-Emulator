@@ -31,6 +31,7 @@ void NES::write(Address adr, Byte content){
         this->ram->at(adr & 0x07FF) = content;
     }
     else if(adr <= 0x3FFF){
+#warning TODO
         //if we try to write the mirros we juste write there
         switch (adr % 8) {
             case 0:
@@ -84,16 +85,9 @@ Byte NES::read(Address addr){
         return this->ram->at(addr & 0x07FF);
     }
     else if(addr <= 0x3FFF){
+#warning TODO
         //if we try to read the mirros, we just read there
         switch (addr % 8) {
-            case 0:
-                return this->ppu->getPPUCTRL();
-                break;
-                
-            case 1:
-                return this->ppu->getPPUMASK();
-                break;
-                
             case 2:
                 return this->ppu->getPPUSTATUS();
                 break;
@@ -106,19 +100,11 @@ Byte NES::read(Address addr){
                 return this->ppu->getOAMDATA();
                 break;
                 
-            case 5:
-                return this->ppu->getPPUSCROLL();
-                break;
-                
-            case 6:
-                return this->ppu->getPPUADDR();
-                break;
-                
             case 7:
                 return this->ppu->getPPUDATA();
                 break;
                 
-            //just in case something goes terribly wrong
+            //not all registers are readable
             default:
                 return 0x00;
                 break;

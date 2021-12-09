@@ -11,6 +11,7 @@
 #include "debug.hpp"
 #include "ppu.hpp"
 #include "cartridge.hpp"
+#include "screen.hpp"
 
 
 
@@ -87,7 +88,7 @@ int main(){
     PPU *ppu = nes.ppu;
     CARTRIDGE *cartridge = nes.cartridge;
     
-    /* Exemple */
+    
     if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
         std::cout << "AHHHHHHHHH";
         return 0;
@@ -96,20 +97,39 @@ int main(){
 
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
     log.close();
-
-    
     logging(*cpu);
-    while(1){
-        cpu->clock();
-        show_state(*cpu, *nes.ram, *ppu);
-        refresh();
-        if(cpu->rem_cycles == 0){
-            logging(*cpu);
+    
+    
+    GRAPHICS graphics(320,240);
+//    GRAPHICS graphics(256,224);
+    GRAPHICS::Color color;
+    
+    
+    
+    SDL_Event event;
+    while(!(event.type == SDL_QUIT)){
+        for(int x= 0; x<320; x++){
+            for(int y = 0; y <240; y++){
+                graphics.DrawPixel(x, y, graphics.palette->at(rand() % 64));
+                
+                if((x+y) %3 == 0){
+                    cpu->clock();
+//                    show_state(*cpu, *nes.ram, *ppu);
+//                    refresh();
+                    if(cpu->rem_cycles == 0){
+                        logging(*cpu);
+                    }
+                }
+            }
         }
-//        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        SDL_PollEvent(&event);  // Catching the poll event.
+        graphics.update();
+//            std::this_thread::sleep_for(std::chrono::milliseconds(600));
     }
-    /* End of exemple */
 
     return 0;
 }
+
+
+
 

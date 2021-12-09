@@ -33,6 +33,13 @@ private:
         Byte PPUDATA = 0x00; // Address 0x2007       PPU data port
         Byte OAMDMA = 0x00; // Address 0x4014        OAM DMA register (high byte)
     } registers;
+    
+    
+    
+    /*
+     Other
+    */
+    Byte read_buffer = 0x00;
 public:
     /*
         Constructor
@@ -42,6 +49,7 @@ public:
     /*
      Registers
     */
+#warning TODO properly
     Byte getPPUCTRL();    //get PPU control register
     Byte getPPUMASK();    //get PPU mask register
     Byte getPPUSTATUS();  //get PPU status register

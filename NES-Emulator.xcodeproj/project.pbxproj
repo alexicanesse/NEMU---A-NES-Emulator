@@ -12,18 +12,20 @@
 		1A3C4340274B86B600DD181D /* nes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C433D274B86B600DD181D /* nes.cpp */; };
 		1A3C4341274B86B600DD181D /* cpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A3C433E274B86B600DD181D /* cpu.cpp */; };
 		1A3FDAFC2760A04E00519A4B /* cartridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A3FDAFA2760A04E00519A4B /* cartridge.cpp */; };
+		1A3FDB162760E4E800519A4B /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A3FDB152760E4E800519A4B /* SDL2.framework */; };
 		1A879EEE275F98A600D7919F /* ppu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A879EEC275F98A600D7919F /* ppu.cpp */; };
+		1AF80877276234BB0053DB8E /* screen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AF80875276234BB0053DB8E /* screen.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		1A3C43252747D94700DD181D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 10;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -42,9 +44,13 @@
 		1A3C43422751165E00DD181D /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
 		1A3FDAFA2760A04E00519A4B /* cartridge.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = cartridge.cpp; path = src/cartridge.cpp; sourceTree = "<group>"; };
 		1A3FDAFB2760A04E00519A4B /* cartridge.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = cartridge.hpp; path = src/cartridge.hpp; sourceTree = "<group>"; };
+		1A3FDB142760DF1C00519A4B /* NES-Emulator.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "NES-Emulator.entitlements"; sourceTree = "<group>"; };
+		1A3FDB152760E4E800519A4B /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
 		1A879EE72758D2B900D7919F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		1A879EEC275F98A600D7919F /* ppu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ppu.cpp; path = src/ppu.cpp; sourceTree = "<group>"; };
 		1A879EED275F98A600D7919F /* ppu.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ppu.hpp; path = src/ppu.hpp; sourceTree = "<group>"; };
+		1AF80875276234BB0053DB8E /* screen.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = screen.cpp; path = "NES-Emulator/src/screen.cpp"; sourceTree = "<group>"; };
+		1AF80876276234BB0053DB8E /* screen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = screen.hpp; path = "NES-Emulator/src/screen.hpp"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A3FDB162760E4E800519A4B /* SDL2.framework in Frameworks */,
 				1A3C433A2747EF5000DD181D /* libncurses.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -62,6 +69,8 @@
 		1A3C431E2747D94700DD181D = {
 			isa = PBXGroup;
 			children = (
+				1AF80875276234BB0053DB8E /* screen.cpp */,
+				1AF80876276234BB0053DB8E /* screen.hpp */,
 				1A3C433E274B86B600DD181D /* cpu.cpp */,
 				1A3C433F274B86B600DD181D /* debug.cpp */,
 				1A3C433D274B86B600DD181D /* nes.cpp */,
@@ -84,6 +93,7 @@
 		1A3C43292747D94700DD181D /* NES-Emulator */ = {
 			isa = PBXGroup;
 			children = (
+				1A3FDB142760DF1C00519A4B /* NES-Emulator.entitlements */,
 				1A3C43422751165E00DD181D /* tests */,
 				1A3C43312747D99500DD181D /* obj */,
 				1A3C43322747D99500DD181D /* ressources.md */,
@@ -101,6 +111,7 @@
 		1A3C43382747EF4F00DD181D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1A3FDB152760E4E800519A4B /* SDL2.framework */,
 				1A3C43392747EF5000DD181D /* libncurses.tbd */,
 			);
 			name = Frameworks;
@@ -172,6 +183,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A3C4340274B86B600DD181D /* nes.cpp in Sources */,
+				1AF80877276234BB0053DB8E /* screen.cpp in Sources */,
 				1A3FDAFC2760A04E00519A4B /* cartridge.cpp in Sources */,
 				1A879EEE275F98A600D7919F /* ppu.cpp in Sources */,
 				1A3C4341274B86B600DD181D /* cpu.cpp in Sources */,
@@ -298,11 +310,20 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
+				CODE_SIGN_ENTITLEMENTS = "NES-Emulator/NES-Emulator.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 27S37U5VQM;
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"SYSTEM_FRAMEWORK_SEARCH_PATHS[arch=*]" = (
+					"FRAMEWORK_DIRCTORY/SDL2.framework/**",
+					FRAMEWORK_DIRCTORY/SDL2.framework/Headers,
+				);
 			};
 			name = Debug;
 		};
@@ -311,10 +332,15 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
+				CODE_SIGN_ENTITLEMENTS = "NES-Emulator/NES-Emulator.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 27S37U5VQM;
 				ENABLE_HARDENED_RUNTIME = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
