@@ -44,7 +44,7 @@ private:
         //Memory space [0x0100 - 0x01FF] is used for stack. The stack pointer holds the address of the top of that space
         //It grows from top to bottom
         Byte r_SP = 0xFD;   //stack pointer
-        Address r_PC = 0xC000; //program counter (PC)
+        Address r_PC = 0x0000; //program counter (PC)
         //While there are only six flags in the processor status register within the CPU, when transferred to the stack, there are two additional bits. These do not represent a register that can hold a value but can be used to distinguish how the flags were pushed.
         Byte nv_bdizc = 0b00100000; //Processor status register
                                     //_ = expansion | No CPU effect
@@ -225,7 +225,7 @@ public:
     Address get_register_PC();
     
     #warning TODO
-    bool reset();
+    void reset();
     
     /*
      Other

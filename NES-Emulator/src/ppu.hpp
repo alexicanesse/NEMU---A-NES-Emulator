@@ -9,6 +9,9 @@
 #define ppu_hpp
 
 #include <iostream>
+#include <array>
+
+#include "screen.hpp"
 
 
 typedef uint8_t Byte;
@@ -18,6 +21,21 @@ class NES;
 
 class PPU{
 private:
+    /*
+     Graphics
+    */
+    GRAPHICS graphics = *(new GRAPHICS(256*2, 240*2));
+    SDL_Event event;
+    
+    //https://wiki.nesdev.org/w/index.php?title=PPU_frame_timing
+    bool odd_frame = true;
+    
+    /*
+    positions
+    */
+    int scanline = 0;
+    int row = 0;
+    
     /*
      Registers
     */
@@ -34,8 +52,18 @@ private:
         Byte OAMDMA = 0x00; // Address 0x4014        OAM DMA register (high byte)
     } registers;
     
+    struct Color{
+        uint8_t r = 0;
+        uint8_t g = 0;
+        uint8_t b = 0;
+        uint8_t o = 255; //opacity
+    };
     
-    
+    //Memory
+    //https://wiki.nesdev.org/w/index.php?title=PPU_memory_map
+    std::array<std::array<Byte, 0x1000>, 2> *Pattern_table = new std::array<std::array<Byte, 0x1000>, 2>; //pattern table 0 and 1
+    std::array<std::array<Byte, 0x0400>, 4> *Nametable = new std::array<std::array<Byte, 0x0400>, 4>;
+    std::array<GRAPHICS::Color,64> *palette = new std::array<GRAPHICS::Color,64>; //all available colors
     /*
      Other
     */
@@ -70,7 +98,11 @@ public:
     void setPPUDATA(Byte);    //get PPU data port
     void setOAMDMA(Byte);     //get OAM DMA register (high byte)
     
-    
+    /*
+     chrROM
+    */
+    void write(Address, Byte);
+    Byte read(Address);
     
     /*
      Other

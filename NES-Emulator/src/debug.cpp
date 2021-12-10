@@ -77,19 +77,20 @@ void logging(CPU cpu){
     log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y() << "  Stack:" << std::hex << (int) cpu.get_register_SP() << "  opcode: 0x" << (int) cpu.opcode;
     
 #warning debug
-    log << " 0x6000: " << std::hex << (int) cpu.nes->read(0x6000);
+    log << " 0xFFFD 0xFFFC: " << std::hex << (int) ((cpu.nes->read(0xFFFD) << 8) + cpu.nes->read(0xFFFC));
     log.close();
 }
 
 int main(){
-    initscr();
+//    initscr();
     NES nes;
     CPU *cpu = nes.cpu;
     PPU *ppu = nes.ppu;
     CARTRIDGE *cartridge = nes.cartridge;
     
     
-    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
+    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
+//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
         std::cout << "AHHHHHHHHH";
         return 0;
     }
@@ -99,34 +100,33 @@ int main(){
     log.close();
     logging(*cpu);
     
-    
-    GRAPHICS graphics(320,240);
-//    GRAPHICS graphics(256,224);
-    GRAPHICS::Color color;
-    
-    
-    
-    SDL_Event event;
-    while(!(event.type == SDL_QUIT)){
-        for(int x= 0; x<320; x++){
-            for(int y = 0; y <240; y++){
-                graphics.DrawPixel(x, y, graphics.palette->at(rand() % 64));
-                
-                if((x+y) %3 == 0){
-                    cpu->clock();
+    cpu->reset();
+    logging(*cpu);
+    std::cout << "OHHHH";
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+    bool quit = false;
+
+
+        for(int x= 0; x<256; x++){
+            for(int y = 0; y <2400000; y++){
+
+                ppu->clock();
+//                if((x+y) %3 == 0){
+//                    cpu->clock();
 //                    show_state(*cpu, *nes.ram, *ppu);
 //                    refresh();
-                    if(cpu->rem_cycles == 0){
-                        logging(*cpu);
-                    }
-                }
+//                    if(cpu->rem_cycles == 0){
+//                        logging(*cpu);
+//                    }
+//                }
             }
-        }
-        SDL_PollEvent(&event);  // Catching the poll event.
-        graphics.update();
+
 //            std::this_thread::sleep_for(std::chrono::milliseconds(600));
     }
-
+    
+    
+    
     return 0;
 }
 

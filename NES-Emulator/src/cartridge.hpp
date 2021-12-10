@@ -15,14 +15,18 @@
 typedef uint8_t Byte;
 typedef uint16_t Address;
 
+
+
+//Only mapper 0 will be implemented for now
 class CARTRIDGE{
 private:
     
 public:
-    //addresses 0x0000 ~ 0x7FFF are useless
-    std::array<Byte, 0xFFFF + 1> *prgrom = new std::array<Byte, 0xFFFF + 1>; //ROM
+    bool mirror_prgrom = false;
+    bool mirror_chr_rom = false;
     
-#warning TODO chrom
+    //addresses 0x0000 ~ 0x7FFF are useless
+    std::array<Byte, 0xFFFF + 1> *prgROM = new std::array<Byte, 0xFFFF + 1>; //prg ROM + prg RAM
     
 #warning TODO
     bool load(std::string);

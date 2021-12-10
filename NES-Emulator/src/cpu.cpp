@@ -246,8 +246,12 @@ bool CPU::REL(){
         return false;
 }
 
-
-
+#warning it's just a test
+void CPU::reset(){
+    this->registers.r_PC = this->nes->read(0xFFFC) | (this->nes->read(0xFFFD) << 8);
+    this->setflag(0x20, true);
+    this->setflag(0x04, true);
+}
 
 CPU::CPU(NES *nes){
     this->nes = nes;

@@ -31,7 +31,6 @@ public:
         uint8_t b = 0;
         uint8_t o = 255; //opacity
     };
-    std::array<Color,64> *palette = new std::array<Color,64>; //all available colors
     
     void DrawPixel(int x, int y, Color); //draw a pixel but do not update the screen
     void update(); //updte screen content
