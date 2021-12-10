@@ -109,7 +109,7 @@ int main(){
 
 
         for(int x= 0; x<256; x++){
-            for(int y = 0; y <2400000; y++){
+            for(int y = 0; y <2400; y++){
 
                 ppu->clock();
 //                if((x+y) %3 == 0){

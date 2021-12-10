@@ -28,7 +28,7 @@ private:
     SDL_Event event;
     
     //https://wiki.nesdev.org/w/index.php?title=PPU_frame_timing
-    bool odd_frame = true;
+    bool odd_frame = false;
     
     /*
     positions
