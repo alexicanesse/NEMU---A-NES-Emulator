@@ -98,6 +98,9 @@ public:
     void setPPUDATA(Byte);    //get PPU data port
     void setOAMDMA(Byte);     //get OAM DMA register (high byte)
     
+    
+    Address vmem_addr = 0x0000;
+    
     /*
      chrROM
     */
@@ -107,6 +110,7 @@ public:
     /*
      Other
     */
+    Byte address_latch = 0x00;
     NES *nes;
     void clock();
 };

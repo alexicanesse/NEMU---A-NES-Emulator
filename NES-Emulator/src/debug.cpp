@@ -89,8 +89,8 @@ int main(){
     CARTRIDGE *cartridge = nes.cartridge;
     
     
-    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
-//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
+//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
+    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
         std::cout << "AHHHHHHHHH";
         return 0;
     }
@@ -99,27 +99,23 @@ int main(){
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
     log.close();
     logging(*cpu);
-    
+
     cpu->reset();
     logging(*cpu);
-    std::cout << "OHHHH";
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-
-    bool quit = false;
-
+//    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
         for(int x= 0; x<256; x++){
-            for(int y = 0; y <2400; y++){
+            for(int y = 0; y <240000; y++){
 
-                ppu->clock();
-//                if((x+y) %3 == 0){
-//                    cpu->clock();
-//                    show_state(*cpu, *nes.ram, *ppu);
-//                    refresh();
-//                    if(cpu->rem_cycles == 0){
-//                        logging(*cpu);
-//                    }
-//                }
+//                ppu->clock();
+                if((x+y) %3 == 0){
+                    cpu->clock();
+                    show_state(*cpu, *nes.ram, *ppu);
+                    refresh();
+                    if(cpu->rem_cycles == 0){
+                        logging(*cpu);
+                    }
+                }
             }
 
 //            std::this_thread::sleep_for(std::chrono::milliseconds(600));

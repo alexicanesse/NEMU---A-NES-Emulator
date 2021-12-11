@@ -32,13 +32,13 @@ void NES::write(Address adr, Byte content){
     }
     else if(adr <= 0x3FFF){
 #warning TODO
-        //if we try to write the mirros we juste write there
+        //The PPU exposes eight memory-mapped registers to the CPU. These nominally sit at $2000 through $2007 in the CPU's address space, but because they're incompletely decoded, they're mirrored in every 8 bytes from $2008 through $3FFF, so a write to $3456 is the same as a write to $2006.
         switch (adr % 8) {
-            case 0:
+            case 0: //ppuctrl
                 this->ppu->setPPUCTRL(content);
                 break;
                 
-            case 1:
+            case 1: //ppumask
                 this->ppu->setPPUMASK(content);
                 break;
                 
@@ -66,7 +66,7 @@ void NES::write(Address adr, Byte content){
                 this->ppu->setPPUDATA(content);
                 break;
                 
-            //just in case something goes terribly wrong
+            //some registers are write-only
             default:
                 break;
         }
@@ -85,23 +85,47 @@ Byte NES::read(Address addr){
         return this->ram->at(addr & 0x07FF);
     }
     else if(addr <= 0x3FFF){
-#warning TODO
-        //if we try to read the mirros, we just read there
+        //The PPU exposes eight memory-mapped registers to the CPU. These nominally sit at $2000 through $2007 in the CPU's address space, but because they're incompletely decoded, they're mirrored in every 8 bytes from $2008 through $3FFF, so a write to $3456 is the same as a write to $2006.
         switch (addr % 8) {
             case 2:
-                return this->ppu->getPPUSTATUS();
+                Byte buffer = this->ppu->getPPUSTATUS(); //reading the register affect it's value
+                this->ppu->setPPUSTATUS(buffer & 0x7F); //Reading the status register will clear bit 7
+                this->address_latch = 0x00;  //Reading the status register will clear the address latch used by PPUSCROLL and PPUADDR.
+                return buffer;
                 break;
                 
             case 3:
+#warning TODO
                 return this->ppu->getOAMADDR();
                 break;
                
             case 4:
+#warning TODO
                 return this->ppu->getOAMDATA();
                 break;
                 
             case 7:
-                return this->ppu->getPPUDATA();
+                
+                //When reading while the VRAM address is in the range 0-$3EFF (i.e., before the palettes), the read will return the contents of an internal read buffer. This internal buffer is updated only when reading PPUDATA, and so is preserved across frames. After the CPU reads and gets the contents of the internal buffer, the PPU will immediately update the internal buffer with the byte at the current VRAM address. Thus, after setting the VRAM address, one should first read this register to prime the pipeline and discard the result.
+                //Reading palette data from $3F00-$3FFF works differently. The palette data is placed immediately on the data bus, and hence no priming read is required. Reading the palettes still updates the internal buffer though, but the data placed in it is the mirrored nametable data that would appear "underneath" the palette.
+                Byte buffer = this->ppu->read_buffer;
+                this->ppu->read_buffer = this->ppu->getPPUDATA();
+                
+                Byte data_to_return = 0x00;
+                
+                if(this->ppu->vmem_addr <= 0x3EFF)
+                    data_to_return = buffer;
+                else
+                    data_to_return = this->ppu->read_buffer;
+                
+                //VRAM read/write data register. After access, the video memory address will increment by an amount determined by bit 2 of $2000.
+                //(0: add 1, going across; 1: add 32, going down)
+                if(this->ppu->getPPUCTRL() & 0x04)
+                    this->ppu->vmem_addr += 32;
+                else
+                    this->ppu->vmem_addr += 1;
+                
+                return data_to_return;
                 break;
                 
             //not all registers are readable

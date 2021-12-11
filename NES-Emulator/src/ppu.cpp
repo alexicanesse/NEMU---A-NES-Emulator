@@ -383,11 +383,13 @@ Byte PPU::read(Address addr){
 
 void PPU::clock(){
 #warning todo handle oddframes
-    
-    row++; //each cycle the ppu generate one pixel
-    
     graphics.DrawPixel(row, scanline, palette->at(rand() % 64));
 
+    row++; //each cycle the ppu generate one pixel
+    
+    
+
+    
     if(row == 361){
         row = 0;
         scanline++; //switch to next line

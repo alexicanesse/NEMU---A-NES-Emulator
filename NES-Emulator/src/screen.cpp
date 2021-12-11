@@ -27,7 +27,7 @@ GRAPHICS::~GRAPHICS(){
 
 
 void GRAPHICS::DrawPixel(int x, int y, Color c){
-//    SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.o);
+    SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.o);
     SDL_RenderDrawPoint(renderer, 2*x, 2*y);
     SDL_RenderDrawPoint(renderer, 2*x, 2*y + 1);
     SDL_RenderDrawPoint(renderer, 2*x + 1, 2*y);
