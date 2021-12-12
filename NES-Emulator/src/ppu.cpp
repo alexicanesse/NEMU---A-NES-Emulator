@@ -410,11 +410,12 @@ void PPU::write(Address addr, Byte content){
             }
         }
     }
-    else if (addr <= 0x3F1F){ //palette
+    else if (addr <= 0x3FFF){ //palette
         //The palette for the background runs from VRAM $3F00 to $3F0F; the palette for the sprites runs from $3F10 to $3F1F. Each color takes up one byte.
         //Addresses $3F04/$3F08/$3F0C can contain unique data, though these values are not used by the PPU when normally rendering (since the pattern values that would otherwise select those cells select the backdrop color instead).
         //Addresses $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C. Note that this goes for writing as well as reading.
-        this->Palette->at(addr & 0x00FF) = content;
+        //$3F20-$3FFF    $00E0    Mirrors of $3F00-$3F1F
+        this->Palette->at(addr & 0x001F) = content;
         switch (addr & 0x000F) {
             case 0x00:
                 this->Palette->at(0x00) = content;
@@ -465,7 +466,11 @@ Byte PPU::read(Address addr){
         return this->Nametable->at(4).at(addr & 0x03FF);
     }
     else if (addr <= 0x3F1F) //palette
-        return this->Palette->at(addr & 0x00FF);
+        //$3F20-$3FFF    $00E0    Mirrors of $3F00-$3F1F
+        return this->Palette->at(addr & 0x001F);
+    
+    //won't happend
+    return 0x00;
 }
 
 
