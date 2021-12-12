@@ -473,80 +473,115 @@ Byte PPU::read(Address addr){
     return 0x00;
 }
 
+//The shifters are reloaded during ticks 9, 17, 25, ..., 257.
+void PPU::shift(){ //shift shift registers so that the most significant bit is the data to fetch
+    this->pattern_data_shift_register_1 << 1;
+    this->pattern_data_shift_register_2 << 1;
+    this->palette_attribute_shift_register_1 << 1;
+    this->palette_attribute_shift_register_2 << 1;
+}
 
 
+#warning TODO
 void PPU::clock(){
+    //Background evaluation
+    //Conceptually, the PPU does this 33 times for each scanline:
+    //Fetch a nametable entry from $2000-$2FBF.
+    //Fetch the corresponding attribute table entry from $23C0-$2FFF and increment the current VRAM address within the same row.
+    //Fetch the low-order byte of an 8x1 pixel sliver of pattern table from $0000-$0FF7 or $1000-$1FF7.
+    //Fetch the high-order byte of this sliver from an address 8 bytes higher.
+    //Turn the attribute data and the pattern table data into palette indices, and combine them with data from sprite data using priority.
+    //It also does a fetch of a 34th (nametable, attribute, pattern) tuple that is never used
+    
+    
+    
     //https://wiki.nesdev.org/w/index.php?title=PPU_rendering
     //The PPU renders 262 scanlines per frame. Each scanline lasts for 341 PPU clock cycles (113.667 CPU clock cycles; 1 CPU cycle = 3 PPU cycles), with each clock cycle producing one pixel. The line numbers given here correspond to how the internal PPU frame counters count lines.
     
-    // Pre-render scanline (-1 or 261)
-    // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline. Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
-    // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames, the cycle at the end of the scanline is skipped
-    // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
-    if(this->scanline == -1){
+    
+    if(this->scanline <= 240){
+        //for more details see https://wiki.nesdev.org/w/index.php?title=File:Ntsc_timing.png
         
+        //Note: At the beginning of each scanline, the data for the first two tiles is already loaded into the shift registers (and ready to be rendered), so the first tile that gets fetched is Tile 3.
+        
+        // Pre-render scanline (-1 or 261)
+        // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline. Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
+        // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames, the cycle at the end of the scanline is skipped
+        // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
+        if(this->scanline == -1){
+            //Vertical blank has started (0: not in vblank; 1: in vblank).
+            //Set at dot 1 of line 241 (the line *after* the post-render
+            //line); cleared after reading $2002 and at dot 1 of the
+            //pre-render line.
+            if(row == 1)
+                this->registers.PPUSTATUS &= 0x7F;
+            
+            
+            if(!this->odd_frame){ //even frames
+#warning TODO
+            }
+            
+            if((this->row >= 280) & (this->row <= 304)){
+                //vert(v) = vert(t)
+            }
+        }
+        
+        //Cycle 0
+        //This is an idle cycle
+        else if((this->scanline == 0) & (row == 0)){
+            
+        }
+        
+        
+        //Vertical blank has started (0: not in vblank; 1: in vblank).
+        //Set at dot 1 of line 241 (the line *after* the post-render
+        //line); cleared after reading $2002 and at dot 1 of the
+        //pre-render line.
+        if((this->scanline == 241) & (row == 1))
+            this->registers.PPUSTATUS |= 0x80;
+        
+        
+        //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
+        if(((this->row <= 257) | (this->scanline >= row)) & (this->row != 0)){
+            //each opperation last for two cycles. Just like with the CPU, we're gonna do it at the first cycle and idle on the second one
+            switch (this->row % 8) {
+#warning TODO
+                case 1:
+                    //NT Byte
+                    break;
+                    
+                case 3:
+                    //AT Byte
+                    break;
+                    
+                case 5:
+                    //Low BG Byte tile
+                    break;
+                    
+                case 7:
+                    //High BG Byte tile
+                    break;
+                    
+                case 8:
+                    //inc. hori(v)
+                    break;
+                    
+                //opperation has already been executed
+                default:
+                    break;
+            }
+        }
+        
+        if(this->row == 257){
+            //hori(v) = hori(t)
+        }
+        
+    
     }
     
-    //Cycle 0
-    //This is an idle cycle
-    else if(this->scanline == 0){
-        
-    }
+
     
     
-    //Cycles 1-256
-    //The data for each tile is fetched during this phase. Each memory access takes 2 PPU cycles to complete, and 4 must be performed per tile:
-    //Nametable byte
-    //Attribute table byte
-    //Pattern table tile low
-    //Pattern table tile high (+8 bytes from pattern table tile low)
-    else if(this->scanline <= 256){
-        
-    }
-    
-    //Note: At the beginning of each scanline, the data for the first two tiles is already loaded into the shift registers (and ready to be rendered), so the first tile that gets fetched is Tile 3.
-    
-    //Cycles 257-320
-    //The tile data for the sprites on the next scanline are fetched here. Again, each memory access takes 2 PPU cycles to complete, and 4 are performed for each of the 8 sprites:
-    //Garbage nametable byte
-    //Garbage nametable byte
-    //Pattern table tile low
-    //Pattern table tile high (+8 bytes from pattern table tile low)
-    else if(this->scanline <= 320){
-        
-    }
-        
-        
-    //Cycles 321-336
-    //This is where the first two tiles for the next scanline are fetched, and loaded into the shift registers. Again, each memory access takes 2 PPU cycles to complete, and 4 are performed for the two tiles:
-    //Nametable byte
-    //Attribute table byte
-    //Pattern table tile low
-    //Pattern table tile high (+8 bytes from pattern table tile low)
-    else if(this->scanline <= 336){
-        
-    }
-    
-    //Cycles 337-340
-    //Two bytes are fetched, but the purpose for this is unknown. These fetches are 2 PPU cycles each.
-    //Both of the bytes fetched here are the same nametable byte that will be fetched at the beginning of the next scanline (tile 3, in other words).
-    else if(this->scanline <= 340){
-        
-    }
-    
-    //Post-render scanline (240)
-    //The PPU just idles during this scanline. Even though accessing PPU memory from the program would be safe here, the VBlank flag isn't set until after this scanline.
-    else if(this->scanline == 240){
-        
-    }
-    
-    //Vertical blanking lines (241-260)
-    //The VBlank flag of the PPU is set at tick 1 (the second tick) of scanline 241, where the VBlank NMI also occurs. The PPU makes no memory accesses during these scanlines, so PPU memory can be freely accessed by the program.
-    else if(this->scanline <= 260){
-        
-    }
-    
-#warning todo handle oddframes
     graphics.DrawPixel(row, scanline, palette->at(rand() % 64));
 
     row++; //each cycle the ppu generate one pixel

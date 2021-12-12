@@ -35,6 +35,7 @@ private:
     */
     int scanline = 0;
     int row = 0;
+
     
     /*
      Registers
@@ -66,6 +67,19 @@ private:
     std::array<std::array<Byte, 0x0400>, 4> *Nametable = new std::array<std::array<Byte, 0x0400>, 4>;
     std::array<Byte, 0x0020> *Palette = new std::array<Byte, 0x0020>;
     std::array<GRAPHICS::Color,64> *palette = new std::array<GRAPHICS::Color,64>; //all available colors
+    
+    
+    //background rendering
+    //2 16-bit shift registers - These contain the pattern table data for two tiles. Every 8 cycles, the data for the next tile is loaded into the upper 8 bits of this shift register. Meanwhile, the pixel to render is fetched from one of the lower 8 bits.
+    Address pattern_data_shift_register_1 = 0x0000;
+    Address pattern_data_shift_register_2 = 0x0000;
+    //2 8-bit shift registers - These contain the palette attributes for the lower 8 pixels of the 16-bit shift register. These registers are fed by a latch which contains the palette attribute for the next tile. Every 8 cycles, the latch is loaded with the palette attribute for the next tile.
+    Address palette_attribute_shift_register_1 = 0x00;
+    Address palette_attribute_shift_register_2 = 0x00;
+    
+    void shift();
+    
+    
 public:
     /*
         Constructor
@@ -97,7 +111,24 @@ public:
     void setOAMDMA(Byte);     //get OAM DMA register (high byte)
     
     
+    
+    //The 15 bit registers t and v are composed this way during rendering:
+        //yyy NN YYYYY XXXXX
+        //||| || ||||| +++++-- coarse X scroll
+        //||| || +++++-------- coarse Y scroll
+        //||| ++-------------- nametable select
+        //+++----------------- fine Y scroll
+    //Current VRAM address (15 bits)
     Address vmem_addr = 0x0000;
+    //Temporary VRAM address (15 bits); can also be thought of as the address of the top left onscreen tile.
+    Address addr_t = 0x00;
+    //Fine X scroll (3 bits)
+    Byte fine_x_scroll = 0x00;
+    //First or second write toggle (1 bit)
+    bool write_toggle = false;
+    
+    
+    
     Byte read_buffer = 0x00;
     
     /*
