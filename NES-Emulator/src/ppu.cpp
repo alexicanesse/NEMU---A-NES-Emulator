@@ -318,6 +318,7 @@ Byte PPU::getOAMDMA(){
     return this->registers.OAMDMA;
 }
 
+#warning i need to check this later 
 //set PPU control register
 void PPU::setPPUCTRL(Byte data){
     this->registers.PPUCTRL = data;
@@ -355,28 +356,116 @@ void PPU::setOAMDMA(Byte data){
     this->registers.OAMDMA = data;
 }
 
-#warning TODO
+
 void PPU::write(Address addr, Byte content){
-    
+    //The pattern table is divided into two 256-tile sections: $0000-$0FFF, nicknamed "left", and $1000-$1FFF, nicknamed "right". The nicknames come from how emulators with a debugger display the pattern table. Traditionally, they are displayed as two side-by-side 128x128 pixel sections, each representing 16x16 tiles from the pattern table, with $0000-$0FFF on the left and $1000-$1FFF on the right.
+    if(addr <= 0x1FFF) //tablepattern
+        switch (addr & 0x1000) {
+            case 0:
+                this->Pattern_table->at(0).at(addr) = content;
+                break;
+                
+            case 0x1000:
+                this->Pattern_table->at(1).at(addr & 0xFFF) = content;
+                break;
+        }
+    else if(addr <= 0X3EFF){ //nametables
+    //    (0,0)     (256,0)     (511,0)
+    //       +-----------+-----------+
+    //       |           |           |
+    //       |           |           |
+    //       |   $2000   |   $2400   |
+    //       |           |           |
+    //       |           |           |
+    //(0,240)+-----------+-----------+(511,240)
+    //       |           |           |
+    //       |           |           |
+    //       |   $2800   |   $2C00   |
+    //       |           |           |
+    //       |           |           |
+    //       +-----------+-----------+
+    //     (0,479)   (256,479)   (511,479)
+    //    The NES has four logical nametables, arranged in a 2x2 pattern. Each occupies a 1 KiB chunk of PPU address space, starting at $2000 at the top left, $2400 at the top right, $2800 at the bottom left, and $2C00 at the bottom right.
+    //    But the NES system board itself has only 2 KiB of VRAM (called CIRAM, stored in a separate SRAM chip), enough for two physical nametables; hardware on the cartridge controls address bit 10 of CIRAM to map one nametable on top of another.
+    //    Vertical mirroring: $2000 equals $2800 and $2400 equals $2C00 (e.g. Super Mario Bros.)
+    //    Horizontal mirroring: $2000 equals $2400 and $2800 equals $2C00 (e.g. Kid Icarus)
+        if(this->nes->cartridge->mirroring_v){ //vertical mirroring
+            if((addr & 0x07FF) <= 0x400){
+                this->Nametable->at(0).at(addr & 0x0FFF) = content;
+                this->Nametable->at(2).at(addr & 0x0FFF) = content;
+            }
+            else{
+                this->Nametable->at(1).at(addr & 0x0FFF) = content;
+                this->Nametable->at(3).at(addr & 0x0FFF) = content;
+            }
+        }
+        else{ //horizontal mirroring
+            if((addr & 0x07FF) <= 0x400){
+                this->Nametable->at(0).at(addr & 0x07FF) = content;
+                this->Nametable->at(1).at(addr & 0x07FF) = content;
+            }
+            else{
+                this->Nametable->at(2).at(addr & 0x07FF) = content;
+                this->Nametable->at(3).at(addr & 0x07FF) = content;
+            }
+        }
+    }
+    else if (addr <= 0x3F1F){ //palette
+        //The palette for the background runs from VRAM $3F00 to $3F0F; the palette for the sprites runs from $3F10 to $3F1F. Each color takes up one byte.
+        //Addresses $3F04/$3F08/$3F0C can contain unique data, though these values are not used by the PPU when normally rendering (since the pattern values that would otherwise select those cells select the backdrop color instead).
+        //Addresses $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C. Note that this goes for writing as well as reading.
+        this->Palette->at(addr & 0x00FF) = content;
+        switch (addr & 0x000F) {
+            case 0x00:
+                this->Palette->at(0x00) = content;
+                this->Palette->at(0x10) = content;
+                break;
+                
+            case 0x04:
+                this->Palette->at(0x04) = content;
+                this->Palette->at(0x14) = content;
+                break;
+                
+            case 0x08:
+                this->Palette->at(0x08) = content;
+                this->Palette->at(0x18) = content;
+                break;
+                
+            case 0x0C:
+                this->Palette->at(0x08) = content;
+                this->Palette->at(0x1C) = content;
+                break;
+                
+            default:
+                break;
+        }
+    }
 }
 
-#warning TODO
 Byte PPU::read(Address addr){
-    if(addr <= 0x0FFF)
-        return this->Pattern_table->at(0).at(addr);
-    else if(addr <= 0x1FFF)
-        return this->Pattern_table->at(1).at(addr & 0x0FFF);
-    else if(addr <= 0x23FF)
-        return this->Nametable->at(0).at(addr - 0x2000);
-    else if(addr <= 0x27FF)
-        return this->Nametable->at(1).at(addr - 0x2400);
-    else if(addr <= 0x2BFF)
-        return this->Nametable->at(2).at(addr - 0x2800);
-    else if(addr <= 0x2FFF)
-        return this->Nametable->at(2).at(addr - 0x2C00);
-    else if(addr <= 0x3EFF)
-        return this->read(addr - 0x1000);
-    else return 0x00;
+    //The pattern table is divided into two 256-tile sections: $0000-$0FFF, nicknamed "left", and $1000-$1FFF, nicknamed "right". The nicknames come from how emulators with a debugger display the pattern table. Traditionally, they are displayed as two side-by-side 128x128 pixel sections, each representing 16x16 tiles from the pattern table, with $0000-$0FFF on the left and $1000-$1FFF on the right.
+    if(addr <= 0x1FFF) //tablepattern
+        switch (addr & 0x1000) {
+            case 0:
+                return this->Pattern_table->at(0).at(addr);
+                break;
+                
+            case 0x1000:
+                return this->Pattern_table->at(1).at(addr & 0xFFF);
+                break;
+                
+            default: //won't happend
+                return 0x00;
+                break;
+        }
+    else if(addr <= 0X3EFF){ //nametables
+        if(addr < 0x2400) return this->Nametable->at(0).at(addr & 0x03FF);
+        if(addr < 0x2800) return this->Nametable->at(1).at(addr & 0x03FF);
+        if(addr < 0xC200) return this->Nametable->at(3).at(addr & 0x03FF);
+        return this->Nametable->at(4).at(addr & 0x03FF);
+    }
+    else if (addr <= 0x3F1F) //palette
+        return this->Palette->at(addr & 0x00FF);
 }
 
 

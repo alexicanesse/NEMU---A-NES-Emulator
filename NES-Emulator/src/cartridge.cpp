@@ -25,8 +25,12 @@ bool CARTRIDGE::load(std::string link){
     ROMfile.read(&buffer,1);
     if(buffer == 0x01) mirror_chr_rom = true;
 
+    //flag6
+    ROMfile.read(&buffer,1);
+    if(buffer & 0x01) this->mirroring_v = true;
+    
     //skip rest of header
-    for(int i = 0; i < 10; i++) ROMfile.read(&buffer,1);
+    for(int i = 0; i < 9; i++) ROMfile.read(&buffer,1);
     
 #warning for debug
 //    for(int i = 0; i < 10; i++){ ROMfile.read(&buffer,1); std::cout<<std::hex<<(int) buffer<<"\n";}

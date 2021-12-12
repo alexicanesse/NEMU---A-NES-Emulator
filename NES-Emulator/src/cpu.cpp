@@ -1236,6 +1236,7 @@ bool CPU::STA(){
     this->nes->write(this->data_to_read, this->registers.r_A);
     return false;
 }
+
 //Store Index Register X In Memory
 bool CPU::STX(){
     this->nes->write(this->data_to_read, this->registers.r_iX);

@@ -39,11 +39,12 @@ private:
     /*
      Registers
     */
-#warning TODO init reg
+    //power-up state
+    //https://wiki.nesdev.org/w/index.php?title=PPU_power_up_state
     struct registers {
         Byte PPUCTRL = 0x00; // Address 0x2000       PPU control register
         Byte PPUMASK = 0x00; // Address 0x2001       PPU mask register
-        Byte PPUSTATUS = 0x00; // Address 0x2002     PPU status register
+        Byte PPUSTATUS = 0xC0; // Address 0x2002     PPU status register
         Byte OAMADDR = 0x00; // Address 0x2003       OAM address port
         Byte OAMDATA = 0x00; // Address 0x2004       OAM data port
         Byte PPUSCROLL = 0x00; // Address 0x2005     PPU scrolling position register
@@ -63,11 +64,8 @@ private:
     //https://wiki.nesdev.org/w/index.php?title=PPU_memory_map
     std::array<std::array<Byte, 0x1000>, 2> *Pattern_table = new std::array<std::array<Byte, 0x1000>, 2>; //pattern table 0 and 1
     std::array<std::array<Byte, 0x0400>, 4> *Nametable = new std::array<std::array<Byte, 0x0400>, 4>;
+    std::array<Byte, 0x0020> *Palette = new std::array<Byte, 0x0020>;
     std::array<GRAPHICS::Color,64> *palette = new std::array<GRAPHICS::Color,64>; //all available colors
-    /*
-     Other
-    */
-    Byte read_buffer = 0x00;
 public:
     /*
         Constructor
@@ -100,6 +98,7 @@ public:
     
     
     Address vmem_addr = 0x0000;
+    Byte read_buffer = 0x00;
     
     /*
      chrROM

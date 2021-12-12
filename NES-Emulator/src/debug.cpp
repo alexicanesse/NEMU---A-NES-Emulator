@@ -77,7 +77,7 @@ void logging(CPU cpu){
     log << "\n" << std::hex << cpu.get_register_PC() << "  CYC:" << std::dec << cpu.cycles << std::hex << "  A:" << (int) cpu.get_register_A() << "  X:" << (int) cpu.get_register_X() << "  Y:" << (int) cpu.get_register_Y() << "  Stack:" << std::hex << (int) cpu.get_register_SP() << "  opcode: 0x" << (int) cpu.opcode;
     
 #warning debug
-    log << " 0xFFFD 0xFFFC: " << std::hex << (int) ((cpu.nes->read(0xFFFD) << 8) + cpu.nes->read(0xFFFC));
+//    log << " 0xFFFD 0xFFFC: " << std::hex << (int) ((cpu.nes->read(0xFFFD) << 8) + cpu.nes->read(0xFFFC));
     log.close();
 }
 
@@ -89,8 +89,8 @@ int main(){
     CARTRIDGE *cartridge = nes.cartridge;
     
     
-//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
-    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
+    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
+//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
         std::cout << "AHHHHHHHHH";
         return 0;
     }
@@ -104,21 +104,20 @@ int main(){
     logging(*cpu);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-        for(int x= 0; x<256; x++){
-            for(int y = 0; y <240000; y++){
+        for(int x= 0; x<500000; x++){
+            for(int y = 0; y <1; y++){
 
 //                ppu->clock();
                 if((x+y) %3 == 0){
                     cpu->clock();
-                    show_state(*cpu, *nes.ram, *ppu);
-                    refresh();
+//                    show_state(*cpu, *nes.ram, *ppu);
+//                    refresh();
                     if(cpu->rem_cycles == 0){
                         logging(*cpu);
                     }
+//                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
                 }
             }
-
-//            std::this_thread::sleep_for(std::chrono::milliseconds(600));
     }
     
     

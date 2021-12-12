@@ -41,30 +41,33 @@ void NES::write(Address adr, Byte content){
             case 1: //ppumask
                 this->ppu->setPPUMASK(content);
                 break;
-                
-            case 2:
-                this->ppu->setPPUSTATUS(content);
-                break;
-                
+  
+#warning TODO
             case 3:
-                this->ppu->setOAMADDR(content);
                 break;
-               
+#warning TODO
             case 4:
-                this->ppu->setOAMDATA(content);
                 break;
+#warning TODO
+            case 5:{
+                break;
+            }
+#warning TODO
+            case 6:{
+                break;
+            }
                 
-            case 5:
-                this->ppu->setPPUSCROLL(content);
-                break;
+            case 7:{
+                this->ppu->write(this->ppu->vmem_addr, content);
                 
-            case 6:
-                this->ppu->setPPUADDR(content);
+                //VRAM read/write data register. After access, the video memory address will increment by an amount determined by bit 2 of $2000.
+                //(0: add 1, going across; 1: add 32, going down)
+                if(this->ppu->getPPUCTRL() & 0x04)
+                    this->ppu->vmem_addr += 32;
+                else
+                    this->ppu->vmem_addr += 1;
                 break;
-                
-            case 7:
-                this->ppu->setPPUDATA(content);
-                break;
+            }
                 
             //some registers are write-only
             default:
@@ -87,29 +90,29 @@ Byte NES::read(Address addr){
     else if(addr <= 0x3FFF){
         //The PPU exposes eight memory-mapped registers to the CPU. These nominally sit at $2000 through $2007 in the CPU's address space, but because they're incompletely decoded, they're mirrored in every 8 bytes from $2008 through $3FFF, so a write to $3456 is the same as a write to $2006.
         switch (addr % 8) {
-            case 2:
+            case 2:{
                 Byte buffer = this->ppu->getPPUSTATUS(); //reading the register affect it's value
                 this->ppu->setPPUSTATUS(buffer & 0x7F); //Reading the status register will clear bit 7
-                this->address_latch = 0x00;  //Reading the status register will clear the address latch used by PPUSCROLL and PPUADDR.
+                this->ppu->address_latch = 0x00;  //Reading the status register will clear the address latch used by PPUSCROLL and PPUADDR.
                 return buffer;
                 break;
-                
-            case 3:
+            }
 #warning TODO
+            case 3:{
                 return this->ppu->getOAMADDR();
                 break;
-               
-            case 4:
+            }
 #warning TODO
+            case 4:{
                 return this->ppu->getOAMDATA();
                 break;
+            }
                 
-            case 7:
-                
+            case 7:{
                 //When reading while the VRAM address is in the range 0-$3EFF (i.e., before the palettes), the read will return the contents of an internal read buffer. This internal buffer is updated only when reading PPUDATA, and so is preserved across frames. After the CPU reads and gets the contents of the internal buffer, the PPU will immediately update the internal buffer with the byte at the current VRAM address. Thus, after setting the VRAM address, one should first read this register to prime the pipeline and discard the result.
                 //Reading palette data from $3F00-$3FFF works differently. The palette data is placed immediately on the data bus, and hence no priming read is required. Reading the palettes still updates the internal buffer though, but the data placed in it is the mirrored nametable data that would appear "underneath" the palette.
                 Byte buffer = this->ppu->read_buffer;
-                this->ppu->read_buffer = this->ppu->getPPUDATA();
+                this->ppu->read_buffer = this->ppu->read(this->ppu->vmem_addr);
                 
                 Byte data_to_return = 0x00;
                 
@@ -127,6 +130,7 @@ Byte NES::read(Address addr){
                 
                 return data_to_return;
                 break;
+            }
                 
             //not all registers are readable
             default:

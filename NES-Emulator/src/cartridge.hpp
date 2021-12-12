@@ -24,6 +24,7 @@ private:
 public:
     bool mirror_prgrom = false;
     bool mirror_chr_rom = false;
+    bool mirroring_v = false;
     
     //addresses 0x0000 ~ 0x7FFF are useless
     std::array<Byte, 0xFFFF + 1> *prgROM = new std::array<Byte, 0xFFFF + 1>; //prg ROM + prg RAM
