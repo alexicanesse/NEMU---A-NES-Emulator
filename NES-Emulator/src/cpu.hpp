@@ -43,7 +43,7 @@ private:
         Byte r_iY = 0;   //index register Y
         //Memory space [0x0100 - 0x01FF] is used for stack. The stack pointer holds the address of the top of that space
         //It grows from top to bottom
-        Byte r_SP = 0xFD;   //stack pointer
+        Byte r_SP = 0xFF;   //stack pointer
         Address r_PC = 0x0000; //program counter (PC)
         //While there are only six flags in the processor status register within the CPU, when transferred to the stack, there are two additional bits. These do not represent a register that can hold a value but can be used to distinguish how the flags were pushed.
         Byte nv_bdizc = 0b00100000; //Processor status register
@@ -159,7 +159,7 @@ private:
     
     //ctrl
 #warning TODO
-    bool BRK(); //Break Command
+    //Break Command (in interuptions)
     bool JMP(); //JMP Indirect
     bool JSR(); //Jump To Subroutine
     bool RTI(); //Return From Interrupt
@@ -224,7 +224,12 @@ public:
     Byte get_register_SP();
     Address get_register_PC();
     
-    #warning TODO
+    /*
+    Interruptions
+    */
+    void IRQ();
+    void NMI();
+    bool BRK();
     void reset();
     
     /*
@@ -234,7 +239,7 @@ public:
     uint64_t opcode = 0x00;
     void clock();
     int rem_cycles = 0;
-    int cycles = 7; //Total number of cycles start at 7 because of init
+    int cycles = 1; //Total number of cycles start at 7 because of init
 };
 
 

@@ -246,11 +246,99 @@ bool CPU::REL(){
         return false;
 }
 
-#warning it's just a test
+#warning TODO cycle by cycle
+/*
+Interruptions
+*/
+void CPU::IRQ(){
+    this->rem_cycles = 6;
+    
+    //1    PC     R  fetch opcode (and discard it - $00 (BRK) is forced into the opcode register instead)
+    this->opcode = 0x00;
+    //2    PC     R  read next instruction byte (actually the same as above, since PC increment is suppressed. Also discarded.)
+    
+    //3  $0100,S  W  push PCH on stack, decrement S
+    
+    //0x0100 to offset
+    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) >> 8); //high
+    //4  $0100,S  W  push PCL on stack, decrement S
+    
+    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) & 0x00FF); //low
+    this->registers.r_SP--;
+    //*** At this point, the signal status determines which interrupt vector is used ***
+    //5  $0100,S  W  push P on stack (with B flag *clear*), decrement S
+    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc & 0xFB);
+    this->registers.r_SP--;
+    //6   A       R  fetch PCL (A = FFFE for IRQ, A = FFFA for NMI), set I flag
+    this->registers.r_PC = this->nes->read(0xFFFE);
+    this->registers.nv_bdizc |= 0x04;
+    //7   A       R  fetch PCH (A = FFFF for IRQ, A = FFFB for NMI)
+    this->registers.r_PC |= (this->nes->read(0xFFFF) << 8);
+}
+void CPU::NMI(){
+    this->rem_cycles = 6;
+    
+    //1    PC     R  fetch opcode (and discard it - $00 (BRK) is forced into the opcode register instead)
+    this->opcode = 0x00;
+    //2    PC     R  read next instruction byte (actually the same as above, since PC increment is suppressed. Also discarded.)
+    
+    //3  $0100,S  W  push PCH on stack, decrement S
+    
+    //0x0100 to offset
+    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) >> 8); //high
+    this->registers.r_SP--;
+    //4  $0100,S  W  push PCL on stack, decrement S
+    
+    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) & 0x00FF); //low
+    this->registers.r_SP--;
+    //*** At this point, the signal status determines which interrupt vector is used ***
+    //5  $0100,S  W  push P on stack (with B flag *clear*), decrement S
+    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc & 0xFB);
+    //6   A       R  fetch PCL (A = FFFE for IRQ, A = FFFA for NMI), set I flag
+    this->registers.r_PC = this->nes->read(0xFFFA);
+    this->registers.nv_bdizc |= 0x04;
+    //7   A       R  fetch PCH (A = FFFF for IRQ, A = FFFB for NMI)
+    this->registers.r_PC |= (this->nes->read(0xFFFB) << 8);
+}
+
+bool CPU::BRK(){ //return type is bool because BRK is also an instruction
+    //1    PC     R  fetch opcode, increment PC
+    this->registers.r_PC++;
+    //2    PC     R  read next instruction byte (and throw it away),
+    //               increment PC
+    this->registers.r_PC++;
+    //3  $0100,S  W  push PCH on stack, decrement S
+    
+    //0x0100 to offset
+    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) >> 8); //high
+    this->registers.r_SP--;
+    //4  $0100,S  W  push PCL on stack, decrement S
+    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) & 0x00FF); //low
+    this->registers.r_SP--;
+    //*** At this point, the signal status determines which interrupt vector is used ***
+    //5  $0100,S  W  push P on stack (with B flag set), decrement S
+    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc | 0x14);
+    this->registers.r_SP--;
+    //6   $FFFE   R  fetch PCL, set I flag
+    this->registers.r_PC = this->nes->read(0xFFFE);
+    this->registers.nv_bdizc |= 0x04;
+    //7   $FFFF   R  fetch PCH
+    this->registers.r_PC |= (this->nes->read(0xFFFF) << 8);
+    
+    return false;
+}
+
+//A reset also goes through the same sequence [as NMI], but suppresses writes, decrementing the stack pointer thrice without modifying memory. This is why the I flag is always set on reset.
 void CPU::reset(){
-    this->registers.r_PC = this->nes->read(0xFFFC) | (this->nes->read(0xFFFD) << 8);
-    this->setflag(0x20, true);
-    this->setflag(0x04, true);
+    this->rem_cycles = 6;
+    
+    this->opcode = 0x00;
+    this->registers.r_SP--;
+    this->registers.r_SP--;
+    this->registers.r_SP--;
+    this->registers.r_PC = this->nes->read(0xFFFC);
+    this->registers.nv_bdizc |= 0x04;
+    this->registers.r_PC |= (this->nes->read(0xFFFD) << 8);
 }
 
 CPU::CPU(NES *nes){
@@ -1598,20 +1686,7 @@ bool CPU::INY(){
 //ctrl
 #warning NOT TESTED I DO NOT KNOW IF IT IS WORKING PROPERLY
 //Break Command
-bool CPU::BRK(){
-    //0x0100 to offset
-    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) >> 8); //high
-    this->registers.r_SP--;
-    
-    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) & 0x00FF); //low
-    this->registers.r_SP--;
-    
-    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc | 0x14);
-    
-    this->registers.r_PC = this->nes->read(0xFFFE) | (this->nes->read(0xFFFF) << 8);
-    
-    return false;
-}
+//BRK's implementation is above with other interuptions
 //JMP Indirect
 bool CPU::JMP(){
     this->registers.r_PC = this->data_to_read;

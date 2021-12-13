@@ -41,7 +41,7 @@ bool CARTRIDGE::load(std::string link){
             ROMfile.read(&buffer,1);
             this->prgROM->at(pos) = (Byte) buffer;
             this->prgROM->at(pos + 0xC000 - 0x8000) = (Byte) buffer;
-            std::cout << std::hex << (int) pos + 0xC000 - 0x8000 << "  " << (int) this->prgROM->at(pos) << (int) this->prgROM->at(pos + 0xC000 - 0x8000) << "\n";
+//            std::cout << std::hex << (int) pos + 0xC000 - 0x8000 << "  " << (int) this->prgROM->at(pos) << (int) this->prgROM->at(pos + 0xC000 - 0x8000) << "\n";
         }
     }
     else{
