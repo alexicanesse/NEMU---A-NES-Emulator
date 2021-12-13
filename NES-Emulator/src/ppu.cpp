@@ -475,10 +475,10 @@ Byte PPU::read(Address addr){
 
 //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
 void PPU::shift(){ //shift shift registers so that the most significant bit is the data to fetch
-    this->pattern_data_shift_register_1 << 1;
-    this->pattern_data_shift_register_2 << 1;
-    this->palette_attribute_shift_register_1 << 1;
-    this->palette_attribute_shift_register_2 << 1;
+    this->pattern_data_shift_register_1 = this->pattern_data_shift_register_1 << 1;
+    this->pattern_data_shift_register_2 = this->pattern_data_shift_register_2 << 1;
+    this->palette_attribute_shift_register_1 = this->palette_attribute_shift_register_1 << 1;
+    this->palette_attribute_shift_register_2 = this->palette_attribute_shift_register_2 << 1;
 }
 
 
@@ -517,19 +517,9 @@ void PPU::clock(){
                 this->registers.PPUSTATUS &= 0x7F;
             
             
-            if(!this->odd_frame){ //even frames
-#warning TODO
-            }
-            
             if((this->row >= 280) & (this->row <= 304)){
                 //vert(v) = vert(t)
             }
-        }
-        
-        //Cycle 0
-        //This is an idle cycle
-        else if((this->scanline == 0) & (row == 0)){
-            
         }
         
         
@@ -542,29 +532,32 @@ void PPU::clock(){
         
         
         //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
-        if(((this->row <= 257) | (this->scanline >= row)) & (this->row != 0)){
+        if(((this->row <= 257) | (this->row >= 321)) & (this->row != 0)){
+            shift();
+            
             //each opperation last for two cycles. Just like with the CPU, we're gonna do it at the first cycle and idle on the second one
             switch (this->row % 8) {
+#warning TODO
+                case 0:
+                    //inc. hori(v)
+                    break;
 #warning TODO
                 case 1:
                     //NT Byte
                     break;
-                    
+#warning TODO
                 case 3:
                     //AT Byte
                     break;
-                    
+#warning TODO
                 case 5:
                     //Low BG Byte tile
                     break;
-                    
+#warning TODO
                 case 7:
                     //High BG Byte tile
                     break;
                     
-                case 8:
-                    //inc. hori(v)
-                    break;
                     
                 //opperation has already been executed
                 default:
@@ -585,19 +578,27 @@ void PPU::clock(){
     graphics.DrawPixel(row, scanline, palette->at(rand() % 64));
 
     row++; //each cycle the ppu generate one pixel
-    
-    
 
-    
-    if(row == 361){
-        row = 0;
-        scanline++; //switch to next line
+    if(this->row == 361){
+        this->row = 0;
         
-        if(scanline == 261){
-            scanline = -1; //return to beggining
+        this->scanline++; //switch to next line
+        if(this->scanline == 261){
+            this->scanline = -1; //return to pre-render scanline
+            
+            this->odd_frame = !this->odd_frame;
+            if(this->odd_frame)
+                this->row = 1; //first cycle is skiped on odd frames
+            
+            
+            
+            //DRAW
             SDL_PollEvent(&event);  // Catching the poll event.
             if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
             else graphics.update();
         }
+        
+
+
     }
 }

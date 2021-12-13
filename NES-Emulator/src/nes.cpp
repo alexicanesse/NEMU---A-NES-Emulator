@@ -24,7 +24,6 @@ NES::NES(){
 /*
     Read/Write Memory
 */
-#warning bool useless
 void NES::write(Address adr, Byte content){
     if(adr <= 0x1FFF){
         //if we try to write the mirros, we juste write there
@@ -48,12 +47,44 @@ void NES::write(Address adr, Byte content){
 #warning TODO
             case 4:
                 break;
-#warning TODO
+                
             case 5:{
+                //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
+                //t: ....... ...ABCDE <- d: ABCDE...
+                //x:              FGH <- d: .....FGH
+                //w:                  <- 1
+                if(!this->ppu->write_toggle){//first write
+                    this->ppu->addr_t = (this->ppu->addr_t & 0xFFE0) | (content >> 3);
+                    this->ppu->fine_x_scroll = content & 0x07;
+                    this->ppu->write_toggle = true;
+                }
+                //t: FGH..AB CDE..... <- d: ABCDEFGH
+                //w:                  <- 0
+                else{//second write
+                    this->ppu->addr_t = ((((content & 0x07) << 12) | (this->ppu->addr_t & 0x0FFF)) & 0xFC1F) | ((content & 0xF8) << 5);
+                    this->ppu->write_toggle = false;
+                }
                 break;
             }
-#warning TODO
+
             case 6:{
+                //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
+                //t: .CDEFGH ........ <- d: ..CDEFGH
+                //       <unused>     <- d: AB......
+                //t: Z...... ........ <- 0 (bit Z is cleared)
+                //w:                  <- 1
+                if(!this->ppu->write_toggle){//first write
+                    this->ppu->addr_t = (this->ppu->addr_t & 0x00FF) | ((content & 0x3F) << 8);
+                    this->ppu->write_toggle = true;
+                }
+                //t: ....... ABCDEFGH <- d: ABCDEFGH
+                //v: <...all bits...> <- t: <...all bits...>
+                //w:                  <- 0
+                else{//second write
+                    this->ppu->addr_t = (this->ppu->addr_t & 0xFF00) | content;
+                    this->ppu->vmem_addr = this->ppu->addr_t;
+                    this->ppu->write_toggle = false;
+                }
                 break;
             }
                 
@@ -77,8 +108,6 @@ void NES::write(Address adr, Byte content){
     else if (adr <= 0x4020){
     #warning TODO write APU/IO
     }
-#warning DO NOT WRITE ROM
-    
 }
 
 
@@ -93,7 +122,7 @@ Byte NES::read(Address addr){
             case 2:{
                 Byte buffer = this->ppu->getPPUSTATUS(); //reading the register affect it's value
                 this->ppu->setPPUSTATUS(buffer & 0x7F); //Reading the status register will clear bit 7
-                this->ppu->address_latch = 0x00;  //Reading the status register will clear the address latch used by PPUSCROLL and PPUADDR.
+                this->ppu->write_toggle = false;  //Reading the status register will clear the address latch used by PPUSCROLL and PPUADDR.
                 return buffer;
                 break;
             }

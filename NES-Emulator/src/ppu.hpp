@@ -140,7 +140,7 @@ public:
     /*
      Other
     */
-    Byte address_latch = 0x00;
+//    Byte address_latch = 0x00;
     NES *nes;
     void clock();
 };

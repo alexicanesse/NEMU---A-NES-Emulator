@@ -107,7 +107,7 @@ int main(){
         for(int x= 0; x<500000; x++){
             for(int y = 0; y <1; y++){
 
-//                ppu->clock();
+                ppu->clock();
                 if((x+y) %3 == 0){
                     cpu->clock();
 //                    show_state(*cpu, *nes.ram, *ppu);
