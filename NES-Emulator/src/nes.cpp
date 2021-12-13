@@ -30,11 +30,13 @@ void NES::write(Address adr, Byte content){
         this->ram->at(adr & 0x07FF) = content;
     }
     else if(adr <= 0x3FFF){
-#warning TODO
         //The PPU exposes eight memory-mapped registers to the CPU. These nominally sit at $2000 through $2007 in the CPU's address space, but because they're incompletely decoded, they're mirrored in every 8 bytes from $2008 through $3FFF, so a write to $3456 is the same as a write to $2006.
         switch (adr % 8) {
             case 0: //ppuctrl
                 this->ppu->setPPUCTRL(content);
+                //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
+                //t: ...GH.. ........ <- d: ......GH
+                this->ppu->addr_t = (this->ppu->addr_t & 0xFCFF) | ((content & 0x02) << 8);
                 break;
                 
             case 1: //ppumask

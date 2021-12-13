@@ -535,11 +535,20 @@ void PPU::clock(){
         if(((this->row <= 257) | (this->row >= 321)) & (this->row != 0)){
             shift();
             
-            //each opperation last for two cycles. Just like with the CPU, we're gonna do it at the first cycle and idle on the second one
+            //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
+            //The high bits of v are used for fine Y during rendering, and addressing nametable data only requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region. The address to be fetched during rendering can be deduced from v in the following way:
+            //tile address      = 0x2000 | (v & 0x0FFF)
+            //attribute address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07)
+            
+            //each opperation last for two cycles. Just like with the CPU, we're gonna do it on the first cycle and idle on the second one
             switch (this->row % 8) {
-#warning TODO
-                case 0:
-                    //inc. hori(v)
+                case 0: //inc. hori(v)
+                    if((this->vmem_addr & 0x001F) == 31){ //last tile on that line
+                        this->vmem_addr &= 0xFFE0;        //coarse X = 0
+                        this->vmem_addr ^= 0x0400;        //switch horizontal nametable
+                    }
+                    else
+                        this->vmem_addr++;                // increment coarse X
                     break;
 #warning TODO
                 case 1:
@@ -575,25 +584,25 @@ void PPU::clock(){
 
     
     
-    graphics.DrawPixel(row, scanline, palette->at(rand() % 64));
+    graphics.DrawPixel(row, scanline, palette->at(rand() % 0x3F));
 
-    row++; //each cycle the ppu generate one pixel
+    row++;                                   //each cycle the ppu generate one pixel
 
     if(this->row == 361){
         this->row = 0;
         
-        this->scanline++; //switch to next line
+        this->scanline++;                    //switch to next line
         if(this->scanline == 261){
-            this->scanline = -1; //return to pre-render scanline
+            this->scanline = -1;             //return to pre-render scanline
             
             this->odd_frame = !this->odd_frame;
             if(this->odd_frame)
-                this->row = 1; //first cycle is skiped on odd frames
+                this->row = 1;               //first cycle is skiped on odd frames
             
             
             
             //DRAW
-            SDL_PollEvent(&event);  // Catching the poll event.
+            SDL_PollEvent(&event);           // Catching the poll event.
             if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
             else graphics.update();
         }

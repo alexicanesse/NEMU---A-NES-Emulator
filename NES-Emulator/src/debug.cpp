@@ -112,9 +112,9 @@ int main(){
                     cpu->clock();
 //                    show_state(*cpu, *nes.ram, *ppu);
 //                    refresh();
-                    if(cpu->rem_cycles == 0){
-                        logging(*cpu);
-                    }
+//                    if(cpu->rem_cycles == 0){
+//                        logging(*cpu);
+//                    }
 //                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
                 }
             }
