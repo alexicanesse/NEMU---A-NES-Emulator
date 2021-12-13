@@ -318,7 +318,6 @@ Byte PPU::getOAMDMA(){
     return this->registers.OAMDMA;
 }
 
-#warning i need to check this later 
 //set PPU control register
 void PPU::setPPUCTRL(Byte data){
     this->registers.PPUCTRL = data;
@@ -481,8 +480,6 @@ void PPU::shift(){ //shift shift registers so that the most significant bit is t
     this->palette_attribute_shift_register_2 = this->palette_attribute_shift_register_2 << 1;
 }
 
-
-#warning TODO
 void PPU::clock(){
     //Background evaluation
     //Conceptually, the PPU does this 33 times for each scanline:
@@ -550,28 +547,81 @@ void PPU::clock(){
                     else
                         this->vmem_addr++;                // increment coarse X
                     break;
-#warning TODO
-                case 1:
+
+                case 1: //NT Byte
+                    //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
+                    this->pattern_data_shift_register_1 |=  this->pattern_data_shift_register_1_latch;
+                    this->pattern_data_shift_register_2 |=  this->pattern_data_shift_register_2_latch;
+                    
+                    if(palette_attribute_shift_register_1_latch)
+                        this->palette_attribute_shift_register_1 = 0xFF;
+                    else
+                        this->palette_attribute_shift_register_1 = 0x00;
+                    
+                    if(palette_attribute_shift_register_2_latch)
+                        this->palette_attribute_shift_register_2 = 0xFF;
+                    else
+                        this->palette_attribute_shift_register_2 = 0x00;
+
+                    
                     //NT Byte
+                    this->next_pattern_data_shift_register_location = this->read(0x2000 | (this->vmem_addr & 0x0FFF));
                     break;
-#warning TODO
-                case 3:
-                    //AT Byte
+
+                case 3:{ //AT Byte
+                    Byte next_palette_attribute_shift_register_location = this->read(0x23C0 | (this->vmem_addr & 0x0C00) | ((this->vmem_addr >> 4) & 0x38) | ((this->vmem_addr >> 2) & 0x07));
+                    
+                    //https://wiki.nesdev.org/w/index.php?title=PPU_attribute_tables
+                    //7654 3210
+                    //|||| ||++- Color bits 3-2 for top left quadrant of this byte
+                    //|||| ++--- Color bits 3-2 for top right quadrant of this byte
+                    //||++------ Color bits 3-2 for bottom left quadrant of this byte
+                    //++-------- Color bits 3-2 for bottom right quadrant of this byte
+                    
+                    if(this->vmem_addr & 0x0040){//bottom half
+                        if(this->vmem_addr & 0x0002){//right
+                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x40) == 0x40;
+                            this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x80) == 0x80;
+                        }
+                        else{//left
+                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x10) == 0x10;
+                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x20) == 0x20;
+                        }
+                    }
+                    else{//top half
+                        if(this->vmem_addr & 0x0002){//right
+                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x04) == 0x04;
+                            this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x08) == 0x08;
+                        }
+                        else{//left
+                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x01) == 0x01;
+                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x02) == 0x02;
+                        }
+                    }
                     break;
-#warning TODO
-                case 5:
-                    //Low BG Byte tile
+                }
+
+                case 5: //Low BG Byte tile
+                    //Bit 4 of PPUCTRL: Background pattern table address (0: $0000; 1: $1000)
+                    //each tile row is 8bit wide and follow by a second one (msb). Therefor, we must multiply the tile location
+                    //fine y is used to choose the right row (0 ~ 7)
+                    this->pattern_data_shift_register_1 = this->read(((this->registers.PPUCTRL & 0x10) << 11) | (this->next_pattern_data_shift_register_location << 4) | ((this->vmem_addr & 0x7000) >> 12));
                     break;
-#warning TODO
-                case 7:
-                    //High BG Byte tile
+
+                case 7: //High BG Byte tile
+                    //the high tile follows the low tile and is 8 Byte wide;
+                    this->pattern_data_shift_register_1 = this->read((((this->registers.PPUCTRL & 0x10) << 11) | (this->next_pattern_data_shift_register_location << 4) | ((this->vmem_addr & 0x7000) >> 12)) + 8);
                     break;
                     
                     
-                //opperation has already been executed
+                //operation has already been executed
                 default:
                     break;
             }
+        }
+        
+        if(this->row == 256){
+            //incr y
         }
         
         if(this->row == 257){

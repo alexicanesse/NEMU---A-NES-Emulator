@@ -77,6 +77,15 @@ private:
     Address palette_attribute_shift_register_1 = 0x00;
     Address palette_attribute_shift_register_2 = 0x00;
     
+    //associated latches
+    Byte pattern_data_shift_register_1_latch = 0x00;
+    Byte pattern_data_shift_register_2_latch = 0x00;
+    Byte next_pattern_data_shift_register_location = 0x00; //buffer to store the location of the next tile untile we fetch it 
+    
+    bool palette_attribute_shift_register_1_latch = false;
+    bool palette_attribute_shift_register_2_latch = false;
+//    Byte next_palette_attribute_shift_register_location = 0x00;
+    
     void shift();
     
     
