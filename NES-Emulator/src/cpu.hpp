@@ -203,11 +203,7 @@ private:
     };
     std::array<instruction, 256> *instructions = new std::array<instruction, 256>; //we use an arry even though many cases are not used
 
-    
-    /*
-    Other
-    */
-    Address data_to_read = 0x0000;
+
 public:
     CPU(NES *nes); //constructor 
     
@@ -239,7 +235,8 @@ public:
     uint64_t opcode = 0x00;
     void clock();
     int rem_cycles = 0;
-    int cycles = 1; //Total number of cycles start at 7 because of init
+    int cycles = 1;
+    Address data_to_read = 0x0000;
 };
 
 

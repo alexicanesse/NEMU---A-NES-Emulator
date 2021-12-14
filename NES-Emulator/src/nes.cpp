@@ -36,7 +36,7 @@ void NES::write(Address adr, Byte content){
                 this->ppu->setPPUCTRL(content);
                 //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
                 //t: ...GH.. ........ <- d: ......GH
-                this->ppu->addr_t = (this->ppu->addr_t & 0xFCFF) | ((content & 0x02) << 8);
+                this->ppu->addr_t = (this->ppu->addr_t & 0xFCFF) | ((content & 0x02) << 10);
                 break;
                 
             case 1: //ppumask
@@ -83,14 +83,15 @@ void NES::write(Address adr, Byte content){
                 //v: <...all bits...> <- t: <...all bits...>
                 //w:                  <- 0
                 else{//second write
+                    //Valid addresses are $0000-$3FFF; higher addresses will be mirrored down.
                     this->ppu->addr_t = (this->ppu->addr_t & 0xFF00) | content;
-                    this->ppu->vmem_addr = this->ppu->addr_t;
+                    this->ppu->vmem_addr = (this->ppu->addr_t & 0x3FFF);
                     this->ppu->write_toggle = false;
                 }
                 break;
             }
                 
-            case 7:{
+            case 7:{ //you can read or write data from VRAM through this port
                 this->ppu->write(this->ppu->vmem_addr, content);
                 
                 //VRAM read/write data register. After access, the video memory address will increment by an amount determined by bit 2 of $2000.

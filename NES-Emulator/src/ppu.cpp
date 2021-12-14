@@ -291,7 +291,13 @@ Byte PPU::getPPUMASK(){
 }
 //get PPU status register
 Byte PPU::getPPUSTATUS(){
-    return this->registers.PPUSTATUS;
+    //7  bit  0
+    //---- ----
+    //VSO. ....
+    //|||| ||||
+    //|||+-++++- Least significant bits previously written into a PPU register
+    //|||        (due to register not being updated for this address)
+    return (this->registers.PPUSTATUS & 0xE0) | (this->read_buffer & 0x1F);
 }
 //OAM address port
 Byte PPU::getOAMADDR(){
@@ -308,10 +314,6 @@ Byte PPU::getPPUSCROLL(){
 //get address register
 Byte PPU::getPPUADDR(){
     return this->registers.PPUADDR;
-}
-//get PPU data port
-Byte PPU::getPPUDATA(){
-    return this->registers.PPUDATA;
 }
 //get OAM DMA register (high byte)
 Byte PPU::getOAMDMA(){
@@ -345,10 +347,6 @@ void PPU::setPPUSCROLL(Byte data){
 //set address register
 void PPU::setPPUADDR(Byte data){
     this->registers.PPUADDR = data;
-}
-//set PPU data port
-void PPU::setPPUDATA(Byte data){
-    this->registers.PPUDATA = data;
 }
 //set OAM DMA register (high byte)
 void PPU::setOAMDMA(Byte data){
@@ -495,152 +493,151 @@ void PPU::clock(){
     //https://wiki.nesdev.org/w/index.php?title=PPU_rendering
     //The PPU renders 262 scanlines per frame. Each scanline lasts for 341 PPU clock cycles (113.667 CPU clock cycles; 1 CPU cycle = 3 PPU cycles), with each clock cycle producing one pixel. The line numbers given here correspond to how the internal PPU frame counters count lines.
     
+
+    //for more details see https://wiki.nesdev.org/w/index.php?title=File:Ntsc_timing.png
     
-    if(this->scanline <= 240){
-        //for more details see https://wiki.nesdev.org/w/index.php?title=File:Ntsc_timing.png
-        
-        //Note: At the beginning of each scanline, the data for the first two tiles is already loaded into the shift registers (and ready to be rendered), so the first tile that gets fetched is Tile 3.
-        
-        // Pre-render scanline (-1 or 261)
-        // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline. Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
-        // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames, the cycle at the end of the scanline is skipped
-        // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
-        if(this->scanline == -1){
-            //Vertical blank has started (0: not in vblank; 1: in vblank).
-            //Set at dot 1 of line 241 (the line *after* the post-render
-            //line); cleared after reading $2002 and at dot 1 of the
-            //pre-render line.
-            if(row == 1)
-                this->registers.PPUSTATUS &= 0x7F;
-            
-            
-            if((this->row >= 280) & (this->row <= 304)){
-                //vert(v) = vert(t)
-                this->vmem_addr = (this->vmem_addr & 0xF71F) | (this->addr_t & 0x0B70);
-            }
-        }
-        
-        
+    //Note: At the beginning of each scanline, the data for the first two tiles is already loaded into the shift registers (and ready to be rendered), so the first tile that gets fetched is Tile 3.
+    
+    // Pre-render scanline (-1 or 261)
+    // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline. Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
+    // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames, the cycle at the end of the scanline is skipped
+    // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
+    if(this->scanline == -1){
         //Vertical blank has started (0: not in vblank; 1: in vblank).
         //Set at dot 1 of line 241 (the line *after* the post-render
         //line); cleared after reading $2002 and at dot 1 of the
         //pre-render line.
-        if((this->scanline == 241) & (row == 1)){
-            this->registers.PPUSTATUS |= 0x80;
-            if(this->registers.PPUCTRL & 0x80)
-                this->nes->cpu->NMI();
+        if(row == 1)
+            this->registers.PPUSTATUS &= 0x7F;
+        
+        
+        if((this->row >= 280) & (this->row <= 304)){
+            //vert(v) = vert(t)
+            this->vmem_addr = (this->vmem_addr & 0xF71F) | (this->addr_t & 0x0B70);
         }
+    }
+
+    
+    //Vertical blank has started (0: not in vblank; 1: in vblank).
+    //Set at dot 1 of line 241 (the line *after* the post-render
+    //line); cleared after reading $2002 and at dot 1 of the
+    //pre-render line.
+    if((this->scanline == 241) && (this->row == 1)){
+        this->registers.PPUSTATUS |= 0x80;
+        if(this->registers.PPUCTRL & 0x80)
+            this->nes->cpu->NMI();
+    }
+    
+    
+    //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
+    if(((this->row <= 257) | (this->row >= 321)) & (this->row != 0)){
+        shift();
         
+        //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
+        //The high bits of v are used for fine Y during rendering, and addressing nametable data only requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region. The address to be fetched during rendering can be deduced from v in the following way:
+        //tile address      = 0x2000 | (v & 0x0FFF)
+        //attribute address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07)
         
-        //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
-        if(((this->row <= 257) | (this->row >= 321)) & (this->row != 0)){
-            shift();
-            
-            //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
-            //The high bits of v are used for fine Y during rendering, and addressing nametable data only requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region. The address to be fetched during rendering can be deduced from v in the following way:
-            //tile address      = 0x2000 | (v & 0x0FFF)
-            //attribute address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07)
-            
-            //each opperation last for two cycles. Just like with the CPU, we're gonna do it on the first cycle and idle on the second one
-            switch (this->row % 8) {
-                case 0: //inc. hori(v)
-                    if((this->vmem_addr & 0x001F) == 31){ //last tile on that line
-                        this->vmem_addr &= 0xFFE0;        //coarse X = 0
-                        this->vmem_addr ^= 0x0400;        //switch horizontal nametable
-                    }
-                    else
-                        this->vmem_addr++;                // increment coarse X
-                    break;
-
-                case 1: //NT Byte
-                    //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
-                    this->pattern_data_shift_register_1 |=  this->pattern_data_shift_register_1_latch;
-                    this->pattern_data_shift_register_2 |=  this->pattern_data_shift_register_2_latch;
-                    
-                    if(palette_attribute_shift_register_1_latch)
-                        this->palette_attribute_shift_register_1 = 0xFF;
-                    else
-                        this->palette_attribute_shift_register_1 = 0x00;
-                    
-                    if(palette_attribute_shift_register_2_latch)
-                        this->palette_attribute_shift_register_2 = 0xFF;
-                    else
-                        this->palette_attribute_shift_register_2 = 0x00;
-
-                    
-                    //NT Byte
-                    this->next_pattern_data_shift_register_location = this->read(0x2000 | (this->vmem_addr & 0x0FFF));
-                    break;
-
-                case 3:{ //AT Byte
-                    Byte next_palette_attribute_shift_register_location = this->read(0x23C0 | (this->vmem_addr & 0x0C00) | ((this->vmem_addr >> 4) & 0x38) | ((this->vmem_addr >> 2) & 0x07));
-                    
-                    //https://wiki.nesdev.org/w/index.php?title=PPU_attribute_tables
-                    //7654 3210
-                    //|||| ||++- Color bits 3-2 for top left quadrant of this byte
-                    //|||| ++--- Color bits 3-2 for top right quadrant of this byte
-                    //||++------ Color bits 3-2 for bottom left quadrant of this byte
-                    //++-------- Color bits 3-2 for bottom right quadrant of this byte
-                    
-                    if(this->vmem_addr & 0x0040){//bottom half
-                        if(this->vmem_addr & 0x0002){//right
-                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x40) == 0x40;
-                            this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x80) == 0x80;
-                        }
-                        else{//left
-                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x10) == 0x10;
-                            this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x20) == 0x20;
-                        }
-                    }
-                    else{//top half
-                        if(this->vmem_addr & 0x0002){//right
-                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x04) == 0x04;
-                            this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x08) == 0x08;
-                        }
-                        else{//left
-                            this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x01) == 0x01;
-                            this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x02) == 0x02;
-                        }
-                    }
-                    break;
+        //each opperation last for two cycles. Just like with the CPU, we're gonna do it on the first cycle and idle on the second one
+        switch (this->row % 8) {
+            case 0: //inc. hori(v)
+                if((this->vmem_addr & 0x001F) == 31){ //last tile on that line
+                    this->vmem_addr &= 0xFFE0;        //coarse X = 0
+                    this->vmem_addr ^= 0x0400;        //switch horizontal nametable
                 }
+                else
+                    this->vmem_addr++;                // increment coarse X
+                break;
 
-                case 5: //Low BG Byte tile
-                    //Bit 4 of PPUCTRL: Background pattern table address (0: $0000; 1: $1000)
-                    //each tile row is 8bit wide and follow by a second one (msb). Therefor, we must multiply the tile location
-                    //fine y is used to choose the right row (0 ~ 7)
-                    this->pattern_data_shift_register_1 = this->read(((this->registers.PPUCTRL & 0x10) << 11) | (this->next_pattern_data_shift_register_location << 4) | ((this->vmem_addr & 0x7000) >> 12));
-                    break;
-
-                case 7: //High BG Byte tile
-                    //the high tile follows the low tile and is 8 Byte wide;
-                    this->pattern_data_shift_register_2 = this->read((((this->registers.PPUCTRL & 0x10) << 11) | (this->next_pattern_data_shift_register_location << 4) | ((this->vmem_addr & 0x7000) >> 12)) + 8);
-                    break;
-                    
-                    
-                //operation has already been executed
-                default:
-                    break;
-            }
-        }
-        
-        if(this->row == 256){//incr y
-            if ((this->vmem_addr & 0x7000) != 0x7000)
-                this->vmem_addr += 0x1000; //incr fine Y
-            else{
-                this->vmem_addr &= ~0x7000; //fine Y = 0
-                int y = (this->vmem_addr & 0x03E0) >> 5; //y = coarse Y
+            case 1: //NT Byte
+                //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
+                this->pattern_data_shift_register_1 |=  this->pattern_data_shift_register_1_latch;
+                this->pattern_data_shift_register_2 |=  this->pattern_data_shift_register_2_latch;
                 
-                if(y == 29){
-                    this->vmem_addr &= 0xFC1F; //coarse Y = 0
-                    this->vmem_addr &= 0xF7FF | ~(this->vmem_addr & 0x0800); //switch vertical nametable
+                if(palette_attribute_shift_register_1_latch)
+                    this->palette_attribute_shift_register_1 = 0xFF;
+                else
+                    this->palette_attribute_shift_register_1 = 0x00;
+                
+                if(palette_attribute_shift_register_2_latch)
+                    this->palette_attribute_shift_register_2 = 0xFF;
+                else
+                    this->palette_attribute_shift_register_2 = 0x00;
+
+                
+                //NT Byte
+                this->next_pattern_data_shift_register_location = this->read(0x2000 | (this->vmem_addr & 0x0FFF));
+                break;
+
+            case 3:{ //AT Byte
+                Byte next_palette_attribute_shift_register_location = this->read(0x23C0 | (this->vmem_addr & 0x0C00) | ((this->vmem_addr >> 4) & 0x38) | ((this->vmem_addr >> 2) & 0x07));
+                
+                //https://wiki.nesdev.org/w/index.php?title=PPU_attribute_tables
+                //7654 3210
+                //|||| ||++- Color bits 3-2 for top left quadrant of this byte
+                //|||| ++--- Color bits 3-2 for top right quadrant of this byte
+                //||++------ Color bits 3-2 for bottom left quadrant of this byte
+                //++-------- Color bits 3-2 for bottom right quadrant of this byte
+                
+                if(this->vmem_addr & 0x0040){//bottom half
+                    if(this->vmem_addr & 0x0002){//right
+                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x40) == 0x40;
+                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x80) == 0x80;
+                    }
+                    else{//left
+                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x10) == 0x10;
+                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x20) == 0x20;
+                    }
                 }
-                else if(y == 31)// coarse Y = 0, nametable not switched
-                    this->vmem_addr &= 0xFC1F; //coarse Y = 0
-                else // increment coarse Y
-                    this->vmem_addr += 0x0020;
+                else{//top half
+                    if(this->vmem_addr & 0x0002){//right
+                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x04) == 0x04;
+                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x08) == 0x08;
+                    }
+                    else{//left
+                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x01) == 0x01;
+                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x02) == 0x02;
+                    }
+                }
+                break;
             }
+
+            case 5: //Low BG Byte tile
+                //Bit 4 of PPUCTRL: Background pattern table address (0: $0000; 1: $1000)
+                //each tile row is 8bit wide and follow by a second one (msb). Therefor, we must multiply the tile location
+                //fine y is used to choose the right row (0 ~ 7)
+                this->pattern_data_shift_register_1 = this->read(((this->registers.PPUCTRL & 0x10) << 11) | (this->next_pattern_data_shift_register_location << 4) | ((this->vmem_addr & 0x7000) >> 12));
+                break;
+
+            case 7: //High BG Byte tile
+                //the high tile follows the low tile and is 8 Byte wide;
+                this->pattern_data_shift_register_2 = this->read((((this->registers.PPUCTRL & 0x10) << 11) | (this->next_pattern_data_shift_register_location << 4) | ((this->vmem_addr & 0x7000) >> 12)) + 8);
+                break;
+                
+                
+            //operation has already been executed
+            default:
+                break;
         }
+
+    
+    if(this->row == 256){//incr y
+        if ((this->vmem_addr & 0x7000) != 0x7000)
+            this->vmem_addr += 0x1000; //incr fine Y
+        else{
+            this->vmem_addr &= ~0x7000; //fine Y = 0
+            int y = (this->vmem_addr & 0x03E0) >> 5; //y = coarse Y
+            
+            if(y == 29){
+                this->vmem_addr &= 0xFC1F; //coarse Y = 0
+                this->vmem_addr &= 0xF7FF | ~(this->vmem_addr & 0x0800); //switch vertical nametable
+            }
+            else if(y == 31)// coarse Y = 0, nametable not switched
+                this->vmem_addr &= 0xFC1F; //coarse Y = 0
+            else // increment coarse Y
+                this->vmem_addr += 0x0020;
+        }
+    }
         
         
         if(this->row == 257){ //hori(v) = hori(t)
@@ -665,7 +662,7 @@ void PPU::clock(){
     //|||++- Pixel value from tile data
     //|++--- Palette number from attribute table or OAM
     //+----- Background/Sprite select
-    GRAPHICS::Color c = (*this->palette).at(this->Palette->at((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 4) | (palette_value_low << 3)) & 0x3F);
+    GRAPHICS::Color c = this->palette->at(this->Palette->at((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 4) | (palette_value_low << 3)) & 0x3F);
     graphics.DrawPixel(row, scanline, c);
 
     row++;                                   //each cycle the ppu generate one pixel

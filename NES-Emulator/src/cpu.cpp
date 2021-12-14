@@ -235,15 +235,19 @@ bool CPU:: YZI(){
 //relative
 //instructions will handle the t additionnal cycle
 bool CPU::REL(){
-    Byte offset = this->nes->read(this->registers.r_PC);
+    Address offset = this->nes->read(this->registers.r_PC);
     this->registers.r_PC++;
+
+    if(offset & 0x80)
+        offset |= 0xFF00;
     
-    //an “Offset" added to the contents of the lower eight bits of the program counter
-    this->data_to_read = ((this->registers.r_PC + offset) & 0x01FF) | (this->registers.r_PC & 0xFF00);
+    this->data_to_read = this->registers.r_PC + offset;
+
     if((this->registers.r_PC ^ this->data_to_read) & 0xFF00) //page crossed
         return true;
     else
         return false;
+    
 }
 
 #warning TODO cycle by cycle
@@ -303,6 +307,7 @@ void CPU::NMI(){
 
 bool CPU::BRK(){ //return type is bool because BRK is also an instruction
     //1    PC     R  fetch opcode, increment PC
+    this->opcode = this->nes->read(this->registers.r_PC);
     this->registers.r_PC++;
     //2    PC     R  read next instruction byte (and throw it away),
     //               increment PC
@@ -317,7 +322,7 @@ bool CPU::BRK(){ //return type is bool because BRK is also an instruction
     this->registers.r_SP--;
     //*** At this point, the signal status determines which interrupt vector is used ***
     //5  $0100,S  W  push P on stack (with B flag set), decrement S
-    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc | 0x14);
+    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc | 0x10);
     this->registers.r_SP--;
     //6   $FFFE   R  fetch PCL, set I flag
     this->registers.r_PC = this->nes->read(0xFFFE);

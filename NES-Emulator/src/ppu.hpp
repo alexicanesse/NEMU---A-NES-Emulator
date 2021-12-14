@@ -45,12 +45,12 @@ private:
     struct registers {
         Byte PPUCTRL = 0x00; // Address 0x2000       PPU control register
         Byte PPUMASK = 0x00; // Address 0x2001       PPU mask register
-        Byte PPUSTATUS = 0xC0; // Address 0x2002     PPU status register
+        Byte PPUSTATUS = 0x00; // Address 0x2002     PPU status register
         Byte OAMADDR = 0x00; // Address 0x2003       OAM address port
         Byte OAMDATA = 0x00; // Address 0x2004       OAM data port
         Byte PPUSCROLL = 0x00; // Address 0x2005     PPU scrolling position register
         Byte PPUADDR = 0x00; // Address 0x2006      PPU address register
-        Byte PPUDATA = 0x00; // Address 0x2007       PPU data port
+//      // Address 0x2007       PPU data port: vmem_addr(declared in public)
         Byte OAMDMA = 0x00; // Address 0x4014        OAM DMA register (high byte)
     } registers;
     
@@ -106,7 +106,6 @@ public:
     Byte getOAMDATA();    //get OAM data port
     Byte getPPUSCROLL();  //get scrolling position register
     Byte getPPUADDR();    //get address register
-    Byte getPPUDATA();    //get PPU data port
     Byte getOAMDMA();     //get OAM DMA register (high byte)
     
     void setPPUCTRL(Byte);    //get PPU control register
@@ -116,7 +115,6 @@ public:
     void setOAMDATA(Byte);    //get OAM data port
     void setPPUSCROLL(Byte);  //get scrolling position register
     void setPPUADDR(Byte);    //get address register
-    void setPPUDATA(Byte);    //get PPU data port
     void setOAMDMA(Byte);     //get OAM DMA register (high byte)
     
     
@@ -152,6 +150,10 @@ public:
 //    Byte address_latch = 0x00;
     NES *nes;
     void clock();
+    
+    //debug
+    int get_scanline(){ return scanline;}
+    int get_row(){ return row; }
 };
 
 
