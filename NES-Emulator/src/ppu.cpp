@@ -388,22 +388,22 @@ void PPU::write(Address addr, Byte content){
     //    Horizontal mirroring: $2000 equals $2400 and $2800 equals $2C00 (e.g. Kid Icarus)
         if(this->nes->cartridge->mirroring_v){ //vertical mirroring
             if((addr & 0x07FF) <= 0x400){
-                this->Nametable->at(0).at(addr & 0x0FFF) = content;
-                this->Nametable->at(2).at(addr & 0x0FFF) = content;
+                this->Nametable->at(0).at(addr & 0x03FF) = content; //&0x3FF because each nametable is 0x0400 wide
+                this->Nametable->at(2).at(addr & 0x03FF) = content;
             }
             else{
-                this->Nametable->at(1).at(addr & 0x0FFF) = content;
-                this->Nametable->at(3).at(addr & 0x0FFF) = content;
+                this->Nametable->at(1).at(addr & 0x03FF) = content;
+                this->Nametable->at(3).at(addr & 0x03FF) = content;
             }
         }
         else{ //horizontal mirroring
             if((addr & 0x07FF) <= 0x400){
-                this->Nametable->at(0).at(addr & 0x07FF) = content;
-                this->Nametable->at(1).at(addr & 0x07FF) = content;
+                this->Nametable->at(0).at(addr & 0x03FF) = content;
+                this->Nametable->at(1).at(addr & 0x03FF) = content;
             }
             else{
-                this->Nametable->at(2).at(addr & 0x07FF) = content;
-                this->Nametable->at(3).at(addr & 0x07FF) = content;
+                this->Nametable->at(2).at(addr & 0x03FF) = content;
+                this->Nametable->at(3).at(addr & 0x03FF) = content;
             }
         }
     }
@@ -456,13 +456,13 @@ Byte PPU::read(Address addr){
                 return 0x00;
                 break;
         }
-    else if(addr <= 0X3EFF){ //nametables
+    else if(addr <= 0x3EFF){ //nametables
         if(addr < 0x2400) return this->Nametable->at(0).at(addr & 0x03FF);
         if(addr < 0x2800) return this->Nametable->at(1).at(addr & 0x03FF);
         if(addr < 0xC200) return this->Nametable->at(3).at(addr & 0x03FF);
         return this->Nametable->at(4).at(addr & 0x03FF);
     }
-    else if (addr <= 0x3F1F) //palette
+    else if (addr <= 0x3FFF) //palette
         //$3F20-$3FFF    $00E0    Mirrors of $3F00-$3F1F
         return this->Palette->at(addr & 0x001F);
     
@@ -470,13 +470,6 @@ Byte PPU::read(Address addr){
     return 0x00;
 }
 
-//The shifters are reloaded during ticks 9, 17, 25, ..., 257.
-void PPU::shift(){ //shift shift registers so that the most significant bit is the data to fetch
-    this->pattern_data_shift_register_1 = this->pattern_data_shift_register_1 << 1;
-    this->pattern_data_shift_register_2 = this->pattern_data_shift_register_2 << 1;
-    this->palette_attribute_shift_register_1 = this->palette_attribute_shift_register_1 << 1;
-    this->palette_attribute_shift_register_2 = this->palette_attribute_shift_register_2 << 1;
-}
 
 void PPU::clock(){
     //Background evaluation
@@ -511,7 +504,7 @@ void PPU::clock(){
             this->registers.PPUSTATUS &= 0x7F;
         
         
-        if((this->row >= 280) & (this->row <= 304)){
+        if((this->registers.PPUMASK & 0x40) & (this->row >= 280) & (this->row <= 304)){
             //vert(v) = vert(t)
             this->vmem_addr = (this->vmem_addr & 0xF71F) | (this->addr_t & 0x0B70);
         }
@@ -531,7 +524,14 @@ void PPU::clock(){
     
     //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
     if(((this->row <= 257) | (this->row >= 321)) & (this->row != 0)){
-        shift();
+        //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
+        //shift shift registers so that the most significant bit is the data to fetch
+        if((this->registers.PPUMASK & 0x40)){
+            this->pattern_data_shift_register_1 = this->pattern_data_shift_register_1 << 1;
+            this->pattern_data_shift_register_2 = this->pattern_data_shift_register_2 << 1;
+            this->palette_attribute_shift_register_1 = this->palette_attribute_shift_register_1 << 1;
+            this->palette_attribute_shift_register_2 = this->palette_attribute_shift_register_2 << 1;
+        }
         
         //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
         //The high bits of v are used for fine Y during rendering, and addressing nametable data only requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region. The address to be fetched during rendering can be deduced from v in the following way:
@@ -541,12 +541,14 @@ void PPU::clock(){
         //each opperation last for two cycles. Just like with the CPU, we're gonna do it on the first cycle and idle on the second one
         switch (this->row % 8) {
             case 0: //inc. hori(v)
-                if((this->vmem_addr & 0x001F) == 31){ //last tile on that line
-                    this->vmem_addr &= 0xFFE0;        //coarse X = 0
-                    this->vmem_addr ^= 0x0400;        //switch horizontal nametable
+                if((this->registers.PPUMASK & 0x40)){
+                    if((this->vmem_addr & 0x001F) == 31){ //last tile on that line
+                        this->vmem_addr &= 0xFFE0;        //coarse X = 0
+                        this->vmem_addr ^= 0x0400;        //switch horizontal nametable
+                    }
+                    else
+                        this->vmem_addr++;                // increment coarse X
                 }
-                else
-                    this->vmem_addr++;                // increment coarse X
                 break;
 
             case 1: //NT Byte
@@ -621,13 +623,13 @@ void PPU::clock(){
         }
 
     
-    if(this->row == 256){//incr y
+    if((this->registers.PPUMASK & 0x40) & (this->row == 256)){//incr y
         if ((this->vmem_addr & 0x7000) != 0x7000)
             this->vmem_addr += 0x1000; //incr fine Y
         else{
             this->vmem_addr &= ~0x7000; //fine Y = 0
             int y = (this->vmem_addr & 0x03E0) >> 5; //y = coarse Y
-            
+
             if(y == 29){
                 this->vmem_addr &= 0xFC1F; //coarse Y = 0
                 this->vmem_addr &= 0xF7FF | ~(this->vmem_addr & 0x0800); //switch vertical nametable
@@ -640,7 +642,7 @@ void PPU::clock(){
     }
         
         
-        if(this->row == 257){ //hori(v) = hori(t)
+        if((this->registers.PPUMASK & 0x40) & (this->row == 257)){ //hori(v) = hori(t)
             this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
         }
         

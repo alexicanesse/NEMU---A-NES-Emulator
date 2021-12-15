@@ -253,81 +253,72 @@ bool CPU::REL(){
 #warning TODO cycle by cycle
 /*
 Interruptions
+ Two interrupts (/IRQ and /NMI) and two instructions (PHP and BRK) push the flags to the stack. In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK) or 0 if from an interrupt line being pulled low (/IRQ or /NMI). This is the only time and place where the B flag actually exists: not in the status register itself, but in bit 4 of the copy that is written to the stack.
 */
 void CPU::IRQ(){
-    this->rem_cycles = 6;
-    
-    //1    PC     R  fetch opcode (and discard it - $00 (BRK) is forced into the opcode register instead)
-    this->opcode = 0x00;
-    //2    PC     R  read next instruction byte (actually the same as above, since PC increment is suppressed. Also discarded.)
-    
-    //3  $0100,S  W  push PCH on stack, decrement S
-    
-    //0x0100 to offset
-    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) >> 8); //high
-    //4  $0100,S  W  push PCL on stack, decrement S
-    
-    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) & 0x00FF); //low
-    this->registers.r_SP--;
-    //*** At this point, the signal status determines which interrupt vector is used ***
-    //5  $0100,S  W  push P on stack (with B flag *clear*), decrement S
-    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc & 0xFB);
-    this->registers.r_SP--;
-    //6   A       R  fetch PCL (A = FFFE for IRQ, A = FFFA for NMI), set I flag
-    this->registers.r_PC = this->nes->read(0xFFFE);
-    this->registers.nv_bdizc |= 0x04;
-    //7   A       R  fetch PCH (A = FFFF for IRQ, A = FFFB for NMI)
-    this->registers.r_PC |= (this->nes->read(0xFFFF) << 8);
+    if(!this->getflag(0x04)){
+        //1    PC     R  fetch opcode (and discard it - $00 (BRK) is forced into the opcode register instead)
+        this->opcode = 0x00;
+        //2    PC     R  read next instruction byte (actually the same as above, since PC increment is suppressed. Also discarded.)
+        
+        //3  $0100,S  W  push PCH on stack, decrement S
+        
+        //0x0100 to offset
+        this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) >> 8); //high
+        this->registers.r_SP--;
+        //4  $0100,S  W  push PCL on stack, decrement S
+        
+        this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
+        this->registers.r_SP--;
+        //*** At this point, the signal status determines which interrupt vector is used ***
+        //5  $0100,S  W  push P on stack (with B flag *clear*), decrement S
+        this->nes->write(0x0100 + this->registers.r_SP, (this->registers.nv_bdizc & 0xEF) | 0x24);
+        this->registers.r_SP--;
+        this->registers.r_PC = this->nes->read(0xFFFE);
+        this->registers.r_PC |= (this->nes->read(0xFFFF) << 8);
+        
+        this->registers.nv_bdizc |= 0x04;
+    }
 }
 void CPU::NMI(){
     this->rem_cycles = 6;
     
-    //1    PC     R  fetch opcode (and discard it - $00 (BRK) is forced into the opcode register instead)
     this->opcode = 0x00;
-    //2    PC     R  read next instruction byte (actually the same as above, since PC increment is suppressed. Also discarded.)
-    
-    //3  $0100,S  W  push PCH on stack, decrement S
     
     //0x0100 to offset
-    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) >> 8); //high
+    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) >> 8); //high
     this->registers.r_SP--;
-    //4  $0100,S  W  push PCL on stack, decrement S
     
-    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) & 0x00FF); //low
+    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
     this->registers.r_SP--;
-    //*** At this point, the signal status determines which interrupt vector is used ***
-    //5  $0100,S  W  push P on stack (with B flag *clear*), decrement S
-    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc & 0xFB);
-    //6   A       R  fetch PCL (A = FFFE for IRQ, A = FFFA for NMI), set I flag
+
+    this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.nv_bdizc & 0xEF) | 0x20);
+
     this->registers.r_PC = this->nes->read(0xFFFA);
     this->registers.nv_bdizc |= 0x04;
-    //7   A       R  fetch PCH (A = FFFF for IRQ, A = FFFB for NMI)
+
     this->registers.r_PC |= (this->nes->read(0xFFFB) << 8);
 }
 
 bool CPU::BRK(){ //return type is bool because BRK is also an instruction
-    //1    PC     R  fetch opcode, increment PC
     this->opcode = this->nes->read(this->registers.r_PC);
     this->registers.r_PC++;
-    //2    PC     R  read next instruction byte (and throw it away),
     //               increment PC
     this->registers.r_PC++;
-    //3  $0100,S  W  push PCH on stack, decrement S
     
     //0x0100 to offset
-    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) >> 8); //high
+    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) >> 8); //high
     this->registers.r_SP--;
-    //4  $0100,S  W  push PCL on stack, decrement S
-    this->nes->write(0x0100 + this->registers.r_SP, (this->data_to_read) & 0x00FF); //low
+
+    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
     this->registers.r_SP--;
-    //*** At this point, the signal status determines which interrupt vector is used ***
-    //5  $0100,S  W  push P on stack (with B flag set), decrement S
-    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc | 0x10);
+
+    this->nes->write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x10);
     this->registers.r_SP--;
-    //6   $FFFE   R  fetch PCL, set I flag
+
     this->registers.r_PC = this->nes->read(0xFFFE);
     this->registers.nv_bdizc |= 0x04;
-    //7   $FFFF   R  fetch PCH
+
     this->registers.r_PC |= (this->nes->read(0xFFFF) << 8);
     
     return false;
@@ -1401,7 +1392,7 @@ bool CPU::PHA(){
 //Push Processor Status On Stack
 bool CPU::PHP(){
     //0x0100 to offset
-    this->nes->write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x14);
+    this->nes->write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x34);
     this->registers.r_SP--; //always point to next address
     return false;
 }

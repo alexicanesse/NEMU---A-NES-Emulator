@@ -21,7 +21,7 @@ void show_stack(std::array<Byte, 2048> ram){
     std::stringstream buffer;
     buffer << "\n\nStack:\n";
     for(int i = 0x100; i <= 0x1FF; i++){
-        buffer << "0x" << std::hex << (int) ram[i] << ", ";
+        buffer << "0x" << std::hex << std::setw(2) << std::left << (int) ram[i] << " ";
         if(i%8 == 7) buffer << "\n";
     }
     addstr(buffer.str().c_str());
@@ -72,19 +72,28 @@ void show_interrupts(NES nes){
     buffer << std::hex << "IRQ/NMI: 0x" << (int) nes.read(0xFFFB) << (int) nes.read(0xFFFA); addstr(buffer.str().c_str());
 }
 
+void show_position(PPU ppu){
+    move(6,50);
+    std::stringstream buffer;
+    buffer << "PPU position:"; addstr(buffer.str().c_str()); move(7,50); buffer.str("");
+    buffer << std::dec << "Scanline: " << ppu.getscanline();; addstr(buffer.str().c_str()); move(8,50); buffer.str("");
+    buffer << std::dec << "Row: " << ppu.getrow(); addstr(buffer.str().c_str()); move(9,50); buffer.str("");
+}
+
 void show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu){
     move(0,0);
     show_registers(cpu);
     show_stack(ram);
     show_ppu_register(ppu);
     show_interrupts(*cpu.nes);
+    show_position(ppu);
     refresh();
 }
 
 void logging(CPU cpu, Address pc, PPU ppu){
     std::ofstream log;
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
-    log << "\n" << std::hex << (int) pc << "  CYC:" << std::dec << cpu.cycles << std::hex <<"  A:" << std::setw(2) << std::left << (int) cpu.get_register_A() << "  X:" << std::setw(2) << std::left << (int) cpu.get_register_X() << "  Y:" << std::setw(2) << std::left << (int) cpu.get_register_Y() <<  "  Stack:" << std::hex << (int) cpu.get_register_SP() << "  opcode: 0x" << (int) cpu.opcode << "  Addr:" << (int) cpu.data_to_read << "  Data: 0x" << std::setw(2) << std::left << (int) cpu.nes->read(cpu.data_to_read) << "  Flags (nv_bdizc):" << cpu.getflag(0x80) << cpu.getflag(0x40) << "_" << cpu.getflag(0x10) << cpu.getflag(0x08) << cpu.getflag(0x04) << cpu.getflag(0x02) << cpu.getflag(0x01) << "  Scanline:" << std::dec << std::setw(3) << std::left << cpu.nes->ppu->get_scanline() << "  Row:" << std::setw(3) << std::left << cpu.nes->ppu->get_row() << "  vram_addr:0x" <<std::hex  << std::setw(4) << std::left << (int) cpu.nes->ppu->vmem_addr << "  t_addr:0x" << std::setw(4) << std::left << cpu.nes->ppu->addr_t << "  ctrl:0x" << std::setw(2) << std::left << (int) ppu.getPPUCTRL() << "  mask:0x" << std::setw(2) << std::left << (int) ppu.getPPUMASK() << "  status:0x" << std::setw(2) << std::left << (int) ppu.getPPUSTATUS() << "  oamddr:0x" << std::setw(2) << std::left << (int) ppu.getOAMADDR() << "  oamdata:0x" << std::setw(2) << std::left << (int) ppu.getOAMDATA() << "  scroll:0x" << std::setw(2) << std::left << (int) ppu.getPPUSCROLL() << "  oamdma:0x" << std::setw(2) << std::left << (int) ppu.getOAMDMA();
+    log << "\n" << std::hex << std::setw(4) << std::left << (int) pc << "  CYC:" << std::dec << cpu.cycles << std::hex <<"  A:" << std::setw(2) << std::left << (int) cpu.get_register_A() << "  X:" << std::setw(2) << std::left << (int) cpu.get_register_X() << "  Y:" << std::setw(2) << std::left << (int) cpu.get_register_Y() <<  "  Stack:" << std::hex << (int) cpu.get_register_SP() << "  opcode: 0x" << std::setw(2) << std::left << (int) cpu.opcode << "  Addr:" << std::setw(4) << std::left << (int) cpu.data_to_read << "  Data: 0x" << std::setw(2) << std::left << (int) cpu.nes->read(cpu.data_to_read) << "  Flags (nv_bdizc):" << cpu.getflag(0x80) << cpu.getflag(0x40) << "_" << cpu.getflag(0x10) << cpu.getflag(0x08) << cpu.getflag(0x04) << cpu.getflag(0x02) << cpu.getflag(0x01) << "  Scanline:" << std::dec << std::setw(3) << std::left << cpu.nes->ppu->get_scanline() << "  Row:" << std::setw(3) << std::left << cpu.nes->ppu->get_row() << "  vram_addr:0x" <<std::hex  << std::setw(4) << std::left << (int) cpu.nes->ppu->vmem_addr << "  t_addr:0x" << std::setw(4) << std::left << cpu.nes->ppu->addr_t << "  ctrl:0x" << std::setw(2) << std::left << (int) ppu.getPPUCTRL() << "  mask:0x" << std::setw(2) << std::left << (int) ppu.getPPUMASK() << "  status:0x" << std::setw(2) << std::left << (int) ppu.r().PPUSTATUS << "  oamddr:0x" << std::setw(2) << std::left << (int) ppu.getOAMADDR() << "  oamdata:0x" << std::setw(2) << std::left << (int) ppu.getOAMDATA() << "  scroll:0x" << std::setw(2) << std::left << (int) ppu.getPPUSCROLL() << "  oamdma:0x" << std::setw(2) << std::left << (int) ppu.getOAMDMA();
     
 #warning debug
 //    log << " 0xFFFD 0xFFFC: " << std::hex << (int) ((cpu.nes->read(0xc109)));
@@ -118,20 +127,20 @@ int main(){
 
     for(int x= 0; x<5000000; x++){
 
-                ppu->clock();
-                if(x %3 == 0){
-                    cpu->clock();
-                    show_state(*cpu, *nes.ram, *ppu);
-                    refresh();
-                    if(cpu->rem_cycles == 0){
-                        logging(*cpu, old_pc, *ppu);
-                        old_pc = cpu->get_register_PC();
-//                        std::getchar(); //wait for user input
-                    }
+        ppu->clock();
+        if(x %3 == 0){
+            cpu->clock();
+            if(cpu->rem_cycles == 0){
+                logging(*cpu, old_pc, *ppu);
+                old_pc = cpu->get_register_PC();
+            }
 
 //                    std::this_thread::sleep_for(std::chrono::milliseconds(2));
-                }
+            show_state(*cpu, *nes.ram, *ppu);
+            refresh();
+        }
 
+//        logging(*cpu, old_pc, *ppu);
     }
     
     

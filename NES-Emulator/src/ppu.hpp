@@ -84,9 +84,6 @@ private:
     
     bool palette_attribute_shift_register_1_latch = false;
     bool palette_attribute_shift_register_2_latch = false;
-//    Byte next_palette_attribute_shift_register_location = 0x00;
-    
-    void shift();
     
     
 public:
@@ -152,8 +149,11 @@ public:
     void clock();
     
     //debug
-    int get_scanline(){ return scanline;}
+    int get_scanline(){ return scanline; }
     int get_row(){ return row; }
+    struct registers r() {return registers; }
+    int getrow(){ return row;}
+    int getscanline(){ return scanline;}
 };
 
 
