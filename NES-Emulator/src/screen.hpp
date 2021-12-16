@@ -32,8 +32,13 @@ public:
         uint8_t o = 255; //opacity
     };
     
-    void DrawPixel(int x, int y, Color); //draw a pixel but do not update the screen
+//    void DrawPixel(int x, int y, Color); //draw a pixel but do not update the screen
     void update(); //updte screen content
+    
+    
+    
+#warning TEST
+    void DrawPixel(int x, int y, Color);
 };
 
 #endif /* screen_hpp */

@@ -15,13 +15,17 @@
 typedef uint8_t Byte;
 typedef uint16_t Address;
 
-
+class NES;
 
 //Only mapper 0 will be implemented for now
 class CARTRIDGE{
 private:
+    NES *nes;
     
 public:
+    //constructor
+    CARTRIDGE(NES*);
+    
     bool mirror_prgrom = false;
     bool mirror_chr_rom = false;
     bool mirroring_v = false;

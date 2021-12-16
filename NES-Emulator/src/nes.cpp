@@ -12,13 +12,14 @@
 
 
 
+
 /*
     Constructor
 */
 NES::NES(){
     this->cpu = new CPU(this);
     this->ppu = new PPU(this);
-    this->cartridge = new CARTRIDGE;
+    this->cartridge = new CARTRIDGE(this);
 }
 
 /*

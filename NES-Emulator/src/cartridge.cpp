@@ -6,8 +6,13 @@
 //
 
 #include "cartridge.hpp"
+#include "nes.hpp"
 
 #include <iostream>
+
+CARTRIDGE::CARTRIDGE(NES *nes){
+    this->nes = nes;
+}
 
 bool CARTRIDGE::load(std::string link){
     std::ifstream ROMfile;
@@ -51,11 +56,11 @@ bool CARTRIDGE::load(std::string link){
         }
     }
     
-    if(mirror_chr_rom){
-        
-    }
-    else{
-        
+    
+    for(int pos = 0x0000; pos <= 0x1FFF; pos++){ //load chrom
+        ROMfile.read(&buffer,1);
+        std::cout << std::hex << (int) buffer << "\n";
+        this->nes->ppu->write(pos, (Byte) buffer);
     }
     
     

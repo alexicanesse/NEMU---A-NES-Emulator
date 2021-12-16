@@ -154,6 +154,7 @@ public:
     struct registers r() {return registers; }
     int getrow(){ return row;}
     int getscanline(){ return scanline;}
+    GRAPHICS getgraphics() { return graphics; }
 };
 
 

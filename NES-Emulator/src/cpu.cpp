@@ -283,8 +283,6 @@ void CPU::IRQ(){
 void CPU::NMI(){
     this->rem_cycles = 6;
     
-    this->opcode = 0x00;
-    
     //0x0100 to offset
     this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) >> 8); //high
     this->registers.r_SP--;
@@ -292,7 +290,7 @@ void CPU::NMI(){
     this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
     this->registers.r_SP--;
 
-    this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.nv_bdizc & 0xEF) | 0x20);
+    this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.nv_bdizc & 0xEF) | 0x24);
 
     this->registers.r_PC = this->nes->read(0xFFFA);
     this->registers.nv_bdizc |= 0x04;
@@ -301,9 +299,6 @@ void CPU::NMI(){
 }
 
 bool CPU::BRK(){ //return type is bool because BRK is also an instruction
-    this->opcode = this->nes->read(this->registers.r_PC);
-    this->registers.r_PC++;
-    //               increment PC
     this->registers.r_PC++;
     
     //0x0100 to offset
@@ -317,8 +312,6 @@ bool CPU::BRK(){ //return type is bool because BRK is also an instruction
     this->registers.r_SP--;
 
     this->registers.r_PC = this->nes->read(0xFFFE);
-    this->registers.nv_bdizc |= 0x04;
-
     this->registers.r_PC |= (this->nes->read(0xFFFF) << 8);
     
     return false;
@@ -332,8 +325,8 @@ void CPU::reset(){
     this->registers.r_SP--;
     this->registers.r_SP--;
     this->registers.r_SP--;
+    this->registers.nv_bdizc |= 0x20;
     this->registers.r_PC = this->nes->read(0xFFFC);
-    this->registers.nv_bdizc |= 0x04;
     this->registers.r_PC |= (this->nes->read(0xFFFD) << 8);
 }
 

@@ -14,6 +14,19 @@
 #include "screen.hpp"
 
 
+//chrom
+//void show_chrom(PPU ppu){
+//    move(0,0);
+//    std::stringstream buffer;
+//    buffer << "\n\nchROM::\n";
+//    for(int i = 0x100; i <= 0x1FFF; i++){
+//        buffer << "0x" << std::hex << std::setw(2) << std::left << (int) ppu.read(i) << " ";
+//        if(i%8 == 7)
+//            buffer << "\n";
+//    }
+//    addstr(buffer.str().c_str());
+//
+//}
 
 
 //Show ram value
@@ -22,7 +35,8 @@ void show_stack(std::array<Byte, 2048> ram){
     buffer << "\n\nStack:\n";
     for(int i = 0x100; i <= 0x1FF; i++){
         buffer << "0x" << std::hex << std::setw(2) << std::left << (int) ram[i] << " ";
-        if(i%8 == 7) buffer << "\n";
+        if(i%8 == 7)
+            buffer << "\n";
     }
     addstr(buffer.str().c_str());
 }
@@ -87,6 +101,7 @@ void show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu){
     show_ppu_register(ppu);
     show_interrupts(*cpu.nes);
     show_position(ppu);
+//    show_chrom(ppu);
     refresh();
 }
 
@@ -101,7 +116,7 @@ void logging(CPU cpu, Address pc, PPU ppu){
 }
 
 int main(){
-    initscr();
+//    initscr();
     NES nes;
     CPU *cpu = nes.cpu;
     PPU *ppu = nes.ppu;
@@ -109,8 +124,8 @@ int main(){
     
     Address old_pc = 0x0000;
     
-//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
-    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
+    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
+//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
         std::cout << "AHHHHHHHHH";
         return 0;
     }
@@ -121,25 +136,26 @@ int main(){
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
     log.close();
 //    logging(*cpu);
-
-
+    
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-    for(int x= 0; x<5000000; x++){
+    int a = 0;
+    while(1){
 
         ppu->clock();
-        if(x %3 == 0){
+        if(a %3 == 0){
             cpu->clock();
-            if(cpu->rem_cycles == 0){
-                logging(*cpu, old_pc, *ppu);
-                old_pc = cpu->get_register_PC();
-            }
+//            if(cpu->rem_cycles == 0){
+//                logging(*cpu, old_pc, *ppu);
+//                old_pc = cpu->get_register_PC();
+//            }
 
 //                    std::this_thread::sleep_for(std::chrono::milliseconds(2));
-            show_state(*cpu, *nes.ram, *ppu);
-            refresh();
+//            show_state(*cpu, *nes.ram, *ppu);
+//            refresh();
         }
-
+        
 //        logging(*cpu, old_pc, *ppu);
     }
     
