@@ -36,8 +36,8 @@ void NES::write(Address adr, Byte content){
             case 0: //ppuctrl
                 this->ppu->setPPUCTRL(content);
                 //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
-                //t: ...GH.. ........ <- d: ......GH
-                this->ppu->addr_t = (this->ppu->addr_t & 0xFCFF) | ((content & 0x02) << 10);
+                //t: ... GH.. .... .... <- d: ......GH
+                this->ppu->addr_t = (this->ppu->addr_t & 0xFCFF) | ((content & 0x03) << 10);
                 break;
                 
             case 1: //ppumask
@@ -86,7 +86,7 @@ void NES::write(Address adr, Byte content){
                 else{//second write
                     //Valid addresses are $0000-$3FFF; higher addresses will be mirrored down.
                     this->ppu->addr_t = (this->ppu->addr_t & 0xFF00) | content;
-                    this->ppu->vmem_addr = (this->ppu->addr_t & 0x3FFF);
+                    this->ppu->vmem_addr = this->ppu->addr_t;
                     this->ppu->write_toggle = false;
                 }
                 break;

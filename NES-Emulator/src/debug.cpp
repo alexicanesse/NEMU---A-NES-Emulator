@@ -151,11 +151,15 @@ int main(){
 //                old_pc = cpu->get_register_PC();
 //            }
 
-//                    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+//                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 //            show_state(*cpu, *nes.ram, *ppu);
 //            refresh();
         }
-        
+        if(ppu->asknmi){
+            cpu->NMI();
+            ppu->asknmi = false;
+        }
+        a++;
 //        logging(*cpu, old_pc, *ppu);
     }
     

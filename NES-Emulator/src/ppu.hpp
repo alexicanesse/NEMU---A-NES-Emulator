@@ -33,7 +33,7 @@ private:
     /*
     positions
     */
-    int scanline = 0;
+    int scanline = -1;
     int row = 0;
 
     
@@ -131,7 +131,7 @@ public:
     //First or second write toggle (1 bit)
     bool write_toggle = false;
     
-    
+    bool asknmi = false;
     
     Byte read_buffer = 0x00;
     

@@ -59,7 +59,6 @@ bool CARTRIDGE::load(std::string link){
     
     for(int pos = 0x0000; pos <= 0x1FFF; pos++){ //load chrom
         ROMfile.read(&buffer,1);
-        std::cout << std::hex << (int) buffer << "\n";
         this->nes->ppu->write(pos, (Byte) buffer);
     }
     
