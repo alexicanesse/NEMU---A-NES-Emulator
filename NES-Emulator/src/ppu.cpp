@@ -590,157 +590,204 @@ void PPU::incY(){
     }
 }
 
-void PPU::clock(){
-    //Background evaluation
-    //Conceptually, the PPU does this 33 times for each scanline:
-    //Fetch a nametable entry from $2000-$2FBF.
-    //Fetch the corresponding attribute table entry from $23C0-$2FFF and increment the current VRAM address within the same row.
-    //Fetch the low-order byte of an 8x1 pixel sliver of pattern table from $0000-$0FF7 or $1000-$1FF7.
-    //Fetch the high-order byte of this sliver from an address 8 bytes higher.
-    //Turn the attribute data and the pattern table data into palette indices, and combine them with data from sprite data using priority.
-    //It also does a fetch of a 34th (nametable, attribute, pattern) tuple that is never used
-
-    
-    // Pre-render scanline (-1 or 261)
-    // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline. Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
-    // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames, the cycle at the end of the scanline is skipped
-    // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
-    if(this->scanline == -1){
-        if(row == 0){
-            row++;
-            return;
-        }
-        //Vertical blank has started (0: not in vblank; 1: in vblank).
-        //Set at dot 1 of line 241 (the line *after* the post-render
-        //line); cleared after reading $2002 and at dot 1 of the
-        //pre-render line.
-        if(row == 1)
-            this->registers.PPUSTATUS &= 0x7F;
-        
-        
-        if((this->registers.PPUMASK & 0x40) & (this->row >= 280) & (this->row <= 304)){
-            //If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from t to v at dot 257, the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304, completing the full initialization of v from t:
-            //v: GHI A.BC DEF. .... <- t: GHI A.BC DEF. ....
-            this->vmem_addr = (this->vmem_addr & 0x041F) | (this->addr_t & 0x7BE0);
-        }
-    }
-
-    
-    //Vertical blank has started (0: not in vblank; 1: in vblank).
-    //Set at dot 1 of line 241 (the line *after* the post-render
-    //line); cleared after reading $2002 and at dot 1 of the
-    //pre-render line.
-    if((this->scanline == 241) && (this->row == 1)){
-        this->registers.PPUSTATUS |= 0x80;
-        
-        if(this->registers.PPUCTRL & 0x80)
-            this->asknmi = true;
-    }
-    
-    //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
-    if((this->scanline <= 239) & (this->row <= 336) & (((this->row <= 257) | (this->row >= 321)) & (this->row != 0))){
-        //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
-        shift();
-        
-        //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
-        //The high bits of v are used for fine Y during rendering, and addressing nametable data only requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region. The address to be fetched during rendering can be deduced from v in the following way:
-        //tile address      = 0x2000 | (v & 0x0FFF)
-        //attribute address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07)
-        
-        //each opperation last for two cycles. Just like with the CPU, we're gonna do it on the first cycle and idle on the second one
-        switch (this->row % 8) {
-            case 0: //inc. hori(v)
-                incHori_v();
-                break;
-
-            case 1: //NT Byte
-                ntbyte();
-
-                break;
-
-            case 3:{ //AT Byte
-                ATByte();
-                
-                break;
-            }
-
-            case 5: //Low BG Byte tile
-                LowBGByteTile();
-                break;
-
-            case 7: //High BG Byte tile
-                HighBGByteTile();
-#warning only 0
-//                std::cout << std::hex << (int) this->pattern_data_shift_register_2_latch << "\n";
-                break;
-                
-                
-            //operation has already been executed
-            default:
-                break;
-        }
-
-    
-        if((this->registers.PPUMASK & 0x08) & (this->row == 256)){//incr y
-            incY();
-        }
-        
-        
-        if((this->registers.PPUMASK & 0x08) & (this->row == 257) & (this->scanline <= 239)){ //hori(v) = hori(t)
-            this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
-        }
-        
-    
-    }
-
-
-    //we read the appropriate (defined by fine x) bit in the pattern shiffters
-    bool pixel_value_high = (this->pattern_data_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-    bool pixel_value_low = (this->pattern_data_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-
-    //we read the appropriate (defined by fine x) bit in the palette shiffters
-    bool palette_value_high = (palette_attribute_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-    bool palette_value_low = (palette_attribute_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-
-//    if((((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F) != 0)
-//       std::cout << std::hex << (int) (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F);
+//void PPU::clock(){
+//    //Background evaluation
+//    //Conceptually, the PPU does this 33 times for each scanline:
+//    //Fetch a nametable entry from $2000-$2FBF.
+//    //Fetch the corresponding attribute table entry from $23C0-$2FFF and increment the current VRAM address within the same row.
+//    //Fetch the low-order byte of an 8x1 pixel sliver of pattern table from $0000-$0FF7 or $1000-$1FF7.
+//    //Fetch the high-order byte of this sliver from an address 8 bytes higher.
+//    //Turn the attribute data and the pattern table data into palette indices, and combine them with data from sprite data using priority.
+//    //It also does a fetch of a 34th (nametable, attribute, pattern) tuple that is never used
 //
-    
-    //43210
-    //|||||
-    //|||++- Pixel value from tile data
-    //|++--- Palette number from attribute table or OAM
-    //+----- Background/Sprite select
-//    std::cout << ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2));
-    GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
-    graphics.DrawPixel(row - 1, scanline, c);
+//
+//    // Pre-render scanline (-1 or 261)
+//    // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline. Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
+//    // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames, the cycle at the end of the scanline is skipped
+//    // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
+//    if(this->scanline == -1){
+//        if(row == 0){
+//            row++;
+//            return;
+//        }
+//        //Vertical blank has started (0: not in vblank; 1: in vblank).
+//        //Set at dot 1 of line 241 (the line *after* the post-render
+//        //line); cleared after reading $2002 and at dot 1 of the
+//        //pre-render line.
+//        if(row == 1)
+//            this->registers.PPUSTATUS &= 0x7F;
+//
+//
+//        if((this->registers.PPUMASK & 0x40) & (this->row >= 280) & (this->row <= 304)){
+//            //If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from t to v at dot 257, the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304, completing the full initialization of v from t:
+//            //v: GHI A.BC DEF. .... <- t: GHI A.BC DEF. ....
+//            this->vmem_addr = (this->vmem_addr & 0x041F) | (this->addr_t & 0x7BE0);
+//        }
+//    }
+//
+//
+//    //Vertical blank has started (0: not in vblank; 1: in vblank).
+//    //Set at dot 1 of line 241 (the line *after* the post-render
+//    //line); cleared after reading $2002 and at dot 1 of the
+//    //pre-render line.
+//    if((this->scanline == 241) && (this->row == 1)){
+//        this->registers.PPUSTATUS |= 0x80;
+//
+//        if(this->registers.PPUCTRL & 0x80)
+//            this->asknmi = true;
+//    }
+//
+//    //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
+//    if((this->scanline <= 239) & (this->row <= 336) & (((this->row <= 257) | (this->row >= 321)) & (this->row != 0))){
+//        //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
+//        shift();
+//
+//        //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
+//        //The high bits of v are used for fine Y during rendering, and addressing nametable data only requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region. The address to be fetched during rendering can be deduced from v in the following way:
+//        //tile address      = 0x2000 | (v & 0x0FFF)
+//        //attribute address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07)
+//
+//        //each opperation last for two cycles. Just like with the CPU, we're gonna do it on the first cycle and idle on the second one
+//        switch (this->row % 8) {
+//            case 0: //inc. hori(v)
+//                incHori_v();
+//                break;
+//
+//            case 1: //NT Byte
+//                ntbyte();
+//
+//                break;
+//
+//            case 3:{ //AT Byte
+//                ATByte();
+//
+//                break;
+//            }
+//
+//            case 5: //Low BG Byte tile
+//                LowBGByteTile();
+//                break;
+//
+//            case 7: //High BG Byte tile
+//                HighBGByteTile();
+//#warning only 0
+////                std::cout << std::hex << (int) this->pattern_data_shift_register_2_latch << "\n";
+//                break;
+//
+//
+//            //operation has already been executed
+//            default:
+//                break;
+//        }
+//
+//
+//        if((this->registers.PPUMASK & 0x08) & (this->row == 256)){//incr y
+//            incY();
+//        }
+//
+//
+//        if((this->registers.PPUMASK & 0x08) & (this->row == 257) & (this->scanline <= 239)){ //hori(v) = hori(t)
+//            this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
+//        }
+//
+//
+//    }
+//
+//
+//    //we read the appropriate (defined by fine x) bit in the pattern shiffters
+//    bool pixel_value_high = (this->pattern_data_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+//    bool pixel_value_low = (this->pattern_data_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+//
+//    //we read the appropriate (defined by fine x) bit in the palette shiffters
+//    bool palette_value_high = (palette_attribute_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+//    bool palette_value_low = (palette_attribute_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+//
+////    if((((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F) != 0)
+////       std::cout << std::hex << (int) (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F);
+////
+//
+//    //43210
+//    //|||||
+//    //|||++- Pixel value from tile data
+//    //|++--- Palette number from attribute table or OAM
+//    //+----- Background/Sprite select
+////    std::cout << ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2));
+//    GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
+//    graphics.DrawPixel(row - 1, scanline, c);
+//
+////    std::cout << std::hex << (int) this->read( 0x3F00 + (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2))) & 0x3F) << "\n";
+//    std::cout << std::hex << (int) (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) << "\n";
+////    if((this->row >= 0) && (this->row <= 255) && (this->scanline >= 0) && (this->scanline <= 239))
+////        graphics.DrawPixel(row, scanline, this->palette->at(this->Palette->at(rand() % 0xf)));
+//
+//    row++;                                   //each cycle the ppu generate one pixel
+//    if(this->row == 361){
+//        this->row = 0;
+//
+//        this->scanline++;                    //switch to next line
+//        if(this->scanline == 261){
+//            this->scanline = -1;             //return to pre-render scanline
+//
+//            this->odd_frame = !this->odd_frame;
+//            if(this->odd_frame)
+//                this->row = 1;               //first cycle is skiped on odd frames
+//
+//
+//
+//            //DRAW
+//            SDL_PollEvent(&event);           // Catching the poll event.
+//            if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
+//            else graphics.update();
+//        }
+//
+//
+//
+//    }
+//}
 
-//    std::cout << std::hex << (int) this->read( 0x3F00 + (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2))) & 0x3F) << "\n";
-    std::cout << std::hex << (int) (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) << "\n";
-//    if((this->row >= 0) && (this->row <= 255) && (this->scanline >= 0) && (this->scanline <= 239))
-//        graphics.DrawPixel(row, scanline, this->palette->at(this->Palette->at(rand() % 0xf)));
+void PPU::clock(){
+    if(this->scanline <= 239){//it includes the pre-render line
+        if((this->scanline == -1) & (this->row == 1))
+            this->registers.PPUSTATUS &= 0x5F;
 
-    row++;                                   //each cycle the ppu generate one pixel
-    if(this->row == 361){
-        this->row = 0;
-        
-        this->scanline++;                    //switch to next line
-        if(this->scanline == 261){
-            this->scanline = -1;             //return to pre-render scanline
-            
-            this->odd_frame = !this->odd_frame;
-            if(this->odd_frame)
-                this->row = 1;               //first cycle is skiped on odd frames
-            
-            
-            
-            //DRAW
-            SDL_PollEvent(&event);           // Catching the poll event.
-            if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
-            else graphics.update();
+        if((this->row >= 1) && ((this->row <= 255) || ((this->row >= 321) && (this->row <= 338)))){
+            shift();
+            switch (this->row % 8) {
+                case 0: //inc hori(v)
+                    incHori_v();
+                    break;
+
+                case 1: //NT Byte
+                    ntbyte();
+                    break;
+
+                case 3: // AT Byte
+                    ATByte();
+                    break;
+
+                case 5: //low BG Tile
+                    LowBGByteTile();
+                    break;
+
+                case 6://high BG Tile
+                    HighBGByteTile();
+                    break;
+
+                default://second cycle of the opperation
+                    break;
+            }
         }
-        
 
+        if(this->row == 256)
+            incY();
 
+        if(this->row == 257)
+            this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
+
+        if((this->scanline == -1) && (this->row >= 280) && (this->row <= 304))
+            this->vmem_addr = (this->vmem_addr & 0x041F) | (this->addr_t & 0x7BE0);
     }
+
+    if((this->scanline == 241) && (this->row == 1))
+        this->registers.PPUSTATUS |= 0x80;
 }
