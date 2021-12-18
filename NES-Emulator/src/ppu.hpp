@@ -115,6 +115,16 @@ public:
     void setOAMDMA(Byte);     //get OAM DMA register (high byte)
     
     
+    //rendering functions
+    void ntbyte();
+    void LowBGByteTile();
+    void HighBGByteTile();
+    void ATByte();
+    void incHori_v();
+    void shift();
+    void incY();
+    
+    
     
     //The 15 bit registers t and v are composed this way during rendering:
         //yyy NN YYYYY XXXXX

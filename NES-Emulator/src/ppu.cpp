@@ -470,6 +470,125 @@ Byte PPU::read(Address addr){
     return 0x00;
 }
 
+void PPU::ntbyte(){
+    //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
+    this->pattern_data_shift_register_1 = (this->pattern_data_shift_register_1 & 0xFF00) | this->pattern_data_shift_register_1_latch;
+    this->pattern_data_shift_register_2 = (this->pattern_data_shift_register_1 & 0xFF00) | this->pattern_data_shift_register_2_latch;
+    
+    if(palette_attribute_shift_register_1_latch)
+        this->palette_attribute_shift_register_1 = (this->palette_attribute_shift_register_1 & 0xFF00) | 0x00FF;
+    else
+        this->palette_attribute_shift_register_1 = (this->palette_attribute_shift_register_1 & 0xFF00) | 0x0000;
+    
+    if(palette_attribute_shift_register_2_latch)
+        this->palette_attribute_shift_register_2 = (this->palette_attribute_shift_register_2 & 0xFF00) | 0x00FF;
+    else
+        this->palette_attribute_shift_register_2 = (this->palette_attribute_shift_register_2 & 0xFF00) | 0x0000;
+    
+    //NT Byte
+    this->next_pattern_data_shift_register_location = this->read(0x2000 | (this->vmem_addr & 0x0FFF));
+}
+
+
+void PPU::LowBGByteTile(){//Low BG Byte tile
+    //Bit 4 of PPUCTRL: Background pattern table address (0: $0000; 1: $1000)
+    //each tile row is 8bit wide and follow by a second one (msb). Therefor, we must multiply the tile location
+    //fine y is used to choose the right row (0 ~ 7)
+    this->pattern_data_shift_register_1_latch = this->read(((( (Address) this->registers.PPUCTRL) & 0x0010) << 8) + (((Address) this->next_pattern_data_shift_register_location) << 4) + ((this->vmem_addr & 0x7000) >> 12));
+}
+
+
+void PPU::HighBGByteTile(){
+    //the high tile follows the low tile and is 8 Byte wide;
+    this->pattern_data_shift_register_2_latch = this->read(((( (Address) this->registers.PPUCTRL) & 0x0010) << 8) + (((Address) this->next_pattern_data_shift_register_location) << 4) + ((this->vmem_addr & 0x7000) >> 12) + 8);
+}
+
+void PPU::ATByte(){
+    Byte next_palette_attribute_shift_register_location = this->read(0x23C0 | (this->vmem_addr & 0x0C00) | ((this->vmem_addr >> 4) & 0x0038) | ((this->vmem_addr >> 2) & 0x0007));
+
+    //https://wiki.nesdev.org/w/index.php?title=PPU_attribute_tables
+    //7654 3210
+    //|||| ||++- Color bits 3-2 for top left quadrant of this byte
+    //|||| ++--- Color bits 3-2 for top right quadrant of this byte
+    //||++------ Color bits 3-2 for bottom left quadrant of this byte
+    //++-------- Color bits 3-2 for bottom right quadrant of this byte
+    
+    
+#warning need to verify
+//                if(this->vmem_addr & 0x0040){//bottom half
+//                    if(this->vmem_addr & 0x0002){//right
+//                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x40) == 0x40;
+//                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x80) == 0x80;
+//                    }
+//                    else{//left
+//                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x10) == 0x10;
+//                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x20) == 0x20;
+//                    }
+//                }
+//                else{//top half
+//                    if(this->vmem_addr & 0x0002){//right
+//                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x04) == 0x04;
+//                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x08) == 0x08;
+//                    }
+//                    else{//left
+//                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x01) == 0x01;
+//                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x02) == 0x02;
+//                    }
+//                }
+    if (((this->vmem_addr & 0x003E0) >> 5) & 0x02) next_palette_attribute_shift_register_location >>= 4;
+    if ((this->vmem_addr & 0x001F) & 0x02) next_palette_attribute_shift_register_location >>= 2;
+    next_palette_attribute_shift_register_location &= 0x03;
+
+    if(next_palette_attribute_shift_register_location == 1)
+        this->palette_attribute_shift_register_1_latch = true;
+    else
+        this->palette_attribute_shift_register_1_latch = false;
+
+    if((next_palette_attribute_shift_register_location & 0x2) == 0x2)
+        this->palette_attribute_shift_register_2_latch = true;
+    else
+        this->palette_attribute_shift_register_2_latch = false;
+}
+
+void PPU::incHori_v(){
+    if((this->registers.PPUMASK & 0x08)){
+        if((this->vmem_addr & 0x001F) == 0x1F){ //last tile on that line
+            this->vmem_addr &= 0xFFE0;        //coarse X = 0
+            this->vmem_addr ^= 0x0400;        //switch horizontal nametable
+        }
+        else
+            this->vmem_addr++;                // increment coarse X
+    }
+}
+
+void PPU::shift(){
+    //shift shift registers so that the most significant bit is the data to fetch
+    if((this->registers.PPUMASK & 0x08)){
+        this->pattern_data_shift_register_1 = this->pattern_data_shift_register_1 << 1;
+        this->pattern_data_shift_register_2 = this->pattern_data_shift_register_2 << 1;
+        this->palette_attribute_shift_register_1 = this->palette_attribute_shift_register_1 << 1;
+        this->palette_attribute_shift_register_2 = this->palette_attribute_shift_register_2 << 1;
+    }
+}
+
+void PPU::incY(){
+    if ((this->vmem_addr & 0x7000) != 0x7000)
+        this->vmem_addr += 0x1000; //incr fine Y
+    else{
+        this->vmem_addr &= 0x0FFF; //fine Y = 0
+        
+        int y = (this->vmem_addr & 0x03E0) >> 5; //y = coarse Y
+
+        if(y == 29){
+            this->vmem_addr &= 0xFC1F; //coarse Y = 0
+            this->vmem_addr &= 0xF7FF | (~(this->vmem_addr & 0x0800) & 0x0800); //switch vertical nametable
+        }
+        else if(y == 31)// coarse Y = 0, nametable not switched
+            this->vmem_addr &= 0xFC1F; //coarse Y = 0
+        else // increment coarse Y
+            this->vmem_addr += 0x0020;
+    }
+}
 
 void PPU::clock(){
     //Background evaluation
@@ -480,16 +599,7 @@ void PPU::clock(){
     //Fetch the high-order byte of this sliver from an address 8 bytes higher.
     //Turn the attribute data and the pattern table data into palette indices, and combine them with data from sprite data using priority.
     //It also does a fetch of a 34th (nametable, attribute, pattern) tuple that is never used
-    
-    
-    
-    //https://wiki.nesdev.org/w/index.php?title=PPU_rendering
-    //The PPU renders 262 scanlines per frame. Each scanline lasts for 341 PPU clock cycles (113.667 CPU clock cycles; 1 CPU cycle = 3 PPU cycles), with each clock cycle producing one pixel. The line numbers given here correspond to how the internal PPU frame counters count lines.
-    
 
-    //for more details see https://wiki.nesdev.org/w/index.php?title=File:Ntsc_timing.png
-    
-    //Note: At the beginning of each scanline, the data for the first two tiles is already loaded into the shift registers (and ready to be rendered), so the first tile that gets fetched is Tile 3.
     
     // Pre-render scanline (-1 or 261)
     // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline. Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
@@ -528,15 +638,9 @@ void PPU::clock(){
     }
     
     //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
-    if((this->scanline <= 239) & (((this->row <= 257) | (this->row >= 321)) & (this->row != 0))){
+    if((this->scanline <= 239) & (this->row <= 336) & (((this->row <= 257) | (this->row >= 321)) & (this->row != 0))){
         //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
-        //shift shift registers so that the most significant bit is the data to fetch
-        if((this->registers.PPUMASK & 0x08)){
-            this->pattern_data_shift_register_1 = this->pattern_data_shift_register_1 << 1;
-            this->pattern_data_shift_register_2 = this->pattern_data_shift_register_2 << 1;
-            this->palette_attribute_shift_register_1 = this->palette_attribute_shift_register_1 << 1;
-            this->palette_attribute_shift_register_2 = this->palette_attribute_shift_register_2 << 1;
-        }
+        shift();
         
         //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
         //The high bits of v are used for fine Y during rendering, and addressing nametable data only requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region. The address to be fetched during rendering can be deduced from v in the following way:
@@ -546,95 +650,26 @@ void PPU::clock(){
         //each opperation last for two cycles. Just like with the CPU, we're gonna do it on the first cycle and idle on the second one
         switch (this->row % 8) {
             case 0: //inc. hori(v)
-                if((this->registers.PPUMASK & 0x08)){
-                    if((this->vmem_addr & 0x001F) == 0x1F){ //last tile on that line
-                        this->vmem_addr &= 0xFFE0;        //coarse X = 0
-                        this->vmem_addr ^= 0x0400;        //switch horizontal nametable
-                    }
-                    else
-                        this->vmem_addr++;                // increment coarse X
-                }
+                incHori_v();
                 break;
 
             case 1: //NT Byte
-                //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
-                this->pattern_data_shift_register_1 = (this->pattern_data_shift_register_1 & 0xFF00) | this->pattern_data_shift_register_1_latch;
-                this->pattern_data_shift_register_2 = (this->pattern_data_shift_register_1 & 0xFF00) | this->pattern_data_shift_register_2_latch;
-                
-                if(palette_attribute_shift_register_1_latch)
-                    this->palette_attribute_shift_register_1 = (this->palette_attribute_shift_register_1 & 0xFF00) | 0x00FF;
-                else
-                    this->palette_attribute_shift_register_1 = (this->palette_attribute_shift_register_1 & 0xFF00) | 0x0000;
-                
-                if(palette_attribute_shift_register_2_latch)
-                    this->palette_attribute_shift_register_2 = (this->palette_attribute_shift_register_2 & 0xFF00) | 0x00FF;
-                else
-                    this->palette_attribute_shift_register_2 = (this->palette_attribute_shift_register_2 & 0xFF00) | 0x0000;
-                
-                //NT Byte
-                this->next_pattern_data_shift_register_location = this->read(0x2000 | (this->vmem_addr & 0x0FFF));
+                ntbyte();
 
                 break;
 
             case 3:{ //AT Byte
-                Byte next_palette_attribute_shift_register_location = this->read(0x23C0 | (this->vmem_addr & 0x0C00) | ((this->vmem_addr >> 4) & 0x0038) | ((this->vmem_addr >> 2) & 0x0007));
-
-                //https://wiki.nesdev.org/w/index.php?title=PPU_attribute_tables
-                //7654 3210
-                //|||| ||++- Color bits 3-2 for top left quadrant of this byte
-                //|||| ++--- Color bits 3-2 for top right quadrant of this byte
-                //||++------ Color bits 3-2 for bottom left quadrant of this byte
-                //++-------- Color bits 3-2 for bottom right quadrant of this byte
-                
-                
-#warning need to verify
-//                if(this->vmem_addr & 0x0040){//bottom half
-//                    if(this->vmem_addr & 0x0002){//right
-//                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x40) == 0x40;
-//                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x80) == 0x80;
-//                    }
-//                    else{//left
-//                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x10) == 0x10;
-//                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x20) == 0x20;
-//                    }
-//                }
-//                else{//top half
-//                    if(this->vmem_addr & 0x0002){//right
-//                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x04) == 0x04;
-//                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x08) == 0x08;
-//                    }
-//                    else{//left
-//                        this->palette_attribute_shift_register_1_latch = (next_palette_attribute_shift_register_location & 0x01) == 0x01;
-//                        this->palette_attribute_shift_register_2_latch = (next_palette_attribute_shift_register_location & 0x02) == 0x02;
-//                    }
-//                }
-                if (((this->vmem_addr & 0x003E0) >> 5) & 0x02) next_palette_attribute_shift_register_location >>= 4;
-                if ((this->vmem_addr & 0x001F) & 0x02) next_palette_attribute_shift_register_location >>= 2;
-                next_palette_attribute_shift_register_location &= 0x03;
-
-                if(next_palette_attribute_shift_register_location == 1)
-                    this->palette_attribute_shift_register_1_latch = true;
-                else
-                    this->palette_attribute_shift_register_1_latch = false;
-
-                if((next_palette_attribute_shift_register_location & 0x2) == 0x2)
-                    this->palette_attribute_shift_register_2_latch = true;
-                else
-                    this->palette_attribute_shift_register_2_latch = false;
+                ATByte();
                 
                 break;
             }
 
             case 5: //Low BG Byte tile
-                //Bit 4 of PPUCTRL: Background pattern table address (0: $0000; 1: $1000)
-                //each tile row is 8bit wide and follow by a second one (msb). Therefor, we must multiply the tile location
-                //fine y is used to choose the right row (0 ~ 7)
-                this->pattern_data_shift_register_1_latch = this->read(((( (Address) this->registers.PPUCTRL) & 0x0010) << 8) + (((Address) this->next_pattern_data_shift_register_location) << 4) + ((this->vmem_addr & 0x7000) >> 12));
+                LowBGByteTile();
                 break;
 
             case 7: //High BG Byte tile
-                //the high tile follows the low tile and is 8 Byte wide;
-                this->pattern_data_shift_register_2_latch = this->read(((( (Address) this->registers.PPUCTRL) & 0x0010) << 8) + (((Address) this->next_pattern_data_shift_register_location) << 4) + ((this->vmem_addr & 0x7000) >> 12) + 8);
+                HighBGByteTile();
 #warning only 0
 //                std::cout << std::hex << (int) this->pattern_data_shift_register_2_latch << "\n";
                 break;
@@ -646,24 +681,9 @@ void PPU::clock(){
         }
 
     
-    if((this->registers.PPUMASK & 0x08) & (this->row == 256) & (this->scanline <= 239)){//incr y
-        if ((this->vmem_addr & 0x7000) != 0x7000)
-            this->vmem_addr += 0x1000; //incr fine Y
-        else{
-            this->vmem_addr &= 0x0FFF; //fine Y = 0
-            
-            int y = (this->vmem_addr & 0x03E0) >> 5; //y = coarse Y
-
-            if(y == 29){
-                this->vmem_addr &= 0xFC1F; //coarse Y = 0
-                this->vmem_addr &= 0xF7FF | (~(this->vmem_addr & 0x0800) & 0x0800); //switch vertical nametable
-            }
-            else if(y == 31)// coarse Y = 0, nametable not switched
-                this->vmem_addr &= 0xFC1F; //coarse Y = 0
-            else // increment coarse Y
-                this->vmem_addr += 0x0020;
+        if((this->registers.PPUMASK & 0x08) & (this->row == 256)){//incr y
+            incY();
         }
-    }
         
         
         if((this->registers.PPUMASK & 0x08) & (this->row == 257) & (this->scanline <= 239)){ //hori(v) = hori(t)
@@ -675,12 +695,12 @@ void PPU::clock(){
 
 
     //we read the appropriate (defined by fine x) bit in the pattern shiffters
-    bool pixel_value_high = (this->pattern_data_shift_register_2 & (0x8000 >> (int) (this->vmem_addr & 0x0010))) != 0;
-    bool pixel_value_low = (this->pattern_data_shift_register_1 & (0x8000 >> (int) (this->vmem_addr & 0x0010))) != 0;
+    bool pixel_value_high = (this->pattern_data_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+    bool pixel_value_low = (this->pattern_data_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
 
     //we read the appropriate (defined by fine x) bit in the palette shiffters
-    bool palette_value_high = (palette_attribute_shift_register_2 & (0x8000 >> (int) (this->vmem_addr & 0x0010))) != 0;
-    bool palette_value_low = (palette_attribute_shift_register_1 & (0x8000 >> (int) (this->vmem_addr & 0x0010))) != 0;
+    bool palette_value_high = (palette_attribute_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+    bool palette_value_low = (palette_attribute_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
 
 //    if((((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F) != 0)
 //       std::cout << std::hex << (int) (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F);
@@ -692,10 +712,11 @@ void PPU::clock(){
     //|++--- Palette number from attribute table or OAM
     //+----- Background/Sprite select
 //    std::cout << ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2));
-    GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F));
+    GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
     graphics.DrawPixel(row - 1, scanline, c);
-    
-    std::cout << std::hex << (int) this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F) << "\n";
+
+//    std::cout << std::hex << (int) this->read( 0x3F00 + (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2))) & 0x3F) << "\n";
+    std::cout << std::hex << (int) (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) << "\n";
 //    if((this->row >= 0) && (this->row <= 255) && (this->scanline >= 0) && (this->scanline <= 239))
 //        graphics.DrawPixel(row, scanline, this->palette->at(this->Palette->at(rand() % 0xf)));
 
