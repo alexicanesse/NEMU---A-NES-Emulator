@@ -4,7 +4,7 @@
 //
 //  Created by Alexi Canesse on 07/12/2021.
 //
-
+#include <thread>
 #include "ppu.hpp"
 #include "nes.hpp"
 
@@ -387,7 +387,7 @@ void PPU::write(Address addr, Byte content){
     //    Vertical mirroring: $2000 equals $2800 and $2400 equals $2C00 (e.g. Super Mario Bros.)
     //    Horizontal mirroring: $2000 equals $2400 and $2800 equals $2C00 (e.g. Kid Icarus)
         if(this->nes->cartridge->mirroring_v){ //vertical mirroring
-            if(((addr & 0x0FFF) < 0x0400) | (((addr & 0x0FFF) >= 0x0800) & ((addr & 0x0FFF) < 0x0C00))){
+            if(((addr & 0x0FFF) < 0x0400) || (((addr & 0x0FFF) >= 0x0800) && ((addr & 0x0FFF) < 0x0C00))){
                 this->Nametable->at(0).at(addr & 0x03FF) = content; //&0x3FF because each nametable is 0x0400 wide
                 this->Nametable->at(2).at(addr & 0x03FF) = content;
             }
@@ -475,14 +475,14 @@ void PPU::reloadShifters(){//The shifters are reloaded during ticks 9, 17, 25, .
     this->pattern_data_shift_register_2 = (this->pattern_data_shift_register_2 & 0xFF00) | this->pattern_data_shift_register_2_latch;
     
     if(palette_attribute_shift_register_1_latch)
-        this->palette_attribute_shift_register_1 = (this->palette_attribute_shift_register_1 & 0xFF00) | 0x00FF;
+        this->palette_attribute_shift_register_1 |= 0x00FF;
     else
-        this->palette_attribute_shift_register_1 = (this->palette_attribute_shift_register_1 & 0xFF00) | 0x0000;
+        this->palette_attribute_shift_register_1 &= 0xFF00;
     
     if(palette_attribute_shift_register_2_latch)
-        this->palette_attribute_shift_register_2 = (this->palette_attribute_shift_register_2 & 0xFF00) | 0x00FF;
+        this->palette_attribute_shift_register_2 |= 0x00FF;
     else
-        this->palette_attribute_shift_register_2 = (this->palette_attribute_shift_register_2 & 0xFF00) | 0x0000;
+        this->palette_attribute_shift_register_2 &= 0xFF00;
 }
 
 void PPU::ntbyte(){
@@ -501,12 +501,11 @@ void PPU::LowBGByteTile(){//Low BG Byte tile
 
 void PPU::HighBGByteTile(){
     //the high tile follows the low tile and is 8 Byte wide;
-    this->pattern_data_shift_register_2_latch = this->read(((( (Address) this->registers.PPUCTRL) & 0x0010) << 8) + (((Address) this->next_pattern_data_shift_register_location) << 4) + ((this->vmem_addr & 0x7000) >> 12) + 8);
+    this->pattern_data_shift_register_2_latch = this->read((((( (Address) this->registers.PPUCTRL) & 0x0010) << 8) + (((Address) this->next_pattern_data_shift_register_location) << 4) + ((this->vmem_addr & 0x7000) >> 12)) + 8);
 }
 
 void PPU::ATByte(){
     Byte next_palette_attribute_shift_register_location = this->read(0x23C0 | (this->vmem_addr & 0x0C00) | ((this->vmem_addr >> 4) & 0x0038) | ((this->vmem_addr >> 2) & 0x0007));
-
     //https://wiki.nesdev.org/w/index.php?title=PPU_attribute_tables
     //7654 3210
     //|||| ||++- Color bits 3-2 for top left quadrant of this byte
@@ -545,7 +544,7 @@ void PPU::ATByte(){
     else
         this->palette_attribute_shift_register_1_latch = false;
 
-    if(next_palette_attribute_shift_register_location & 0x2)
+    if(next_palette_attribute_shift_register_location & 0x02)
         this->palette_attribute_shift_register_2_latch = true;
     else
         this->palette_attribute_shift_register_2_latch = false;
@@ -753,7 +752,7 @@ void PPU::clock(){
         if((this->scanline == -1) & (this->row == 1))
             this->registers.PPUSTATUS &= 0x5F;
 
-        if((this->row >= 1) && ((this->row <= 255) || ((this->row >= 321) && (this->row <= 338)))){
+        if((this->row >= 1) && ((this->row <= 256) || ((this->row >= 321) && (this->row <= 337)))){
             shift();
             
             switch (this->row % 8) {
@@ -795,105 +794,102 @@ void PPU::clock(){
 
         if((this->scanline == -1) && (this->row >= 280) && (this->row <= 304)){
             this->vmem_addr = (this->vmem_addr & 0x041F) | (this->addr_t & 0x7BE0);
-            
-            if(this->registers.PPUCTRL & 0x80)
-                this->asknmi = true;
         }
     }
 
-    if((this->scanline == 241) && (this->row == 1))
+    if((this->scanline == 241) && (this->row == 1)){
         this->registers.PPUSTATUS |= 0x80;
-    
-    
-    
-    
-//    Byte pixel = 0x00; //2bit
-//    Byte palette_index = 0x00; //3bit
-//
-//    if(this->registers.PPUMASK == 0x08){
-//        Address offset = 0x8000 >> (int) fine_x_scroll;
-//
-//        Byte pixel_low = (this->pattern_data_shift_register_1 & offset) > 0;
-//        Byte pixel_high = (this->pattern_data_shift_register_2 & offset) > 0;
-//
-//
-//        pixel = pixel_low | (pixel_high << 1);
-//
-//        Byte palette_low = (this->palette_attribute_shift_register_1 & offset) > 0;
-//        Byte palette_high = (this->palette_attribute_shift_register_2 & offset) > 0;
-//
-//        palette_index = palette_low | (palette_high << 1);
-//    }
-//
-//
-//    GRAPHICS::Color c = this->palette->at(this->read(0x3F00 + (palette_index << 2) + pixel) & 0x3F);
-//    this->graphics.DrawPixel(this->row, this->scanline, c);
-//
-//
-//    this->row++;
-//    if(this->row >= 361){
-//        this->row = 0;
-//
-//        this->scanline++;
-//        if(this->scanline >= 261){
-//            this->scanline = -1;
-//            if(this->odd_frame){
-//                this->row = 1;
-//            }
-//            this->odd_frame = !this->odd_frame;
-//
-//            //DRAW
-//            SDL_PollEvent(&event);           // Catching the poll event.
-//            if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
-//            else graphics.update();
-//        }
-//    }
-    
-    
-    
-
-    
-    
-    
-    
-        //we read the appropriate (defined by fine x) bit in the pattern shiffters
-        bool pixel_value_high = (this->pattern_data_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-        bool pixel_value_low = (this->pattern_data_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-    
-        //we read the appropriate (defined by fine x) bit in the palette shiffters
-        bool palette_value_high = (palette_attribute_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-        bool palette_value_low = (palette_attribute_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-    
-        //43210
-        //|||||
-        //|||++- Pixel value from tile data
-        //|++--- Palette number from attribute table or OAM
-        //+----- Background/Sprite select
-        GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
-        graphics.DrawPixel(row - 1, scanline, c);
-    
-        row++;                                   //each cycle the ppu generate one pixel
-        if(this->row == 361){
-            this->row = 0;
-    
-            this->scanline++;                    //switch to next line
-            if(this->scanline == 261){
-                this->scanline = -1;             //return to pre-render scanline
-    
-                this->odd_frame = !this->odd_frame;
-                if(this->odd_frame)
-                    this->row = 1;               //first cycle is skiped on odd frames
-    
-    
-    
-                //DRAW
-                SDL_PollEvent(&event);           // Catching the poll event.
-                if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
-                else graphics.update();
-            }
-    
-    
-    
+        if(this->registers.PPUCTRL & 0x80){
+            if(this->registers.PPUMASK & 0x04) this->asknmi = true;
         }
+    }
+    
+    
+    
+    
+    Byte pixel = 0x00; //2bit
+    Byte palette_index = 0x00; //3bit
 
+    if(this->registers.PPUMASK & 0x08){
+        Address offset = 0x8000 >> ((int) this->fine_x_scroll);
+
+        Byte pixel_low = (this->pattern_data_shift_register_1 & offset) > 0;
+        Byte pixel_high = (this->pattern_data_shift_register_2 & offset) > 0;
+
+
+        pixel = pixel_low | (pixel_high << 1);
+
+        Byte palette_low = (this->palette_attribute_shift_register_1 & offset) > 0;
+        Byte palette_high = (this->palette_attribute_shift_register_2 & offset) > 0;
+
+        palette_index = palette_low | (palette_high << 1);
+    }
+
+//    std::cout <<std::hex << (int) this->read(0x2224) << "\n";
+    GRAPHICS::Color c = this->palette->at(this->read(0x3F00 + (palette_index << 2) + pixel) & 0x3F);
+    this->graphics.DrawPixel(this->row, this->scanline, c);
+
+
+    this->row++;
+    if(this->row >= 361){
+        this->row = 0;
+
+        this->scanline++;
+        if(this->scanline >= 261){
+            this->scanline = -1;
+            if(this->odd_frame){
+                this->row = 1;
+            }
+            this->odd_frame = !this->odd_frame;
+
+            //DRAW
+            SDL_PollEvent(&event);           // Catching the poll event.
+            if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
+            else graphics.update();
+        }
+    }
+
+    
+    
+//        //we read the appropriate (defined by fine x) bit in the pattern shiffters
+//        bool pixel_value_high = (this->pattern_data_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+//        bool pixel_value_low = (this->pattern_data_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+//
+//        //we read the appropriate (defined by fine x) bit in the palette shiffters
+//        bool palette_value_high = (palette_attribute_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+//        bool palette_value_low = (palette_attribute_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
+//
+//        //43210
+//        //|||||
+//        //|||++- Pixel value from tile data
+//        //|++--- Palette number from attribute table or OAM
+//        //+----- Background/Sprite select
+//        GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
+//        graphics.DrawPixel(row - 1, scanline, c);
+//
+//        row++;                                   //each cycle the ppu generate one pixel
+//        if(this->row == 361){
+//            this->row = 0;
+//
+//            this->scanline++;                    //switch to next line
+//            if(this->scanline == 261){
+//                this->scanline = -1;             //return to pre-render scanline
+//
+//                this->odd_frame = !this->odd_frame;
+//                if(this->odd_frame)
+//                    this->row = 1;               //first cycle is skiped on odd frames
+//
+//
+//
+//                //DRAW
+//                SDL_PollEvent(&event);           // Catching the poll event.
+//                if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
+//                else graphics.update();
+//            }
+//
+//
+//
+//        }
 }
+    
+

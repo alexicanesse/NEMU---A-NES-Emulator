@@ -37,7 +37,7 @@ void NES::write(Address adr, Byte content){
                 this->ppu->setPPUCTRL(content);
                 //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
                 //t: ... GH.. .... .... <- d: ......GH
-                this->ppu->addr_t = (this->ppu->addr_t & 0xFCFF) | ((content & 0x03) << 10);
+                this->ppu->addr_t = (this->ppu->addr_t & 0xF3FF) | ((content & 0x03) << 10);
                 break;
                 
             case 1: //ppumask
@@ -61,10 +61,13 @@ void NES::write(Address adr, Byte content){
                     this->ppu->fine_x_scroll = content & 0x07;
                     this->ppu->write_toggle = true;
                 }
-                //t: FGH..AB CDE..... <- d: ABCDEFGH
+                //t: FGH ..AB CDE. .... <- d: ABCDEFGH
                 //w:                  <- 0
                 else{//second write
-                    this->ppu->addr_t = ((((content & 0x07) << 12) | (this->ppu->addr_t & 0x0FFF)) & 0xFC1F) | ((content & 0xF8) << 5);
+//                    this->ppu->addr_t = ((((content & 0x07) << 12) | (this->ppu->addr_t & 0x0FFF)) & 0xFC1F) | ((content & 0xF8) << 5);
+                    this->ppu->addr_t &= 0x0C1F;
+                    this->ppu->addr_t |= ((content >> 3) << 5);
+                    this->ppu->addr_t |= ((content & 0x7) << 12);
                     this->ppu->write_toggle = false;
                 }
                 break;
@@ -72,12 +75,14 @@ void NES::write(Address adr, Byte content){
 
             case 6:{
                 //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
-                //t: .CDEFGH ........ <- d: ..CDEFGH
+                //t: .CD EFGH .... .... <- d: ..CD EFGH
                 //       <unused>     <- d: AB......
-                //t: Z...... ........ <- 0 (bit Z is cleared)
+                //t: Z.. .... .... .... <- 0 (bit Z is cleared)
                 //w:                  <- 1
                 if(!this->ppu->write_toggle){//first write
-                    this->ppu->addr_t = (this->ppu->addr_t & 0x00FF) | ((content & 0x3F) << 8);
+                    this->ppu->addr_t &= 0x00FF;
+                    this->ppu->addr_t |= (( (Address) (content & 0x3F) << 8));
+//                    this->ppu->addr_t = (this->ppu->addr_t & 0x00FF) | ((content & 0x3F) << 8);
                     this->ppu->write_toggle = true;
                 }
                 //t: ....... ABCDEFGH <- d: ABCDEFGH
@@ -94,7 +99,7 @@ void NES::write(Address adr, Byte content){
                 
             case 7:{ //you can read or write data from VRAM through this port
                 this->ppu->write(this->ppu->vmem_addr, content);
-                
+
                 //VRAM read/write data register. After access, the video memory address will increment by an amount determined by bit 2 of $2000.
                 //(0: add 1, going across; 1: add 32, going down)
                 if(this->ppu->getPPUCTRL() & 0x04)
@@ -104,7 +109,7 @@ void NES::write(Address adr, Byte content){
                 break;
             }
                 
-            //some registers are write-only
+            //some registers are read-only
             default:
                 break;
         }
@@ -132,12 +137,12 @@ Byte NES::read(Address addr){
             }
 #warning TODO
             case 3:{
-                return this->ppu->getOAMADDR();
+                //return this->ppu->getOAMADDR();
                 break;
             }
 #warning TODO
             case 4:{
-                return this->ppu->getOAMDATA();
+                //return this->ppu->getOAMDATA();
                 break;
             }
                 

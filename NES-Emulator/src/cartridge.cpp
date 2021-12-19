@@ -37,9 +37,6 @@ bool CARTRIDGE::load(std::string link){
     //skip rest of header
     for(int i = 0; i < 9; i++) ROMfile.read(&buffer,1);
     
-#warning for debug
-//    for(int i = 0; i < 10; i++){ ROMfile.read(&buffer,1); std::cout<<std::hex<<(int) buffer<<"\n";}
-    
     
     if(mirror_prgrom){
         for(int pos = 0x8000; pos <= 0xBFFF; pos++){ //load prgrom

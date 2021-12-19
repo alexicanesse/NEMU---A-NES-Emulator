@@ -140,12 +140,19 @@ int main(){
     
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
+    
+//    for(int i = 0x2000; i<0x3000; i++){
+//        ppu->write(i, 0x24);
+//    }
+    
+    
     int a = 0;
     while(1){
 
         ppu->clock();
         if(a %3 == 0){
             cpu->clock();
+//            cpu->clock();
 //            if(cpu->rem_cycles == 0){
 //                logging(*cpu, old_pc, *ppu);
 //                old_pc = cpu->get_register_PC();
