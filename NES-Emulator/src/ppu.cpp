@@ -470,8 +470,7 @@ Byte PPU::read(Address addr){
     return 0x00;
 }
 
-void PPU::ntbyte(){
-    //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
+void PPU::reloadShifters(){//The shifters are reloaded during ticks 9, 17, 25, ..., 257.
     this->pattern_data_shift_register_1 = (this->pattern_data_shift_register_1 & 0xFF00) | this->pattern_data_shift_register_1_latch;
     this->pattern_data_shift_register_2 = (this->pattern_data_shift_register_1 & 0xFF00) | this->pattern_data_shift_register_2_latch;
     
@@ -484,7 +483,9 @@ void PPU::ntbyte(){
         this->palette_attribute_shift_register_2 = (this->palette_attribute_shift_register_2 & 0xFF00) | 0x00FF;
     else
         this->palette_attribute_shift_register_2 = (this->palette_attribute_shift_register_2 & 0xFF00) | 0x0000;
-    
+}
+
+void PPU::ntbyte(){
     //NT Byte
     this->next_pattern_data_shift_register_location = this->read(0x2000 | (this->vmem_addr & 0x0FFF));
 }
@@ -752,12 +753,14 @@ void PPU::clock(){
 
         if((this->row >= 1) && ((this->row <= 255) || ((this->row >= 321) && (this->row <= 338)))){
             shift();
+            
             switch (this->row % 8) {
                 case 0: //inc hori(v)
                     incHori_v();
                     break;
 
                 case 1: //NT Byte
+                    reloadShifters();
                     ntbyte();
                     break;
 
@@ -769,7 +772,7 @@ void PPU::clock(){
                     LowBGByteTile();
                     break;
 
-                case 6://high BG Tile
+                case 7://high BG Tile
                     HighBGByteTile();
                     break;
 
@@ -781,13 +784,52 @@ void PPU::clock(){
         if(this->row == 256)
             incY();
 
-        if(this->row == 257)
+        if(this->row == 257){
+            reloadShifters();
             this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
+        }
+        
+#warning read NTByte at 337 and 339 ?
 
-        if((this->scanline == -1) && (this->row >= 280) && (this->row <= 304))
+        if((this->scanline == -1) && (this->row >= 280) && (this->row <= 304)){
             this->vmem_addr = (this->vmem_addr & 0x041F) | (this->addr_t & 0x7BE0);
+            
+            if(this->registers.PPUCTRL & 0x80)
+                this->asknmi = true;
+        }
     }
 
     if((this->scanline == 241) && (this->row == 1))
         this->registers.PPUSTATUS |= 0x80;
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+        row++;                                   //each cycle the ppu generate one pixel
+        if(this->row == 361){
+            this->row = 0;
+    
+            this->scanline++;                    //switch to next line
+            if(this->scanline == 261){
+                this->scanline = -1;             //return to pre-render scanline
+    
+                this->odd_frame = !this->odd_frame;
+                if(this->odd_frame)
+                    this->row = 1;               //first cycle is skiped on odd frames
+    
+    
+    
+                //DRAW
+                SDL_PollEvent(&event);           // Catching the poll event.
+                if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
+                else graphics.update();
+            }
+        }
+    
 }

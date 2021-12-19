@@ -116,6 +116,7 @@ public:
     
     
     //rendering functions
+    void reloadShifters();
     void ntbyte();
     void LowBGByteTile();
     void HighBGByteTile();
