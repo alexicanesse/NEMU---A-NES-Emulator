@@ -20,6 +20,8 @@ typedef uint16_t Address;
 
 
 class NES{
+private:
+    int cycle; //it will be used to make the cpu run at a third of ppu speed 
 public:
     CPU *cpu;
     PPU *ppu;
@@ -30,11 +32,18 @@ public:
     */
     NES();
     
+    
+    //controller (only one because it's annoying to map tow controllers to one keyboard)
+    Byte controler_state = 0x00;
+    Byte controler_shifter = 0x00;
+    
 #warning TODO init matrix at init
-    std::array<Byte, 2048> *ram = new std::array<Byte, 2048>; //le reste et un miroire de cette tranche mémoire.
+    std::array<Byte, 2048> *ram = new std::array<Byte, 2048>;
     
     void write(Address adr, Byte content);
-    Byte read(Address adr); //errno = 22 en cas d'erreur.
+    Byte read(Address adr);
+    
+    void clock();
 };
 
 

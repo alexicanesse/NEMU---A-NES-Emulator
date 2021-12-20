@@ -197,3 +197,20 @@ Byte NES::read(Address addr){
 }
 
 
+void NES::clock(){
+    
+
+
+    
+    this->ppu->clock();
+    if(this->cycle % 3 == 0)
+        this->cpu->clock();
+    
+    if(this->ppu->asknmi){
+        this->cpu->NMI();
+        this->ppu->asknmi = false;
+    }
+    
+    cycle++;
+}
+

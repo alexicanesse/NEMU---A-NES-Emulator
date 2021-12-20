@@ -21,11 +21,6 @@ class NES;
 
 class PPU{
 private:
-    /*
-     Graphics
-    */
-    GRAPHICS graphics = *(new GRAPHICS(256*2, 240*2));
-    SDL_Event event;
     
     //https://wiki.nesdev.org/w/index.php?title=PPU_frame_timing
     bool odd_frame = false;
@@ -87,6 +82,12 @@ private:
     
     
 public:
+    /*
+     Graphics
+    */
+    GRAPHICS graphics = *(new GRAPHICS(256*2, 240*2));
+    SDL_Event event;
+    
     /*
         Constructor
     */
@@ -166,9 +167,6 @@ public:
     int getrow(){ return row;}
     int getscanline(){ return scanline;}
     GRAPHICS getgraphics() { return graphics; }
-    
-#warning debug
-    int frame = 0;
 };
 
 

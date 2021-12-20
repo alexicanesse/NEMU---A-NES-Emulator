@@ -124,8 +124,8 @@ int main(){
     
     Address old_pc = 0x0000;
     
-//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
-    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
+    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
+//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
         std::cout << "AHHHHHHHHH";
         return 0;
     }
@@ -136,24 +136,17 @@ int main(){
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
     log.close();
 //    logging(*cpu);
-    
-    
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-    
-//    for(int i = 0x2000; i<0x3000; i++){
-//        ppu->write(i, 0x24);
-//    }
     
     
     int a = 0;
     while(1){
 
-
-        cpu->clock();
-
-        if(a %3 == 0){
-            ppu->clock();
+        nes.clock();
+//        cpu->clock();
+//
+//        if(a %3 == 0){
+//            ppu->clock();
 
 //            cpu->clock();
 //            if(cpu->rem_cycles == 0){
@@ -164,12 +157,12 @@ int main(){
 //                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 //            show_state(*cpu, *nes.ram, *ppu);
 //            refresh();
-        }
-        if(ppu->asknmi){
-            cpu->NMI();
-            ppu->asknmi = false;
-        }
-        a++;
+//        }
+//        if(ppu->asknmi){
+//            cpu->NMI();
+//            ppu->asknmi = false;
+//        }
+//        a++;
 //        logging(*cpu, old_pc, *ppu);
     }
     
