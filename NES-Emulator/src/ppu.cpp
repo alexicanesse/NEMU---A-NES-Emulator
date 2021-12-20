@@ -816,7 +816,6 @@ void PPU::clock(){
     GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
     graphics.DrawPixel(row - 1, scanline, c);
 
-    
 
     row++;                                   //each cycle the ppu generate one pixel
     if(this->row == 361){
@@ -830,6 +829,9 @@ void PPU::clock(){
             if(this->odd_frame)
                 this->row = 1;               //first cycle is skiped on odd frames
    
+            
+
+
             SDL_PollEvent(&event);
             graphics.update();
         }

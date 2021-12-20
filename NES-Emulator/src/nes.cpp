@@ -114,7 +114,16 @@ void NES::write(Address adr, Byte content){
                 break;
         }
     }
+    else if(adr == 0x4016){
+#warning work in progress
+        SDL_Event event;
+        SDL_PollEvent(&event);
+        const Byte *keys = SDL_GetKeyboardState(NULL);
+                if(keys[SDL_SCANCODE_B])
+        std::cout << "omg";
+    }
     else if (adr <= 0x401F){
+        
     #warning TODO write APU/IO
     }
 }
@@ -182,6 +191,9 @@ Byte NES::read(Address addr){
             case 0x4014:
                 return this->ppu->getOAMDMA();
                 break;
+            case 0x4016:
+                std::cout << "6";
+                break;
                 
             default:
                 return 0x00;
@@ -198,10 +210,6 @@ Byte NES::read(Address addr){
 
 
 void NES::clock(){
-    
-
-
-    
     this->ppu->clock();
     if(this->cycle % 3 == 0)
         this->cpu->clock();
