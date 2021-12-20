@@ -166,6 +166,9 @@ public:
     int getrow(){ return row;}
     int getscanline(){ return scanline;}
     GRAPHICS getgraphics() { return graphics; }
+    
+#warning debug
+    int frame = 0;
 };
 
 

@@ -551,7 +551,7 @@ void PPU::ATByte(){
 }
 
 void PPU::incHori_v(){
-    if((this->registers.PPUMASK & 0x08)){
+    if((this->registers.PPUMASK & 0x18)){
         if((this->vmem_addr & 0x001F) == 0x1F){ //last tile on that line
             this->vmem_addr &= 0xFFE0;        //coarse X = 0
             this->vmem_addr ^= 0x0400;        //switch horizontal nametable
@@ -563,7 +563,7 @@ void PPU::incHori_v(){
 
 void PPU::shift(){
     //shift shift registers so that the most significant bit is the data to fetch
-    if((this->registers.PPUMASK & 0x08)){
+    if((this->registers.PPUMASK & 0x18)){
         this->pattern_data_shift_register_1 <<= 1;
         this->pattern_data_shift_register_2 <<= 1;
         this->palette_attribute_shift_register_1 <<= 1;
@@ -572,7 +572,7 @@ void PPU::shift(){
 }
 
 void PPU::incY(){
-    if(this->registers.PPUMASK & 0x08){
+    if(this->registers.PPUMASK & 0x18){
         if ((this->vmem_addr & 0x7000) != 0x7000)
             this->vmem_addr += 0x1000; //incr fine Y
         else{
@@ -749,8 +749,8 @@ void PPU::incY(){
 
 void PPU::clock(){
     if(this->scanline <= 239){//it includes the pre-render line
-        if((this->scanline == -1) & (this->row == 1))
-            this->registers.PPUSTATUS &= 0x5F;
+        if((this->scanline == -1) && (this->row == 1))
+            this->registers.PPUSTATUS &= 0x1F;
 
         if((this->row >= 1) && ((this->row <= 256) || ((this->row >= 321) && (this->row <= 337)))){
             shift();
@@ -787,12 +787,13 @@ void PPU::clock(){
 
         if(this->row == 257){
             reloadShifters();
-            this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
+            if(this->registers.PPUMASK & 0x18)
+                this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
         }
         
 #warning read NTByte at 337 and 339 ?
 
-        if((this->scanline == -1) && (this->row >= 280) && (this->row <= 304)){
+        if((this->scanline == -1) && (this->row >= 280) && (this->row <= 304) && ((this->registers.PPUMASK & 0x18) != 0)){
             this->vmem_addr = (this->vmem_addr & 0x041F) | (this->addr_t & 0x7BE0);
         }
     }
@@ -800,7 +801,7 @@ void PPU::clock(){
     if((this->scanline == 241) && (this->row == 1)){
         this->registers.PPUSTATUS |= 0x80;
         if(this->registers.PPUCTRL & 0x80){
-            if(this->registers.PPUMASK & 0x04) this->asknmi = true;
+            if(this->registers.PPUMASK & 0x1E) this->asknmi = true;
         }
     }
     
@@ -829,19 +830,21 @@ void PPU::clock(){
     GRAPHICS::Color c = this->palette->at(this->read(0x3F00 + (palette_index << 2) + pixel) & 0x3F);
     this->graphics.DrawPixel(this->row, this->scanline, c);
 
-
+    
     this->row++;
-    if(this->row >= 361){
+    if(this->row == 341){
         this->row = 0;
 
         this->scanline++;
-        if(this->scanline >= 261){
+        if(this->scanline == 261){
             this->scanline = -1;
             if(this->odd_frame){
                 this->row = 1;
             }
             this->odd_frame = !this->odd_frame;
 
+            frame++;
+            
             //DRAW
             SDL_PollEvent(&event);           // Catching the poll event.
             if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();

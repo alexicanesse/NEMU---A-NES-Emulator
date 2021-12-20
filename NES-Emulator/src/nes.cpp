@@ -114,7 +114,7 @@ void NES::write(Address adr, Byte content){
                 break;
         }
     }
-    else if (adr <= 0x4020){
+    else if (adr <= 0x401F){
     #warning TODO write APU/IO
     }
 }
@@ -176,7 +176,7 @@ Byte NES::read(Address addr){
                 break;
         }
     }
-    else if (addr <= 4020){
+    else if (addr <= 0x401F){
     #warning TODO read APU/IO
         switch (addr) {
             case 0x4014:

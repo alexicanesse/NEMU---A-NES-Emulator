@@ -124,8 +124,8 @@ int main(){
     
     Address old_pc = 0x0000;
     
-    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
-//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
+//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
+    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
         std::cout << "AHHHHHHHHH";
         return 0;
     }
@@ -149,9 +149,12 @@ int main(){
     int a = 0;
     while(1){
 
-        ppu->clock();
+
+        cpu->clock();
+
         if(a %3 == 0){
-            cpu->clock();
+            ppu->clock();
+
 //            cpu->clock();
 //            if(cpu->rem_cycles == 0){
 //                logging(*cpu, old_pc, *ppu);

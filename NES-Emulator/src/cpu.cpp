@@ -72,7 +72,6 @@ void CPU::clock(){
         this->rem_cycles++;
     
     //branch instructions handle cycles themseles
-    ;
 
 }
 
@@ -293,7 +292,7 @@ void CPU::NMI(){
     this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.nv_bdizc & 0xEF) | 0x24);
 
     this->registers.r_PC = this->nes->read(0xFFFA);
-    this->registers.nv_bdizc |= 0x04;
+    this->registers.nv_bdizc |= 0x34;
 
     this->registers.r_PC |= (this->nes->read(0xFFFB) << 8);
 }
