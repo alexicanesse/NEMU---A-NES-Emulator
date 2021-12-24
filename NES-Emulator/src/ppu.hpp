@@ -16,6 +16,7 @@
 
 typedef uint8_t Byte;
 typedef uint16_t Address;
+typedef std::array<Byte, 4> Sprite; //each byte as its own role and must be accessed separatly so it doesn't make sense to use uint32_t (which is what I did at first)
 
 class NES;
 
@@ -34,7 +35,7 @@ private:
     positions
     */
     int scanline = -1;
-    int row = 0;
+    int cycle = 0;
 
     
     /*
@@ -85,7 +86,21 @@ private:
     bool palette_attribute_shift_register_1_latch = false;
     bool palette_attribute_shift_register_2_latch = false;
     
-    
+    //Sprites
+    //Primary OAM (holds 64 sprites for the frame)
+    //Secondary OAM (holds 8 sprites for the current scanline)
+    //8 pairs of 8-bit shift registers - These contain the pattern table data for up to 8 sprites, to be rendered on the current scanline. Unused sprites are loaded with an all-transparent set of values.
+    //8 latches - These contain the attribute bytes for up to 8 sprites.
+    //8 counters - These contain the X positions for up to 8 sprites.
+    std::array<Sprite, 64> *OAM = new std::array<Sprite, 64>;
+    std::array<Sprite, 8> *Sec_OAM = new std::array<Sprite, 8>;
+    int last_available_slot = 0; //helper variable that indicates were to write in the secondary OAM. 8 indicates that the secondary OAM is full.
+    std::array<std::array<Byte,2>,8> *sprite_shift_registers = new std::array<std::array<Byte,2>,8>;
+    std::array<Byte,8> *sprite_latches = new std::array<Byte,8>;
+    std::array<Byte,8> *sprite_counters = new std::array<Byte,8>;
+    int n = 0; //helper variable
+    int sprite_cycle = 0; //helper variable
+    Byte sprite_data_read = 0x00; //helper variable
 public:
 
     
@@ -163,10 +178,8 @@ public:
     
     //debug
     int get_scanline(){ return scanline; }
-    int get_row(){ return row; }
+    int get_cycle(){ return cycle; }
     struct registers r() {return registers; }
-    int getrow(){ return row;}
-    int getscanline(){ return scanline;}
     GRAPHICS getgraphics() { return graphics; }
 };
 

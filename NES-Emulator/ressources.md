@@ -18,3 +18,5 @@ https://bugzmanov.github.io/nes_ebook/chapter_6_1.html
 http://archive.nes.science/nesdev-forums/f3/t12605.xhtml
 
 https://github.com/amhndu/SimpleNES/blob/master/include/VirtualScreen.h
+
+https://documentation.help/FCEUX/%7B9C73EB3E-118D-451A-AAE8-BBF99A5FDEEB%7D.htm

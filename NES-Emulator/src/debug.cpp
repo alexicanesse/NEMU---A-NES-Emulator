@@ -90,8 +90,8 @@ void show_position(PPU ppu){
     move(6,50);
     std::stringstream buffer;
     buffer << "PPU position:"; addstr(buffer.str().c_str()); move(7,50); buffer.str("");
-    buffer << std::dec << "Scanline: " << ppu.getscanline();; addstr(buffer.str().c_str()); move(8,50); buffer.str("");
-    buffer << std::dec << "Row: " << ppu.getrow(); addstr(buffer.str().c_str()); move(9,50); buffer.str("");
+    buffer << std::dec << "Scanline: " << ppu.get_scanline();; addstr(buffer.str().c_str()); move(8,50); buffer.str("");
+    buffer << std::dec << "Cycle: " << ppu.get_cycle(); addstr(buffer.str().c_str()); move(9,50); buffer.str("");
 }
 
 void show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu){
@@ -108,7 +108,7 @@ void show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu){
 void logging(CPU cpu, Address pc, PPU ppu){
     std::ofstream log;
     log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ostream::app);
-    log << "\n" << std::hex << std::setw(4) << std::left << (int) pc << "  CYC:" << std::dec << cpu.cycles << std::hex <<"  A:" << std::setw(2) << std::left << (int) cpu.get_register_A() << "  X:" << std::setw(2) << std::left << (int) cpu.get_register_X() << "  Y:" << std::setw(2) << std::left << (int) cpu.get_register_Y() <<  "  Stack:" << std::hex << (int) cpu.get_register_SP() << "  opcode: 0x" << std::setw(2) << std::left << (int) cpu.opcode << "  Addr:" << std::setw(4) << std::left << (int) cpu.data_to_read << "  Data: 0x" << std::setw(2) << std::left << (int) cpu.nes->read(cpu.data_to_read) << "  Flags (nv_bdizc):" << cpu.getflag(0x80) << cpu.getflag(0x40) << "_" << cpu.getflag(0x10) << cpu.getflag(0x08) << cpu.getflag(0x04) << cpu.getflag(0x02) << cpu.getflag(0x01) << "  Scanline:" << std::dec << std::setw(3) << std::left << cpu.nes->ppu->get_scanline() << "  Row:" << std::setw(3) << std::left << cpu.nes->ppu->get_row() << "  vram_addr:0x" <<std::hex  << std::setw(4) << std::left << (int) cpu.nes->ppu->vmem_addr << "  t_addr:0x" << std::setw(4) << std::left << cpu.nes->ppu->addr_t << "  ctrl:0x" << std::setw(2) << std::left << (int) ppu.getPPUCTRL() << "  mask:0x" << std::setw(2) << std::left << (int) ppu.getPPUMASK() << "  status:0x" << std::setw(2) << std::left << (int) ppu.r().PPUSTATUS << "  oamddr:0x" << std::setw(2) << std::left << (int) ppu.getOAMADDR() << "  oamdata:0x" << std::setw(2) << std::left << (int) ppu.getOAMDATA() << "  scroll:0x" << std::setw(2) << std::left << (int) ppu.getPPUSCROLL() << "  oamdma:0x" << std::setw(2) << std::left << (int) ppu.getOAMDMA();
+    log << "\n" << std::hex << std::setw(4) << std::left << (int) pc << "  CYC:" << std::dec << cpu.cycles << std::hex <<"  A:" << std::setw(2) << std::left << (int) cpu.get_register_A() << "  X:" << std::setw(2) << std::left << (int) cpu.get_register_X() << "  Y:" << std::setw(2) << std::left << (int) cpu.get_register_Y() <<  "  Stack:" << std::hex << (int) cpu.get_register_SP() << "  opcode: 0x" << std::setw(2) << std::left << (int) cpu.opcode << "  Addr:" << std::setw(4) << std::left << (int) cpu.data_to_read << "  Data: 0x" << std::setw(2) << std::left << (int) cpu.nes->read(cpu.data_to_read) << "  Flags (nv_bdizc):" << cpu.getflag(0x80) << cpu.getflag(0x40) << "_" << cpu.getflag(0x10) << cpu.getflag(0x08) << cpu.getflag(0x04) << cpu.getflag(0x02) << cpu.getflag(0x01) << "  Scanline:" << std::dec << std::setw(3) << std::left << cpu.nes->ppu->get_scanline() << "  Row:" << std::setw(3) << std::left << cpu.nes->ppu->get_cycle() << "  vram_addr:0x" <<std::hex  << std::setw(4) << std::left << (int) cpu.nes->ppu->vmem_addr << "  t_addr:0x" << std::setw(4) << std::left << cpu.nes->ppu->addr_t << "  ctrl:0x" << std::setw(2) << std::left << (int) ppu.getPPUCTRL() << "  mask:0x" << std::setw(2) << std::left << (int) ppu.getPPUMASK() << "  status:0x" << std::setw(2) << std::left << (int) ppu.r().PPUSTATUS << "  oamddr:0x" << std::setw(2) << std::left << (int) ppu.getOAMADDR() << "  oamdata:0x" << std::setw(2) << std::left << (int) ppu.getOAMDATA() << "  scroll:0x" << std::setw(2) << std::left << (int) ppu.getPPUSCROLL() << "  oamdma:0x" << std::setw(2) << std::left << (int) ppu.getOAMDMA();
     
 #warning debug
 //    log << " 0xFFFD 0xFFFC: " << std::hex << (int) ((cpu.nes->read(0xc109)));
@@ -123,9 +123,9 @@ int main(){
     CARTRIDGE *cartridge = nes.cartridge;
     
     Address old_pc = 0x0000;
-    
-    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
-//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
+  
+//    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes")) {
+    if(!cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes")) {
         std::cout << "AHHHHHHHHH";
         return 0;
     }
@@ -143,10 +143,10 @@ int main(){
     while(1){
 
         nes.clock();
-//        cpu->clock();
-//
+//        ppu->clock();
+////
 //        if(a %3 == 0){
-//            ppu->clock();
+//            cpu->clock();
 
 //            cpu->clock();
 //            if(cpu->rem_cycles == 0){

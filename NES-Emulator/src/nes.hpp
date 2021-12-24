@@ -34,7 +34,6 @@ public:
     
     
     //controller (only one because it's annoying to map tow controllers to one keyboard)
-    Byte controler_state = 0x00;
     Byte controler_shifter = 0x00;
     
 #warning TODO init matrix at init

@@ -576,170 +576,17 @@ void PPU::incY(){
     }
 }
 
-//void PPU::clock(){
-//    //Background evaluation
-//    //Conceptually, the PPU does this 33 times for each scanline:
-//    //Fetch a nametable entry from $2000-$2FBF.
-//    //Fetch the corresponding attribute table entry from $23C0-$2FFF and increment the current VRAM address within the same row.
-//    //Fetch the low-order byte of an 8x1 pixel sliver of pattern table from $0000-$0FF7 or $1000-$1FF7.
-//    //Fetch the high-order byte of this sliver from an address 8 bytes higher.
-//    //Turn the attribute data and the pattern table data into palette indices, and combine them with data from sprite data using priority.
-//    //It also does a fetch of a 34th (nametable, attribute, pattern) tuple that is never used
-//
-//
-//    // Pre-render scanline (-1 or 261)
-//    // This is a dummy scanline, whose sole purpose is to fill the shift registers with the data for the first two tiles of the next scanline. Although no pixels are rendered for this scanline, the PPU still makes the same memory accesses it would for a regular scanline.
-//    // This scanline varies in length, depending on whether an even or an odd frame is being rendered. For odd frames, the cycle at the end of the scanline is skipped
-//    // During pixels 280 through 304 of this scanline, the vertical scroll bits are reloaded if rendering is enabled.
-//    if(this->scanline == -1){
-//        if(row == 0){
-//            row++;
-//            return;
-//        }
-//        //Vertical blank has started (0: not in vblank; 1: in vblank).
-//        //Set at dot 1 of line 241 (the line *after* the post-render
-//        //line); cleared after reading $2002 and at dot 1 of the
-//        //pre-render line.
-//        if(row == 1)
-//            this->registers.PPUSTATUS &= 0x7F;
-//
-//
-//        if((this->registers.PPUMASK & 0x40) & (this->row >= 280) & (this->row <= 304)){
-//            //If rendering is enabled, at the end of vblank, shortly after the horizontal bits are copied from t to v at dot 257, the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304, completing the full initialization of v from t:
-//            //v: GHI A.BC DEF. .... <- t: GHI A.BC DEF. ....
-//            this->vmem_addr = (this->vmem_addr & 0x041F) | (this->addr_t & 0x7BE0);
-//        }
-//    }
-//
-//
-//    //Vertical blank has started (0: not in vblank; 1: in vblank).
-//    //Set at dot 1 of line 241 (the line *after* the post-render
-//    //line); cleared after reading $2002 and at dot 1 of the
-//    //pre-render line.
-//    if((this->scanline == 241) && (this->row == 1)){
-//        this->registers.PPUSTATUS |= 0x80;
-//
-//        if(this->registers.PPUCTRL & 0x80)
-//            this->asknmi = true;
-//    }
-//
-//    //https://wiki.nesdev.org/w/images/4/4f/Ppu.svg
-//    if((this->scanline <= 239) & (this->row <= 336) & (((this->row <= 257) | (this->row >= 321)) & (this->row != 0))){
-//        //The shifters are reloaded during ticks 9, 17, 25, ..., 257.
-//        shift();
-//
-//        //https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
-//        //The high bits of v are used for fine Y during rendering, and addressing nametable data only requires 12 bits, with the high 2 CHR address lines fixed to the 0x2000 region. The address to be fetched during rendering can be deduced from v in the following way:
-//        //tile address      = 0x2000 | (v & 0x0FFF)
-//        //attribute address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07)
-//
-//        //each opperation last for two cycles. Just like with the CPU, we're gonna do it on the first cycle and idle on the second one
-//        switch (this->row % 8) {
-//            case 0: //inc. hori(v)
-//                incHori_v();
-//                break;
-//
-//            case 1: //NT Byte
-//                ntbyte();
-//
-//                break;
-//
-//            case 3:{ //AT Byte
-//                ATByte();
-//
-//                break;
-//            }
-//
-//            case 5: //Low BG Byte tile
-//                LowBGByteTile();
-//                break;
-//
-//            case 7: //High BG Byte tile
-//                HighBGByteTile();
-//#warning only 0
-////                std::cout << std::hex << (int) this->pattern_data_shift_register_2_latch << "\n";
-//                break;
-//
-//
-//            //operation has already been executed
-//            default:
-//                break;
-//        }
-//
-//
-//        if((this->registers.PPUMASK & 0x08) & (this->row == 256)){//incr y
-//            incY();
-//        }
-//
-//
-//        if((this->registers.PPUMASK & 0x08) & (this->row == 257) & (this->scanline <= 239)){ //hori(v) = hori(t)
-//            this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
-//        }
-//
-//
-//    }
-//
-//
-//    //we read the appropriate (defined by fine x) bit in the pattern shiffters
-//    bool pixel_value_high = (this->pattern_data_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-//    bool pixel_value_low = (this->pattern_data_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-//
-//    //we read the appropriate (defined by fine x) bit in the palette shiffters
-//    bool palette_value_high = (palette_attribute_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-//    bool palette_value_low = (palette_attribute_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
-//
-////    if((((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F) != 0)
-////       std::cout << std::hex << (int) (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) & 0x3F);
-////
-//
-//    //43210
-//    //|||||
-//    //|||++- Pixel value from tile data
-//    //|++--- Palette number from attribute table or OAM
-//    //+----- Background/Sprite select
-////    std::cout << ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2));
-//    GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
-//    graphics.DrawPixel(row - 1, scanline, c);
-//
-////    std::cout << std::hex << (int) this->read( 0x3F00 + (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2))) & 0x3F) << "\n";
-//    std::cout << std::hex << (int) (((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) << "\n";
-////    if((this->row >= 0) && (this->row <= 255) && (this->scanline >= 0) && (this->scanline <= 239))
-////        graphics.DrawPixel(row, scanline, this->palette->at(this->Palette->at(rand() % 0xf)));
-//
-//    row++;                                   //each cycle the ppu generate one pixel
-//    if(this->row == 361){
-//        this->row = 0;
-//
-//        this->scanline++;                    //switch to next line
-//        if(this->scanline == 261){
-//            this->scanline = -1;             //return to pre-render scanline
-//
-//            this->odd_frame = !this->odd_frame;
-//            if(this->odd_frame)
-//                this->row = 1;               //first cycle is skiped on odd frames
-//
-//
-//
-//            //DRAW
-//            SDL_PollEvent(&event);           // Catching the poll event.
-//            if(event.type == SDL_KEYDOWN) graphics.~GRAPHICS();
-//            else graphics.update();
-//        }
-//
-//
-//
-//    }
-//}
+
 
 void PPU::clock(){
     if(this->scanline <= 239){//it includes the pre-render line
-        if((this->scanline == -1) && (this->row == 1))
+        if((this->scanline == -1) && (this->cycle == 1))
             this->registers.PPUSTATUS &= 0x1F;
 
-        if((this->row >= 1) && ((this->row <= 256) || ((this->row >= 321) && (this->row <= 337)))){
+        if((this->cycle >= 1) && ((this->cycle <= 256) || ((this->cycle >= 321) && (this->cycle <= 337)))){
             shift();
             
-            switch (this->row % 8) {
+            switch (this->cycle % 8) {
                 case 0: //inc hori(v)
                     incHori_v();
                     break;
@@ -766,23 +613,23 @@ void PPU::clock(){
             }
         }
 
-        if(this->row == 256)
+        if(this->cycle == 256)
             incY();
 
-        if(this->row == 257){
+        if(this->cycle == 257){
             reloadShifters();
             if(this->registers.PPUMASK & 0x18)
                 this->vmem_addr = (this->vmem_addr & 0xFBE0) | (this->addr_t & 0x041F);
         }
 
-        if((this->scanline == -1) && (this->row >= 280) && (this->row <= 304) && ((this->registers.PPUMASK & 0x18) != 0)){
+        if((this->scanline == -1) && (this->cycle >= 280) && (this->cycle <= 304) && ((this->registers.PPUMASK & 0x18) != 0)){
             this->vmem_addr = (this->vmem_addr & 0x041F) | (this->addr_t & 0x7BE0);
         }
     }
 
     
     
-    if((this->scanline == 241) && (this->row == 1)){
+    if((this->scanline == 241) && (this->cycle == 1)){
         this->registers.PPUSTATUS |= 0x80;
         if(this->registers.PPUCTRL & 0x80){
             if(this->registers.PPUMASK & 0x1E) this->asknmi = true;
@@ -792,10 +639,162 @@ void PPU::clock(){
 
 
     
+    /*
+     Sprits
+     */
+    //Sprite 0 Hit.  Set when a nonzero pixel of sprite 0 overlaps
+    //a nonzero background pixel; cleared at dot 1 of the pre-render
+    //line.  Used for raster timing.
+    
+    //Sprite overflow. The intent was for this flag to be set whenever more than eight sprites appear on a scanline, but a
+    //hardware bug causes the actual behavior to be more complicated and generate false positives as well as false negatives;
+    //This flag is set during sprite evaluation and cleared at dot 1 (the second dot) of the pre-render line.
+    if((this->scanline == -1) && (this->cycle == 1))
+        this->registers.PPUSTATUS &= 0x90;
     
     
     
+    //Source: https://wiki.nesdev.org/w/index.php?title=PPU_sprite_evaluation
+    //During all visible scanlines, the PPU scans through OAM to determine which sprites to render on the next scanline. Sprites found to be within range are copied into the secondary OAM, which is then used to initialize eight internal sprite output units.
+    //OAM[n][m] below refers to the byte at offset 4*n + m within OAM, i.e. OAM byte m (0-3) of sprite n (0-63).
+    //During each pixel clock (341 total per scanline), the PPU accesses OAM in the following pattern:
     
+    
+    if(this->scanline <= 239){//this includes the pre-render line
+        //Cycles 1-64: Secondary OAM (32-byte buffer for current sprites on scanline) is initialized to $FF - attempting to read $2004 will return $FF. Internally, the clear operation is implemented by reading from the OAM and writing into the secondary OAM as usual, only a signal is active that makes the read always return $FF.
+        if(this->cycle == 1){ //it is not cycle accurate but who cares ?
+            this->last_available_slot = 0; // secondary OAM is empty
+            for(int i = 0; i< 8; i++){
+                this->Sec_OAM->at(i).at(0) = 0xFF;
+                this->Sec_OAM->at(i).at(1) = 0xFF;
+                this->Sec_OAM->at(i).at(2) = 0xFF;
+                this->Sec_OAM->at(i).at(3) = 0xFF;
+            }
+        }
+        
+        if(this->cycle >= 1 && this->cycle <= 64){
+            //already done at cycle == 1
+        }
+        
+//        //Cycles 65-256: Sprite evaluation
+//        else if(this->cycle >= 65 && this->cycle <= 256){
+//            //Sprite evaluation occurs if either the sprite layer or background layer is enabled via $2001. Unless both layers are disabled, it merely hides sprite rendering.
+//            if(this->registers.PPUMASK & 0x18){//sprite evaluation
+//                if(this->scanline == 65)//it ain't accurate as I'm not using OAMADDR but it only matter when rendering is enable at the middle of the screen because oamaddr is reset at the begging of rendering
+//                    this->sprite_n = 0;
+//                //On odd cycles, data is read from (primary) OAM
+//                //On even cycles, data is written to secondary OAM (unless secondary OAM is full, in which case it will read the value in secondary OAM instead)
+//
+//                if(this->sprite_cycle == 0) //odd
+//                    this->sprite_data_read = this->OAM->at(n).(0);
+//                else if(this->sprite_cyle == 1){
+//                    if(this->last_available_slot != 8){ //Sec_OAM is not full
+//                        this->Sec_OAM->at(last_available_slot).at(0) = this->sprite_data_read;
+//
+//                        int sprite_height = 0;
+//                        if(this->registers.PPUCTRL 0x20) //Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
+//                            sprite_height = 16;
+//                        else
+//                            sprite_height = 8;
+//
+//                        if((this->Sec_OAM->at(last_available_slot).at(0) <= this->scanline) && ((this->Sec_OAM->at(last_available_slot).at(0) + sprite_height) >= this->scanline)){//in range
+//                            this->sprite_cyle = 3; //we fetch the rest of the sprite
+//                            this->Sec_OAM->at(last_available_slot).at(1) = this->OAM->at(n).(1);
+//                            this->Sec_OAM->at(last_available_slot).at(2) = this->OAM->at(n).(2);
+//                            this->Sec_OAM->at(last_available_slot).at(3) = this->OAM->at(n).(3);
+//                        }
+//                        else{ //not in range
+//                            this->sprite_cyle = 0; //we keep going
+//                        }
+//                    }
+//                    else{
+//                        this->sprite_data_read = this->Sec_OAM->at(this->last_available_slot).at(0);
+//#warning TODO sprite overflow flag
+//                    }
+//                }
+//            }
+//        }
+        //Cycles 65-256: Sprite evaluation
+        else if(this->cycle >= 65 && this->cycle <= 256){
+            //Sprite evaluation occurs if either the sprite layer or background layer is enabled via $2001. Unless both layers are disabled, it merely hides sprite rendering.
+            if(this->registers.PPUMASK & 0x18){//sprite evaluation
+                if(this->scanline == 65){//it ain't accurate as I'm not using OAMADDR but it only matter when rendering is enable at the middle of the screen because oamaddr is reset at the begging of rendering
+                    this->n = 0;
+                    this->sprite_cycle = 0;
+                }
+
+                if(this->sprite_cycle == 0){
+                    this->sprite_data_read = this->OAM->at(n).(0);
+                    this->sprite_cycle = 1;
+                }
+                else if(this->sprite_cycle == 1){
+                    this->Sec_OAM->at(this->last_available_slot).(0) = this->sprite_data_read;
+                    
+                    //is this sprite in range ?
+                    int sprite_height = 0;
+                    if(this->registers.PPUCTRL & 0x20) //Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
+                        sprite_height = 16;
+                    else
+                        sprite_height = 8;
+
+                    if((this->Sec_OAM->at(last_available_slot).at(0) <= this->scanline) && ((this->Sec_OAM->at(last_available_slot).at(0) + sprite_height) >= this->scanline))//in range
+                        this->cycle = 2;
+                    else{
+                        this->cycle = 0;
+                        n++; //get ready to read the next sprite
+                        if(n == 64)//n overflow
+                            n = 0;
+                    }
+                }
+                else if(this->sprite_cycle == 2){
+                    this->sprite_data_read = this->OAM->at(n).(1);
+                    this->sprite_cycle = 3;
+                }
+                else if(this->sprite_cycle == 3){
+                    this->Sec_OAM->at(this->last_available_slot).(1) = this->sprite_data_read;
+                    this->sprite_cycle = 4;
+                }
+                else if(this->sprite_cycle == 4){
+                    this->sprite_data_read = this->OAM->at(n).(2);
+                    this->sprite_cycle = 5;
+                }
+                else if(this->sprite_cycle == 5){
+                    this->Sec_OAM->at(this->last_available_slot).(2) = this->sprite_data_read;
+                    this->sprite_cycle = 6;
+                }
+                else if(this->sprite_cycle == 6){
+                    this->sprite_data_read = this->OAM->at(n).(3);
+                    this->sprite_cycle = 7;
+                }
+                else if(this->sprite_cycle == 7){
+                    this->Sec_OAM->at(this->last_available_slot).(3) = this->sprite_data_read;
+                    this->last_available_slot++; //we took a slot in secondary oam
+                    this->n++; //get ready to read the next sprite
+                    if(n == 64)//n overflow
+                        n = 0;
+                    
+                    this->sprite_cycle = 0; //this sprite is processed!
+                }
+            }
+        }
+
+        //Hblank begins after dot 256, and ends at dot 320 when the first tile of the next line is fetched.
+        
+        //Cycles 257-320: Sprite fetches (8 sprites total, 8 cycles per sprite)
+        //1-4: Read the Y-coordinate, tile number, attributes, and X-coordinate of the selected sprite from secondary OAM
+        //5-8: Read the X-coordinate of the selected sprite from secondary OAM 4 times (while the PPU fetches the sprite tile data)
+        //For the first empty sprite slot, this will consist of sprite #63's Y-coordinate followed by 3 $FF bytes; for subsequent empty sprite slots, this will be four $FF bytes
+        else if((this->cycle >= 257) && (this->cycle <= 320)){
+            //OAMADDR is set to 0 during each of ticks 257-320 (the sprite tile loading interval) of the pre-render and visible scanlines.
+            this->registers.OAMADDR = 0x00;
+        }
+        
+        //Cycles 321-340+0: Background render pipeline initialization
+        //Read the first byte in secondary OAM (while the PPU fetches the first two background tiles for the next scanline)
+        else if((this->cycle >= 320) && (this->cycle <= 340)){
+            
+        }
+    }
 /*
  Actual rendering
 */
@@ -814,12 +813,12 @@ void PPU::clock(){
     //|++--- Palette number from attribute table or OAM
     //+----- Background/Sprite select
     GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
-    graphics.DrawPixel(row - 1, scanline, c);
+    graphics.DrawPixel(cycle - 1, scanline, c);
 
 
-    row++;                                   //each cycle the ppu generate one pixel
-    if(this->row == 361){
-        this->row = 0;
+    cycle++;                                   //each cycle the ppu generate one pixel
+    if(this->cycle == 361){
+        this->cycle = 0;
 
         this->scanline++;                    //switch to next line
         if(this->scanline == 261){
@@ -827,7 +826,7 @@ void PPU::clock(){
 
             this->odd_frame = !this->odd_frame;
             if(this->odd_frame)
-                this->row = 1;               //first cycle is skiped on odd frames
+                this->cycle = 1;               //first cycle is skiped on odd frames
    
             
 

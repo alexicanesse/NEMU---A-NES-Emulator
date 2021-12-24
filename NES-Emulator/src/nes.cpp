@@ -115,12 +115,34 @@ void NES::write(Address adr, Byte content){
         }
     }
     else if(adr == 0x4016){
-#warning work in progress
+        //0 - A
+        //1 - B
+        //2 - Select
+        //3 - Start
+        //4 - Up
+        //5 - Down
+        //6 - Left
+        //7 - Right
+        this->controler_shifter = 0x00;
         SDL_Event event;
         SDL_PollEvent(&event);
         const Byte *keys = SDL_GetKeyboardState(NULL);
-                if(keys[SDL_SCANCODE_B])
-        std::cout << "omg";
+        if(keys[SDL_SCANCODE_Z])
+            this->controler_shifter |= 0x08;
+        if(keys[SDL_SCANCODE_Q])
+            this->controler_shifter |= 0x01;
+        if(keys[SDL_SCANCODE_S])
+            this->controler_shifter |= 0x04;
+        if(keys[SDL_SCANCODE_D])
+            this->controler_shifter |= 0x02;
+        if(keys[SDL_SCANCODE_G])
+            this->controler_shifter |= 0x20;
+        if(keys[SDL_SCANCODE_H])
+            this->controler_shifter |= 0x10;
+        if(keys[SDL_SCANCODE_K])
+            this->controler_shifter |= 0x80;
+        if(keys[SDL_SCANCODE_L])
+            this->controler_shifter |= 0x40;
     }
     else if (adr <= 0x401F){
         
@@ -191,9 +213,12 @@ Byte NES::read(Address addr){
             case 0x4014:
                 return this->ppu->getOAMDMA();
                 break;
-            case 0x4016:
-                std::cout << "6";
+            case 0x4016:{
+                bool value = ((this->controler_shifter & 0x80) != 0);
+                this->controler_shifter <<= 1;
+                return value;
                 break;
+            }
                 
             default:
                 return 0x00;
