@@ -547,12 +547,33 @@ void PPU::incHori_v(){
 
 void PPU::shift(){
     //shift shift registers so that the most significant bit is the data to fetch
-    if((this->registers.PPUMASK & 0x18)){
+    if((this->registers.PPUMASK & 0x08)){//background rendering is enabled
         this->pattern_data_shift_register_1 <<= 1;
         this->pattern_data_shift_register_2 <<= 1;
         this->palette_attribute_shift_register_1 <<= 1;
         this->palette_attribute_shift_register_2 <<= 1;
     }
+    
+    if((this->registers.PPUMASK & 0x10)){//foreground rendering is enabled
+        for(int i = 0; i < 8; i++){
+            if(i < this->last_available_slot){//for each sprite we found
+                if(this->sprite_counters->at(i) != 0) //we have not reached the sprite yet
+                    this->sprite_counters->at(i)--;
+                else{//we need to shiffts the pattern registers
+                    if(this->sprite_latches->at(i) & 0x40){//we shift in the other direction because the sprite is flipped horizontaly
+                        this->sprite_shift_registers->at(i).at(0) >>= 1;
+                        this->sprite_shift_registers->at(i).at(1) >>= 1;
+                    }
+                    else{
+                        this->sprite_shift_registers->at(i).at(0) <<= 1;
+                        this->sprite_shift_registers->at(i).at(1) <<= 1;
+                    }
+                }
+            }
+        }
+    }
+    
+#warning TODO shift foreground
 }
 
 void PPU::incY(){
@@ -579,6 +600,7 @@ void PPU::incY(){
 
 
 void PPU::clock(){
+#warning TODO change to ppumask & 0x08 everywhere
     if(this->scanline <= 239){//it includes the pre-render line
         if((this->scanline == -1) && (this->cycle == 1))
             this->registers.PPUSTATUS &= 0x1F;
@@ -786,7 +808,7 @@ void PPU::clock(){
             //it is easier to implement and faster to run
             if(this->cycle == 257){
                 for(int i = 0; i<8; i++){
-                    if(i <= this->last_available_slot){
+                    if(i < this->last_available_slot){
                         //generate pattern addr from which we'll fetch the sprite pattern data
                         Address pattern_table_addr = 0x0000;
                         //Byte 1: For 8x8 sprites, this is the tile number of this sprite within the pattern table selected in bit 3 of PPUCTRL ($2000).
@@ -826,14 +848,14 @@ void PPU::clock(){
                         
                         
                         //we now have the address were to get the pattern data from!
-                        this->sprite_shift_registers->at(i).(0) = this->read(pattern_table_addr); //low bit row
-                        this->sprite_shift_registers->at(i).(1) = this->read(pattern_table_addr + 8); //high bit row
+                        this->sprite_shift_registers->at(i).at(0) = this->read(pattern_table_addr); //low bit row
+                        this->sprite_shift_registers->at(i).at(1) = this->read(pattern_table_addr + 8); //high bit row
                         
                         //we still need to horizontally flip the pattern data if it needs to.
                         //it will be achieved at rendering
 #warning TODO flip horizontal
                         
-                        this->sprite_latches->at(i) = this->Sec_OAM->at(i).(2);
+                        this->sprite_latches->at(i) = this->Sec_OAM->at(i).at(2);
                         //76543210
                         //||||||||
                         //||||||++- Palette (4 to 7) of sprite
@@ -841,7 +863,7 @@ void PPU::clock(){
                         //||+------ Priority (0: in front of background; 1: behind background)
                         //|+------- Flip sprite horizontally
                         //+-------- Flip sprite vertically
-                        this->sprite_counters->at(i) = this->Sec_OAM->at(i).(3);
+                        this->sprite_counters->at(i) = this->Sec_OAM->at(i).at(3);
                     }
                 }
             }
@@ -853,10 +875,43 @@ void PPU::clock(){
 
         }
     }
-/*
- Actual rendering
-*/
     
+    
+    
+    
+    
+    
+    /*
+     Actual rendering
+    */
+    
+    //foreground
+    Byte fg_pixel = 0x00;
+    Byte fg_palette = 0x00;
+    bool priority = false;
+    if(this->registers.PPUMASK & 0x10){ //if sprite rendering in enabled
+    #warning TODO HANDLE SPRITE 0
+        for(int i = 0; i < 8; i++){
+            if(i < this->last_available_slot){//if this sprite has been fetched
+                if(this->sprite_counters->at(i) == 0){//if we must render the sprite
+                    if(this->sprite_latches->at(i) & 0x40){//horizontal flip
+                        fg_pixel = (((this->sprite_shift_registers->at(i).at(1) & 0x01) != 0) << 1) | ((this->sprite_shift_registers->at(i).at(0) & 0x01) != 0);
+                    }
+                    else{//no horizontal flip
+                        fg_pixel = (((this->sprite_shift_registers->at(i).at(1) & 0x80) != 0) << 1) | ((this->sprite_shift_registers->at(i).at(0) & 0x80) != 0);
+                    }
+                    
+                    fg_palette = (this->sprite_latches->at(i) & 0x03) | 0x04; //|0x04 to added to offset in the sprite palette
+                    priority = (this->sprite_latches->at(i) & 0x20) == 0; //0 = in front of background
+                    
+                    
+                    break; //sprites are looked at from the highest priority to the lowest
+                }
+            }
+        }
+    }
+    
+    //background
     //we read the appropriate (defined by fine x) bit in the pattern shiffters
     bool pixel_value_high = (this->pattern_data_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
     bool pixel_value_low = (this->pattern_data_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
@@ -865,12 +920,37 @@ void PPU::clock(){
     bool palette_value_high = (palette_attribute_shift_register_2 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
     bool palette_value_low = (palette_attribute_shift_register_1 & (0x8000 >> (int) this->fine_x_scroll)) != 0;
 
+
+    Byte bg_pixel = (pixel_value_high << 1) | pixel_value_low;
+    Byte bg_palette = (palette_value_high << 1) | palette_value_low;
+    
+    Byte final_pixel = 0x00;
+    Byte final_palette = 0x00;
+    
+    if(fg_pixel != 0){//foreground pixel is not transparent
+        if((bg_pixel == 0) || priority){//background is transparent so draw the fg_pixel or sprite has priority
+            final_pixel = fg_pixel;
+            final_palette = fg_palette;
+        }
+        else {
+            final_pixel = bg_pixel;
+            final_palette = bg_palette;
+        }
+    }
+    else{//forground pixel is transparent
+        //if bg_pixel if transparent, bg color will be drown
+        //else bg_pixel will be drown
+        //in any case,
+        final_pixel = bg_pixel;
+        final_palette = bg_palette;
+    }
+    
     //43210
     //|||||
     //|||++- Pixel value from tile data
     //|++--- Palette number from attribute table or OAM
     //+----- Background/Sprite select
-    GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ((pixel_value_high << 1) | pixel_value_low | (palette_value_high << 3) | (palette_value_low << 2)) ) & 0x3F);
+    GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ( final_pixel | (final_palette << 2) )) & 0x3F);
     graphics.DrawPixel(cycle - 1, scanline, c);
 
 
