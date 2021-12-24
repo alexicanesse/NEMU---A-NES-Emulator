@@ -44,11 +44,12 @@ void NES::write(Address adr, Byte content){
                 this->ppu->setPPUMASK(content);
                 break;
   
-#warning TODO
             case 3:
+                ppu->setOAMADDR(content);
                 break;
-#warning TODO
+
             case 4:
+                ppu->setOAMDATA(content);
                 break;
                 
             case 5:{
@@ -114,6 +115,10 @@ void NES::write(Address adr, Byte content){
                 break;
         }
     }
+    else if(adr == 0x4014){//initiate a DMA transfer
+        this->ppu->setOAMDMA(content);
+        this->transfert_dma = true;
+    }
     else if(adr == 0x4016){
         //0 - A
         //1 - B
@@ -126,8 +131,8 @@ void NES::write(Address adr, Byte content){
         this->controler_shifter = 0x00;
         SDL_Event event;
         SDL_PollEvent(&event);
-        const Byte *keys = SDL_GetKeyboardState(NULL);
-        if(keys[SDL_SCANCODE_Z])
+        const Byte *keys = SDL_GetKeyboardState(NULL); //keyboard is handled as qwerty
+        if(keys[SDL_SCANCODE_W]) // z
             this->controler_shifter |= 0x08;
         if(keys[SDL_SCANCODE_Q])
             this->controler_shifter |= 0x01;
@@ -143,10 +148,6 @@ void NES::write(Address adr, Byte content){
             this->controler_shifter |= 0x80;
         if(keys[SDL_SCANCODE_L])
             this->controler_shifter |= 0x40;
-    }
-    else if (adr <= 0x401F){
-        
-    #warning TODO write APU/IO
     }
 }
 
@@ -166,14 +167,9 @@ Byte NES::read(Address addr){
                 return buffer;
                 break;
             }
-#warning TODO
-            case 3:{
-                //return this->ppu->getOAMADDR();
-                break;
-            }
-#warning TODO
+
             case 4:{
-                //return this->ppu->getOAMDATA();
+                return this->ppu->getOAMDATA();
                 break;
             }
                 
@@ -236,13 +232,36 @@ Byte NES::read(Address addr){
 
 void NES::clock(){
     this->ppu->clock();
-    if(this->cycle % 3 == 0)
-        this->cpu->clock();
-    
-    if(this->ppu->asknmi){
-        this->cpu->NMI();
-        this->ppu->asknmi = false;
+    if(this->cycle % 3 == 0){ //this cycle also concerns the cpu (which runs 3 times slower than the ppu
+        if(this->transfert_dma){
+            if(this->dma_idle_cycle_done){
+                //read is done on even cycles and write on odd cycles
+                //I'll do both during odd cycles. It won't matter as CPU is disabled
+                if(this->cycle & 0x01){
+                    this->ppu->setOAM_with_addr( this->read((this->ppu->getOAMDMA() * 0x100) + this->dma_offset), this->dma_offset);
+                }
+                
+                if(this->dma_offset == 0xFF){//dma transfert is done
+                    this->transfert_dma = false;
+                    this->dma_idle_cycle_done = false;
+                    this->dma_offset = 0x00;
+                }
+                else
+                    this->dma_offset++;
+            }
+            else if(this->cycle & 0x01)//we start the dma transfert on an even cycle and at least one idle cycle happen
+                dma_idle_cycle_done = true;
+        }
+
+        else if(this->ppu->asknmi){
+            this->cpu->NMI();
+            this->ppu->asknmi = false;
+        }
+        else
+            this->cpu->clock();
     }
+    
+
     
     cycle++;
 }

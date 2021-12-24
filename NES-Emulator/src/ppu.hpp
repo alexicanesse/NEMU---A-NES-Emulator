@@ -129,6 +129,9 @@ public:
     void setOAMDMA(Byte);     //get OAM DMA register (high byte)
     
     
+    //OAMtransfert utility
+    void setOAM_with_addr(Byte, Address);
+    
     //rendering functions
     void reloadShifters();
     void ntbyte();
@@ -172,6 +175,7 @@ public:
 //    Byte address_latch = 0x00;
     NES *nes;
     void clock();
+    
     
     //debug
     int get_scanline(){ return scanline; }

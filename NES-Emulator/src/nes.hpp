@@ -21,7 +21,11 @@ typedef uint16_t Address;
 
 class NES{
 private:
-    int cycle; //it will be used to make the cpu run at a third of ppu speed 
+    int cycle; //it will be used to make the cpu run at a third of ppu speed
+    
+    bool transfert_dma = false;
+    Byte dma_offset = 0x00;
+    bool dma_idle_cycle_done = false;
 public:
     CPU *cpu;
     PPU *ppu;

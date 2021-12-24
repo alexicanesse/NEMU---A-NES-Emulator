@@ -305,7 +305,7 @@ Byte PPU::getOAMADDR(){
 }
 //get OAM data port
 Byte PPU::getOAMDATA(){
-    return this->registers.OAMDATA;
+    return ((uint8_t *) this->OAM)[this->registers.OAMADDR]; //we convert it to a pointer in order to read the appropriate byte
 }
 //get scrolling position register
 Byte PPU::getPPUSCROLL(){
@@ -338,7 +338,8 @@ void PPU::setOAMADDR(Byte data){
 }
 //set OAM data port
 void PPU::setOAMDATA(Byte data){
-    this->registers.OAMDATA = data;
+    ((uint8_t *)this->OAM)[this->registers.OAMADDR++] = data;//oamaddr is incremented after the write
+    //we convert it to a pointer in order to write the appropriate byte location
 }
 //set scrolling position register
 void PPU::setPPUSCROLL(Byte data){
@@ -351,6 +352,11 @@ void PPU::setPPUADDR(Byte data){
 //set OAM DMA register (high byte)
 void PPU::setOAMDMA(Byte data){
     this->registers.OAMDMA = data;
+}
+
+void PPU::setOAM_with_addr(Byte content, Address addr){
+    ((uint8_t *)this->OAM)[addr] = content;
+    //we convert it to a pointer in order to write the appropriate byte location
 }
 
 
