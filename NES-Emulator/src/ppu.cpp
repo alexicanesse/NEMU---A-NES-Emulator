@@ -662,7 +662,7 @@ void PPU::clock(){
     
     if(this->scanline <= 239){//this includes the pre-render line
         //Cycles 1-64: Secondary OAM (32-byte buffer for current sprites on scanline) is initialized to $FF - attempting to read $2004 will return $FF. Internally, the clear operation is implemented by reading from the OAM and writing into the secondary OAM as usual, only a signal is active that makes the read always return $FF.
-        if(this->cycle == 1){ //it is not cycle accurate but who cares ?
+        if((this->cycle == 1) && (this->scanline >= 0)){ //it is not cycle accurate but who cares ? (does not append during the pre render line)
             this->last_available_slot = 0; // secondary OAM is empty
             for(int i = 0; i< 8; i++){
                 this->Sec_OAM->at(i).at(0) = 0xFF;
@@ -671,128 +671,186 @@ void PPU::clock(){
                 this->Sec_OAM->at(i).at(3) = 0xFF;
             }
         }
-        
+
         if(this->cycle >= 1 && this->cycle <= 64){
             //already done at cycle == 1
         }
-        
-//        //Cycles 65-256: Sprite evaluation
-//        else if(this->cycle >= 65 && this->cycle <= 256){
-//            //Sprite evaluation occurs if either the sprite layer or background layer is enabled via $2001. Unless both layers are disabled, it merely hides sprite rendering.
-//            if(this->registers.PPUMASK & 0x18){//sprite evaluation
-//                if(this->scanline == 65)//it ain't accurate as I'm not using OAMADDR but it only matter when rendering is enable at the middle of the screen because oamaddr is reset at the begging of rendering
-//                    this->sprite_n = 0;
-//                //On odd cycles, data is read from (primary) OAM
-//                //On even cycles, data is written to secondary OAM (unless secondary OAM is full, in which case it will read the value in secondary OAM instead)
-//
-//                if(this->sprite_cycle == 0) //odd
-//                    this->sprite_data_read = this->OAM->at(n).(0);
-//                else if(this->sprite_cyle == 1){
-//                    if(this->last_available_slot != 8){ //Sec_OAM is not full
-//                        this->Sec_OAM->at(last_available_slot).at(0) = this->sprite_data_read;
-//
-//                        int sprite_height = 0;
-//                        if(this->registers.PPUCTRL 0x20) //Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
-//                            sprite_height = 16;
-//                        else
-//                            sprite_height = 8;
-//
-//                        if((this->Sec_OAM->at(last_available_slot).at(0) <= this->scanline) && ((this->Sec_OAM->at(last_available_slot).at(0) + sprite_height) >= this->scanline)){//in range
-//                            this->sprite_cyle = 3; //we fetch the rest of the sprite
-//                            this->Sec_OAM->at(last_available_slot).at(1) = this->OAM->at(n).(1);
-//                            this->Sec_OAM->at(last_available_slot).at(2) = this->OAM->at(n).(2);
-//                            this->Sec_OAM->at(last_available_slot).at(3) = this->OAM->at(n).(3);
-//                        }
-//                        else{ //not in range
-//                            this->sprite_cyle = 0; //we keep going
-//                        }
-//                    }
-//                    else{
-//                        this->sprite_data_read = this->Sec_OAM->at(this->last_available_slot).at(0);
-//#warning TODO sprite overflow flag
-//                    }
-//                }
-//            }
-//        }
+
+
         //Cycles 65-256: Sprite evaluation
-        else if(this->cycle >= 65 && this->cycle <= 256){
+        else if((this->cycle >= 65) && (this->cycle <= 256) && (this->scanline >= 0)){ //does not append during the pre render line
             //Sprite evaluation occurs if either the sprite layer or background layer is enabled via $2001. Unless both layers are disabled, it merely hides sprite rendering.
             if(this->registers.PPUMASK & 0x18){//sprite evaluation
                 if(this->scanline == 65){//it ain't accurate as I'm not using OAMADDR but it only matter when rendering is enable at the middle of the screen because oamaddr is reset at the begging of rendering
                     this->n = 0;
                     this->sprite_cycle = 0;
+                    this->last_available_slot = 0;
                 }
 
-                if(this->sprite_cycle == 0){
-                    this->sprite_data_read = this->OAM->at(n).(0);
-                    this->sprite_cycle = 1;
-                }
-                else if(this->sprite_cycle == 1){
-                    this->Sec_OAM->at(this->last_available_slot).(0) = this->sprite_data_read;
-                    
-                    //is this sprite in range ?
-                    int sprite_height = 0;
-                    if(this->registers.PPUCTRL & 0x20) //Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
-                        sprite_height = 16;
-                    else
-                        sprite_height = 8;
+                
 
-                    if((this->Sec_OAM->at(last_available_slot).at(0) <= this->scanline) && ((this->Sec_OAM->at(last_available_slot).at(0) + sprite_height) >= this->scanline))//in range
-                        this->cycle = 2;
-                    else{
-                        this->cycle = 0;
-                        n++; //get ready to read the next sprite
-                        if(n == 64)//n overflow
-                            n = 0;
+                if(this->last_available_slot < 8){//we have not reached the 8 sprites limit
+                    switch (this->sprite_cycle) {
+                        case 0:{
+                            this->sprite_data_read = this->OAM->at(n).at(0);
+                            this->sprite_cycle = 1;
+                            break;
+                        }
+                          
+                        case 1:{
+                            this->Sec_OAM->at(this->last_available_slot).at(0) = this->sprite_data_read;
+
+                            //is this sprite in range ?
+                            int sprite_height = 0;
+                            if(this->registers.PPUCTRL & 0x20) //Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
+                                sprite_height = 16;
+                            else
+                                sprite_height = 8;
+
+                            if((this->Sec_OAM->at(last_available_slot).at(0) <= this->scanline) && ((this->Sec_OAM->at(last_available_slot).at(0) + sprite_height) >= this->scanline))//in range
+                                this->sprite_cycle = 2;
+                            else{
+                                this->sprite_cycle = 0;
+                                n++; //get ready to read the next sprite
+                                if(n == 64)//n overflow
+                                    n = 0;
+                            }
+                            break;
+                        }
+                            
+                        case 2:{
+                            this->sprite_data_read = this->OAM->at(n).at(1);
+                            this->sprite_cycle = 3;
+                            break;
+                        }
+                            
+                        case 3:{
+                            this->Sec_OAM->at(this->last_available_slot).at(1) = this->sprite_data_read;
+                            this->sprite_cycle = 4;
+                            break;
+                        }
+                            
+                        case 4:{
+                            this->sprite_data_read = this->OAM->at(n).at(2);
+                            this->sprite_cycle = 5;
+                            break;
+                        }
+                            
+                        case 5:{
+                            this->Sec_OAM->at(this->last_available_slot).at(2) = this->sprite_data_read;
+                            this->sprite_cycle = 6;
+                            break;
+                        }
+                         
+                        case 6:{
+                            this->sprite_data_read = this->OAM->at(n).at(3);
+                            this->sprite_cycle = 7;
+                            break;
+                        }
+
+                        case 7:{
+                            this->Sec_OAM->at(this->last_available_slot).at(3) = this->sprite_data_read;
+                            this->last_available_slot++; //we took a slot in secondary oam
+                            this->n++; //get ready to read the next sprite
+                            if(n == 64)//n overflow
+                                n = 0;
+
+                            this->sprite_cycle = 0; //this sprite is processed!
+                            break;
+                        }
                     }
                 }
-                else if(this->sprite_cycle == 2){
-                    this->sprite_data_read = this->OAM->at(n).(1);
-                    this->sprite_cycle = 3;
-                }
-                else if(this->sprite_cycle == 3){
-                    this->Sec_OAM->at(this->last_available_slot).(1) = this->sprite_data_read;
-                    this->sprite_cycle = 4;
-                }
-                else if(this->sprite_cycle == 4){
-                    this->sprite_data_read = this->OAM->at(n).(2);
-                    this->sprite_cycle = 5;
-                }
-                else if(this->sprite_cycle == 5){
-                    this->Sec_OAM->at(this->last_available_slot).(2) = this->sprite_data_read;
-                    this->sprite_cycle = 6;
-                }
-                else if(this->sprite_cycle == 6){
-                    this->sprite_data_read = this->OAM->at(n).(3);
-                    this->sprite_cycle = 7;
-                }
-                else if(this->sprite_cycle == 7){
-                    this->Sec_OAM->at(this->last_available_slot).(3) = this->sprite_data_read;
-                    this->last_available_slot++; //we took a slot in secondary oam
-                    this->n++; //get ready to read the next sprite
-                    if(n == 64)//n overflow
-                        n = 0;
-                    
-                    this->sprite_cycle = 0; //this sprite is processed!
+                else{//we have fetched 8 sprites
+                    //we should look for an other sprite in order to set the sprite overflow flag if it needs to be set
+                    //though, this is bug as hell
+                    //During sprite evaluation, if eight in-range sprites have been found so far, the sprite evaluation logic continues to scan the primary OAM looking for one more in-range sprite to determine whether to set the sprite overflow flag. The first such check correctly checks the y coordinate of the next OAM entry, but after that the logic breaks and starts scanning OAM "diagonally", evaluating the tile number/attributes/X-coordinates of subsequent OAM entries as Y-coordinates (due to incorrectly incrementing m when moving to the next sprite). This results in inconsistent sprite overflow behavior showing both false positives and false negatives.
+                    //therefor only tricky to emulate games uses this
+                    //I'm not taking care of this for now
+                    //proof that it doesn't matter that much
+                    //The sprite overflow flag is rarely used, mainly due to bugs when exactly 8 sprites are present on a scanline. No games rely on the buggy behavior.
                 }
             }
         }
 
         //Hblank begins after dot 256, and ends at dot 320 when the first tile of the next line is fetched.
-        
+
         //Cycles 257-320: Sprite fetches (8 sprites total, 8 cycles per sprite)
-        //1-4: Read the Y-coordinate, tile number, attributes, and X-coordinate of the selected sprite from secondary OAM
-        //5-8: Read the X-coordinate of the selected sprite from secondary OAM 4 times (while the PPU fetches the sprite tile data)
-        //For the first empty sprite slot, this will consist of sprite #63's Y-coordinate followed by 3 $FF bytes; for subsequent empty sprite slots, this will be four $FF bytes
-        else if((this->cycle >= 257) && (this->cycle <= 320)){
+        else if((this->cycle >= 257) && (this->cycle <= 320)){ //does append durring the pre render line
             //OAMADDR is set to 0 during each of ticks 257-320 (the sprite tile loading interval) of the pre-render and visible scanlines.
             this->registers.OAMADDR = 0x00;
+            
+            //I could be cycle accurate
+            //but the cpu cannot mess we secondary oam
+            //so only the PPU has access to it
+            //and therefor I can do all of it during a single cycle
+            //it is easier to implement and faster to run
+            if(this->cycle == 257){
+                for(int i = 0; i<8; i++){
+                    if(i <= this->last_available_slot){
+                        //generate pattern addr from which we'll fetch the sprite pattern data
+                        Address pattern_table_addr = 0x0000;
+                        //Byte 1: For 8x8 sprites, this is the tile number of this sprite within the pattern table selected in bit 3 of PPUCTRL ($2000).
+                        //        For 8x16 sprites, the PPU ignores the pattern table selection and selects a pattern table from bit 0 of this number.
+                        //76543210
+                        //||||||||
+                        //|||||||+- Bank ($0000 or $1000) of tiles
+                        //+++++++-- Tile number of top of sprite (0 to 254; bottom half gets the next tile)
+                        if(this->registers.PPUCTRL & 0x20){//8x16 sprites
+                            pattern_table_addr = (this->Sec_OAM->at(i).at(1) & 0x01) << 12; //see Byte 1 explainations
+                            
+                            //each tile is 8*8 wide
+                            //and separated in a low bit tile and a high bit tile
+                            //therefor each tile is 16Bytes wide
+                            pattern_table_addr |= (this->Sec_OAM->at(i).at(1) & 0xFE) << 4; //offset to the right tile
+                            //are we reading the top or the bottom tile ?
+                            if((this->scanline - this->Sec_OAM->at(i).at(0)) <= 8)//bottom half
+                                pattern_table_addr += 0x0010;
+                        }
+                        else{//8x8 sprites
+                            pattern_table_addr = (this->registers.PPUCTRL & 0x08) << 9; //select the pattern table
+                            //each tile is 8*8 wide
+                            //and separated in a low bit tile and a high bit tile
+                            //therefor each tile is 16Bytes wide
+                            pattern_table_addr |= (this->Sec_OAM->at(i).at(1) << 4);
+                        }
+                        
+                        //select the row
+                        if(this->Sec_OAM->at(i).at(2) & 0x80){//if the sprite is flipped vertically
+                            pattern_table_addr |= (7 - (this->scanline - this->Sec_OAM->at(i).at(0))) & 0x07; // 7- result is done to flip horizontally: we read from the bottom row to the top one
+                            //see the other case for detail on the rest
+                        }
+                        else{//if the sprite is not flipped vertically
+                            pattern_table_addr |= (this->scanline - this->Sec_OAM->at(i).at(0)) & 0x07; //we offset to select the right row
+                            //this offset is ANDed whith 0x07 because for the case of 8x16 sprites, the tile id is used to handle row offset that are greater than 8
+                        }
+                        
+                        
+                        //we now have the address were to get the pattern data from!
+                        this->sprite_shift_registers->at(i).(0) = this->read(pattern_table_addr); //low bit row
+                        this->sprite_shift_registers->at(i).(1) = this->read(pattern_table_addr + 8); //high bit row
+                        
+                        //we still need to horizontally flip the pattern data if it needs to.
+                        //it will be achieved at rendering
+#warning TODO flip horizontal
+                        
+                        this->sprite_latches->at(i) = this->Sec_OAM->at(i).(2);
+                        //76543210
+                        //||||||||
+                        //||||||++- Palette (4 to 7) of sprite
+                        //|||+++--- Unimplemented
+                        //||+------ Priority (0: in front of background; 1: behind background)
+                        //|+------- Flip sprite horizontally
+                        //+-------- Flip sprite vertically
+                        this->sprite_counters->at(i) = this->Sec_OAM->at(i).(3);
+                    }
+                }
+            }
         }
-        
+
         //Cycles 321-340+0: Background render pipeline initialization
         //Read the first byte in secondary OAM (while the PPU fetches the first two background tiles for the next scanline)
         else if((this->cycle >= 320) && (this->cycle <= 340)){
-            
+
         }
     }
 /*
