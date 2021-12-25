@@ -134,12 +134,12 @@ void NES::write(Address adr, Byte content){
         const Byte *keys = SDL_GetKeyboardState(NULL); //keyboard is handled as qwerty
         if(keys[SDL_SCANCODE_W]) // z
             this->controler_shifter |= 0x08;
-        if(keys[SDL_SCANCODE_Q])
-            this->controler_shifter |= 0x01;
+        if(keys[SDL_SCANCODE_A]) // q
+            this->controler_shifter |= 0x02;
         if(keys[SDL_SCANCODE_S])
             this->controler_shifter |= 0x04;
         if(keys[SDL_SCANCODE_D])
-            this->controler_shifter |= 0x02;
+            this->controler_shifter |= 0x01;
         if(keys[SDL_SCANCODE_G])
             this->controler_shifter |= 0x20;
         if(keys[SDL_SCANCODE_H])
