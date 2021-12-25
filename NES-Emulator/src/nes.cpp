@@ -238,16 +238,18 @@ void NES::clock(){
                 //read is done on even cycles and write on odd cycles
                 //I'll do both during odd cycles. It won't matter as CPU is disabled
                 if(this->cycle & 0x01){
-                    this->ppu->setOAM_with_addr( this->read((this->ppu->getOAMDMA() * 0x100) + this->dma_offset), this->dma_offset);
-                }
+                    this->ppu->setOAM_with_addr( this->read((this->ppu->getOAMDMA() << 8) + this->dma_offset), this->dma_offset);
+//                    this->ppu->setOAM_with_addr( this->dma_offset, this->dma_offset);
+
                 
-                if(this->dma_offset == 0xFF){//dma transfert is done
-                    this->transfert_dma = false;
-                    this->dma_idle_cycle_done = false;
-                    this->dma_offset = 0x00;
+                    if(this->dma_offset == 0xFF){//dma transfert is done
+                        this->transfert_dma = false;
+                        this->dma_idle_cycle_done = false;
+                        this->dma_offset = 0x00;
+                    }
+                    else
+                        this->dma_offset++;
                 }
-                else
-                    this->dma_offset++;
             }
             else if(this->cycle & 0x01)//we start the dma transfert on an even cycle and at least one idle cycle happen
                 dma_idle_cycle_done = true;

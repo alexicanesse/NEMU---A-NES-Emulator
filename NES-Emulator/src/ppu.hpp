@@ -25,8 +25,10 @@ private:
     /*
      Graphics
     */
-    GRAPHICS graphics = *(new GRAPHICS(256*2, 240*2));
+    GRAPHICS graphics = *(new GRAPHICS(1280, 960));
     SDL_Event event;
+    int frames_last_seconde = 0;
+    int last_time = 0;
     
     //https://wiki.nesdev.org/w/index.php?title=PPU_frame_timing
     bool odd_frame = false;
@@ -98,6 +100,8 @@ private:
     int n = 0; //helper variable
     int sprite_cycle = 0; //helper variable
     Byte sprite_data_read = 0x00; //helper variable
+    bool sprite_search_is_done = false; //helper variable
+    int number_of_sprites = 0; //helper variable
 public:
 
     

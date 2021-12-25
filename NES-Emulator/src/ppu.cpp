@@ -560,9 +560,9 @@ void PPU::shift(){
         this->palette_attribute_shift_register_2 <<= 1;
     }
     
-    if((this->registers.PPUMASK & 0x10)){//foreground rendering is enabled
+    if((this->registers.PPUMASK & 0x18) && (this->cycle >= 1) && (this->cycle <= 257)){//foreground rendering is enabled
         for(int i = 0; i < 8; i++){
-            if(i < this->last_available_slot){//for each sprite we found
+            if(i < this->number_of_sprites){//for each sprite we found
                 if(this->sprite_counters->at(i) != 0) //we have not reached the sprite yet
                     this->sprite_counters->at(i)--;
                 else{//we need to shiffts the pattern registers
@@ -578,8 +578,6 @@ void PPU::shift(){
             }
         }
     }
-    
-#warning TODO shift foreground
 }
 
 void PPU::incY(){
@@ -704,20 +702,19 @@ void PPU::clock(){
             //already done at cycle == 1
         }
 
-
         //Cycles 65-256: Sprite evaluation
         else if((this->cycle >= 65) && (this->cycle <= 256) && (this->scanline >= 0)){ //does not append during the pre render line
             //Sprite evaluation occurs if either the sprite layer or background layer is enabled via $2001. Unless both layers are disabled, it merely hides sprite rendering.
             if(this->registers.PPUMASK & 0x18){//sprite evaluation
-                if(this->scanline == 65){//it ain't accurate as I'm not using OAMADDR but it only matter when rendering is enable at the middle of the screen because oamaddr is reset at the begging of rendering
+                if(this->cycle == 65){//it ain't accurate as I'm not using OAMADDR but it only matter when rendering is enable at the middle of the screen because oamaddr is reset at the begging of rendering
                     this->n = 0;
                     this->sprite_cycle = 0;
                     this->last_available_slot = 0;
+                    sprite_search_is_done = false;
                 }
-
                 
 
-                if(this->last_available_slot < 8){//we have not reached the 8 sprites limit
+                if(this->last_available_slot < 8 && !sprite_search_is_done){//we have not reached the 8 sprites limit
                     switch (this->sprite_cycle) {
                         case 0:{
                             this->sprite_data_read = this->OAM->at(n).at(0);
@@ -735,13 +732,13 @@ void PPU::clock(){
                             else
                                 sprite_height = 8;
 
-                            if((this->Sec_OAM->at(last_available_slot).at(0) <= this->scanline) && ((this->Sec_OAM->at(last_available_slot).at(0) + sprite_height) >= this->scanline))//in range
+                            if(((int) this->Sec_OAM->at(last_available_slot).at(0) <= this->scanline) && (((int) this->Sec_OAM->at(last_available_slot).at(0) + sprite_height) > this->scanline))//in range
                                 this->sprite_cycle = 2;
                             else{
                                 this->sprite_cycle = 0;
                                 n++; //get ready to read the next sprite
                                 if(n == 64)//n overflow
-                                    n = 0;
+                                    sprite_search_is_done = true;
                             }
                             break;
                         }
@@ -781,7 +778,7 @@ void PPU::clock(){
                             this->last_available_slot++; //we took a slot in secondary oam
                             this->n++; //get ready to read the next sprite
                             if(n == 64)//n overflow
-                                n = 0;
+                                sprite_search_is_done = true;
 
                             this->sprite_cycle = 0; //this sprite is processed!
                             break;
@@ -797,6 +794,7 @@ void PPU::clock(){
                     //proof that it doesn't matter that much
                     //The sprite overflow flag is rarely used, mainly due to bugs when exactly 8 sprites are present on a scanline. No games rely on the buggy behavior.
                 }
+//                std::cout << std::hex << (int) this->Sec_OAM->at(0).at(3) << "\n";
             }
         }
 
@@ -813,6 +811,8 @@ void PPU::clock(){
             //and therefor I can do all of it during a single cycle
             //it is easier to implement and faster to run
             if(this->cycle == 257){
+                this->number_of_sprites = this->last_available_slot;
+                
                 for(int i = 0; i<8; i++){
                     if(i < this->last_available_slot){
                         //generate pattern addr from which we'll fetch the sprite pattern data
@@ -830,9 +830,18 @@ void PPU::clock(){
                             //and separated in a low bit tile and a high bit tile
                             //therefor each tile is 16Bytes wide
                             pattern_table_addr |= (this->Sec_OAM->at(i).at(1) & 0xFE) << 4; //offset to the right tile
-                            //are we reading the top or the bottom tile ?
-                            if((this->scanline - this->Sec_OAM->at(i).at(0)) <= 8)//bottom half
-                                pattern_table_addr += 0x0010;
+                            
+                            //is the tile fliped vertically ?
+                            if(this->Sec_OAM->at(i).at(2) & 0x80){//if the sprite is flipped vertically
+                                //are we reading the top or the bottom tile ?
+                                if((this->scanline - this->Sec_OAM->at(i).at(0)) <= 7)//top half
+                                    pattern_table_addr += 0x0010;
+                            }
+                            else{
+                                //are we reading the top or the bottom tile ?
+                                if((this->scanline - this->Sec_OAM->at(i).at(0)) <= 7)//bottom half
+                                    pattern_table_addr += 0x0010;
+                            }
                         }
                         else{//8x8 sprites
                             pattern_table_addr = (this->registers.PPUCTRL & 0x08) << 9; //select the pattern table
@@ -859,7 +868,6 @@ void PPU::clock(){
                         
                         //we still need to horizontally flip the pattern data if it needs to.
                         //it will be achieved at rendering
-#warning TODO flip horizontal
                         
                         this->sprite_latches->at(i) = this->Sec_OAM->at(i).at(2);
                         //76543210
@@ -898,20 +906,20 @@ void PPU::clock(){
     if(this->registers.PPUMASK & 0x10){ //if sprite rendering in enabled
     #warning TODO HANDLE SPRITE 0
         for(int i = 0; i < 8; i++){
-            if(i < this->last_available_slot){//if this sprite has been fetched
-                if(this->sprite_counters->at(i) == 0){//if we must render the sprite
+            if(i < this->number_of_sprites){//if this sprite has been fetched
+                if(this->sprite_counters->at(i) == 0){//if it's time to render the sprite
                     if(this->sprite_latches->at(i) & 0x40){//horizontal flip
-                        fg_pixel = (((this->sprite_shift_registers->at(i).at(1) & 0x01) != 0) << 1) | ((this->sprite_shift_registers->at(i).at(0) & 0x01) != 0);
+                        fg_pixel = ((this->sprite_shift_registers->at(i).at(1) & 0x01) << 1) | ((this->sprite_shift_registers->at(i).at(0) & 0x01));
                     }
                     else{//no horizontal flip
-                        fg_pixel = (((this->sprite_shift_registers->at(i).at(1) & 0x80) != 0) << 1) | ((this->sprite_shift_registers->at(i).at(0) & 0x80) != 0);
+                        fg_pixel = ((this->sprite_shift_registers->at(i).at(1) & 0x80) >> 6) | ((this->sprite_shift_registers->at(i).at(0) & 0x80) >> 7);
                     }
                     
-                    fg_palette = (this->sprite_latches->at(i) & 0x03) | 0x04; //|0x04 to added to offset in the sprite palette
+                    fg_palette = (this->sprite_latches->at(i) & 0x03) | 0x04; //|0x04 added to offset in the sprite palette
                     priority = (this->sprite_latches->at(i) & 0x20) == 0; //0 = in front of background
                     
-                    
-                    break; //sprites are looked at from the highest priority to the lowest
+                    if(fg_pixel != 0x00)//if the pixel is not transparent
+                        break; //sprites are looked at from the highest priority to the lowest
                 }
             }
         }
@@ -963,7 +971,8 @@ void PPU::clock(){
     cycle++;                                   //each cycle the ppu generate one pixel
     if(this->cycle == 361){
         this->cycle = 0;
-
+//        std::cout << scanline;
+//        std::cout << this->last_available_slot << " " << scanline << "\n";
         this->scanline++;                    //switch to next line
         if(this->scanline == 261){
             this->scanline = -1;             //return to pre-render scanline
@@ -971,14 +980,36 @@ void PPU::clock(){
             this->odd_frame = !this->odd_frame;
             if(this->odd_frame)
                 this->cycle = 1;               //first cycle is skiped on odd frames
-   
             
-
+            
+//            frames_last_seconde++;
+//            int currentTime = SDL_GetTicks();
+//            if (currentTime > last_time + 1000) {
+////                graphics.ChangeTitle((char*) frames_last_seconde);
+//                std::cout << frames_last_seconde;
+//                last_time = currentTime;
+//                frames_last_seconde = 0;
+//            }
+            
+            
+#warning DEBUG
+//    for(int i = 0; i < 64; i++){
+//        if(i % 4 == 0)
+//            std::cout << "\n";
+//        for(int j = 0; j < 4; j++){
+//            std::cout << std::hex << std::setw(3) << std::left << (int) OAM->at(i).at(j);
+//        }
+//    }
+//    for(int i = 0; i < 100; i++)
+//        std::cout << "\n\n";
 
             SDL_PollEvent(&event);
             graphics.update();
         }
     }
+    
+    
+
 }
     
 

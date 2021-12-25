@@ -10,6 +10,7 @@
 
 #include <SDL2/SDL.h>
 #include <array>
+#include <sstream>>
 
 
 #warning TODO
@@ -40,9 +41,7 @@ public:
 //    void DrawPixel(int x, int y, Color); //draw a pixel but do not update the screen
     void update(); //updte screen content
     
-    
-    
-#warning TEST
+    void ChangeTitle(const char *);
     void DrawPixel(int x, int y, Color);
 };
 
