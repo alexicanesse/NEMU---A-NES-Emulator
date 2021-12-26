@@ -20,21 +20,19 @@ class NES;
 //Only mapper 0 will be implemented for now
 class CARTRIDGE{
 private:
-    NES *nes;
+    NES *nes; //only the ppu is necessary. Though, I prefer to go through the nes to access the ppu just because it makes more sence hardwarewise.
     
 public:
     //constructor
     CARTRIDGE(NES*);
     
     bool mirror_prgrom = false;
-    bool mirror_chr_rom = false;
-    bool mirroring_v = false;
+    bool mirroring_v = true;
     
-    //addresses 0x0000 ~ 0x7FFF are useless
+    //addresses 0x0000 ~ 0x7FFF are useless but it makes it easier to address
     std::array<Byte, 0xFFFF + 1> *prgROM = new std::array<Byte, 0xFFFF + 1>; //prg ROM + prg RAM
     
-#warning TODO
-    bool load(std::string);
+    void load(std::string);
     Byte readROM(Address);
 };
 
