@@ -1778,7 +1778,7 @@ bool CPU::CLC(){
 }
 //Clear Decimal Mode
 bool CPU::CLD(){
-    this->setflag(flags.N, false);
+    this->setflag(flags.D, false);
     return false;
 }
 //Clear Overflow Flag
