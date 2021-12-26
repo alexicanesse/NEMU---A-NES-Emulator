@@ -5,6 +5,10 @@
 //  Created by Alexi Canesse on 07/12/2021.
 //
 #include <thread>
+#include <iostream>
+#include <array>
+
+#include "screen.hpp"
 #include "ppu.hpp"
 #include "nes.hpp"
 
@@ -992,16 +996,7 @@ void PPU::clock(){
 //            }
             
             
-#warning DEBUG
-//    for(int i = 0; i < 64; i++){
-//        if(i % 4 == 0)
-//            std::cout << "\n";
-//        for(int j = 0; j < 4; j++){
-//            std::cout << std::hex << std::setw(3) << std::left << (int) OAM->at(i).at(j);
-//        }
-//    }
-//    for(int i = 0; i < 100; i++)
-//        std::cout << "\n\n";
+
 
             SDL_PollEvent(&event);
             graphics.update();

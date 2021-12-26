@@ -8,16 +8,13 @@
 #ifndef debug_hpp
 #define debug_hpp
 
-#include <chrono>
-#include <thread>
-
 
 #include <iostream>
 #include <array>
-#include <ncurses.h>
 #include <string>
 #include <sstream>
 
+#include <ncurses.h>
 
 
 

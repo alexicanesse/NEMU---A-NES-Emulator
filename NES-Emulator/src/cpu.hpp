@@ -21,13 +21,16 @@ class NES;
 
 
 class CPU{
+//private:
+
     
-private:
+public:
+    CPU(NES *nes); //constructor
+    
     /*
      Registers
     */
-    
-    struct flgs {
+    struct flgs { //used to reference flags without having to remember their order
         Byte N = 0x80; //negative result | After most instructions that have a value result, this flag will contain bit 7 of that result.
         Byte V = 0x40; //overflow
         Byte B = 0x10; //break command | No CPU effect
@@ -35,8 +38,41 @@ private:
         Byte I = 0x04; //interrupt disable | When set, all interrupts except the NMI are inhibited.
         Byte Z = 0x02; //zero result | After most instructions that have a value result, if that value is zero, this flag will be set.
         Byte C = 0x01; //carry
-    };
+    } flags;
     
+    void setflag(Byte, bool);
+    bool getflag(Byte flg);
+    Byte get_register_A();
+    Byte get_register_X();
+    Byte get_register_Y();
+    Byte get_register_SP();
+    Address get_register_PC();
+    
+    
+    /*
+    Interruptions
+    */
+    //interruptions are all public for consistency because some requiere to be callable from outside
+    void IRQ();
+    void NMI();
+    bool BRK();
+    void reset();
+    
+    /*
+     Other
+    */
+    NES *nes;
+    Byte opcode = 0x00; //the opcode is stored for debugging purposses
+    int rem_cycles = 0; //remaining cycle until we fetch the next instruction
+    int cycles = 1; //initialized at 1 because clock() is called for the first time when the cpu has already finished it's reset
+    Address data_to_read = 0x0000; //used to store the data fetched until its use
+    
+    
+    void clock(); //main function of the cpu
+private:
+    /*
+     Registers
+    */
     struct registers {
         Byte r_A = 0;    //accumulator register (A)
         Byte r_iX = 0;   //index register X
@@ -49,15 +85,14 @@ private:
         Byte nv_bdizc = 0b00100000; //Processor status register
                                     //_ = expansion | No CPU effect
     } registers;
-  
 
-    int additionnal_cycles = 0; //additionnal cycles for the current instruction
+    
     
     
     /*
      Addressing modes
      https://www.pagetable.com/c64ref/6502/?tab=3
-     */
+    */
     bool IMP(); //implied
     bool ACC(); //accumulator
     bool IMM(); //immediate
@@ -77,30 +112,26 @@ private:
     /*
      OPCODES
      https://www.pagetable.com/c64ref/6502/?tab=2
+     //commented declarations have not been implemented because they're unused
     */
     //Returns true iff is may requiere an additional cycle
     
     //load
-#warning TODO
-    bool LAS(); //"AND" Memory with Stack Pointer                              undocumented
+//    bool LAS(); //"AND" Memory with Stack Pointer                              undocumented
     bool LAX(); //Load Accumulator and Index Register X From Memory            undocumented
     bool LDA(); //Load Accumulator with Memory
     bool LDX(); //Load Index Register X From Memory
     bool LDY(); //Load Index Register Y From Memory
     bool SAX(); //Store Accumulator "AND" Index Register X in Memory           undocumented
-#warning TODO
-    bool SHA(); //Store Accumulator "AND" Index Register X "AND" Value         undocumented
-#warning TODO
-    bool SHX(); //Store Index Register X "AND" Value                           undocumented
-#warning TODO
-    bool SHY(); //Store Index Register Y "AND" Value                           undocumented
+//    bool SHA(); //Store Accumulator "AND" Index Register X "AND" Value         undocumented
+//    bool SHX(); //Store Index Register X "AND" Value                           undocumented
+//    bool SHY(); //Store Index Register Y "AND" Value                           undocumented
     bool STA(); //Store Accumulator in Memory
     bool STX(); //Store Index Register X In Memory
     bool STY(); //Store Index Register Y In Memory
     
     //trans
-#warning TODO
-    bool SHS(); //Transfer Accumulator "AND" Index Register X to Stack Pointer then Store Stack Pointer "AND" Hi-Byte In Memory            undocumented
+//    bool SHS(); //Transfer Accumulator "AND" Index Register X to Stack Pointer then Store Stack Pointer "AND" Hi-Byte In Memory            undocumented
     bool TAX(); //Transfer Accumulator To Index X
     bool TAY(); //Transfer Accumula Tor To Index Y
     bool TSX(); //Transfer Stack Pointer To Index X
@@ -128,12 +159,9 @@ private:
     
     //arith
     bool ADC(); //Add Memory to Accumulator with Carr
-#warning TODO
-    bool ANC(); //"AND" Memory with Accumulator then Move Negative Flag to Carry Flag       undocumented
-#warning TODO
-    bool ARR(); //"AND" Accumulator then Rotate Right                          undocumented
-#warning TODO
-    bool ASR(); //"AND" then Logical Shift Right                               undocumented
+//    bool ANC(); //"AND" Memory with Accumulator then Move Negative Flag to Carry Flag       undocumented
+//    bool ARR(); //"AND" Accumulator then Rotate Right                          undocumented
+//    bool ASR(); //"AND" then Logical Shift Right                               undocumented
     bool CMP(); //Compare Memory and Accumulator
     bool CPX(); //Compare Index Register X To Memory
     bool CPY(); //Compare Index Register Y To Memory
@@ -142,12 +170,10 @@ private:
     bool RLA(); //Rotate Left then "AND" with Accumulator                      undocumented
     bool RRA(); //Rotate Right and Add Memory to Accumulator                   undocumented
     bool SBC(); //Subtract Memory from Accumulator with Borrow
-#warning TODO
-    bool SBX(); //Subtract Memory from Accumulator "AND" Index Register X      undocumented
+//    bool SBX(); //Subtract Memory from Accumulator "AND" Index Register X      undocumented
     bool SLO(); //Arithmetic Shift Left then "OR" Memory with Accumulator      undocumented
     bool SRE(); //Logical Shift Right then "Exclusive OR" Memory with Accumulator      undocumented
-#warning TODO
-    bool XAA(); //Non-deterministic Operation of Accumulator, Index Register X, Memory and Bus Contents      undocumented
+//    bool XAA(); //Non-deterministic Operation of Accumulator, Index Register X, Memory and Bus Contents      undocumented
     
     //inc
     bool DEC(); //Decrement Memory By One
@@ -158,7 +184,6 @@ private:
     bool INY(); //Increment Index Register Y By One
     
     //ctrl
-#warning TODO
     //Break Command (in interuptions)
     bool JMP(); //JMP Indirect
     bool JSR(); //Jump To Subroutine
@@ -186,8 +211,7 @@ private:
     bool SEI(); //Set Interrupt Disable
     
     //kill
-#warning TODO
-    bool JAM(); //Halt the CPU                                                 undocumented
+//    bool JAM(); //Halt the CPU                                                 undocumented
     
     //nop
     bool NOP(); //No Operation
@@ -201,77 +225,14 @@ private:
         bool (CPU::*addressing_mode)() = NULL; // addressing mode function
         int cycles = 0; //number of necessary cycles
     };
-    std::array<instruction, 256> *instructions = new std::array<instruction, 256>; //we use an arry even though many cases are not used
-
-
-public:
-    CPU(NES *nes); //constructor 
-    
-    /*
-     Registers
-    */
-    flgs flags;
-    
-    void setflag(Byte, bool);
-    bool getflag(Byte flg);
-    Byte get_register_A();
-    Byte get_register_X();
-    Byte get_register_Y();
-    Byte get_register_SP();
-    Address get_register_PC();
-    
-    /*
-    Interruptions
-    */
-    void IRQ();
-    void NMI();
-    bool BRK();
-    void reset();
-    
-    /*
-     Other
-    */
-    NES *nes;
-    uint64_t opcode = 0x00;
-    void clock();
-    int rem_cycles = 0;
-    int cycles = 1;
-    Address data_to_read = 0x0000;
+    //this array is used to map all opcodes to their respective combinaison of addressing mode and function
+    std::array<instruction, 256> *instructions = new std::array<instruction, 256>;
+    //Some instructions may requiere an additional cycle in some cases
+    int additionnal_cycles = 0;
 };
 
 
 
 #endif /* cpu_hpp */
 
-/* Memory map*/
-//--------------------- $10000   --------------------- $10000
-//
-//                                PRG-ROM Upper Bank
-//
-//                               --------------------- $C000
-//
-//Cartridge Space                 PRG-ROM Lower Bank
-//
-//                               --------------------- $8000
-//                                SRAM
-//                               --------------------- $6000
-//                                Expansion ROM
-//--------------------- $4020    --------------------- $4020
-//                                APU & I/O Registers
-//                               --------------------- $4000
-//
-// I/O Registers                  Mirrors $2000-$2007
-//
-//                               --------------------- $2008
-//                                PPU Registers
-//--------------------- $2000    --------------------- $2000
-//
-//                                Mirrors $0000-$07FF
-//
-//                               --------------------- $0800
-// RAM                            RAM
-//                               --------------------- $0200
-//                                Stack
-//                               --------------------- $0100
-//                                Zero Page
-//--------------------- $0000    --------------------- $0000
+

@@ -8,6 +8,11 @@
 //#include <stdio.h>
 #include <array>
 
+#include <iostream>
+#include <cstdint>
+#include <map>
+#include <array>
+
 #include "cpu.hpp"
 #include "nes.hpp"
 
@@ -24,7 +29,6 @@ void CPU::setflag(Byte flg, bool value){
 //We change all byte to 0 except the one that interest us which is not modyfied. Then we know it's value.
 bool CPU::getflag(Byte flg){
     return (this->registers.nv_bdizc & flg) != 0;
-
 }
 
 Byte CPU::get_register_A(){

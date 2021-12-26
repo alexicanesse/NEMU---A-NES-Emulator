@@ -5,6 +5,11 @@
 //  Created by Alexi Canesse on 09/12/2021.
 //
 
+//I know it's a weird way to include SDL but it's the only way I found to use SDL and CMake together
+#include "SDL.h"
+#include <array>
+#include <sstream>>
+
 #include "screen.hpp"
 
 /*
@@ -14,7 +19,7 @@ GRAPHICS::GRAPHICS(int width, int height){
     SDL_Init(SDL_INIT_VIDEO);       // Initializing SDL as Video
     SDL_CreateWindowAndRenderer(width, height, 0, &window, &renderer);
 //    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-#warning TODO curstom size
+#warning TODO custome size
     SDL_RenderSetScale(renderer, 4. * 8/7,4);
 }
 

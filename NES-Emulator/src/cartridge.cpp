@@ -5,10 +5,15 @@
 //  Created by Alexi Canesse on 08/12/2021.
 //
 
+#include <iostream>
+#include <array>
+#include <string>
+#include <fstream>
+
 #include "cartridge.hpp"
 #include "nes.hpp"
 
-#include <iostream>
+
 
 CARTRIDGE::CARTRIDGE(NES *nes){
     this->nes = nes;

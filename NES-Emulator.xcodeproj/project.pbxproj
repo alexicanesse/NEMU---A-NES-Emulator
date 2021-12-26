@@ -49,6 +49,8 @@
 		1A879EE72758D2B900D7919F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		1A879EEC275F98A600D7919F /* ppu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ppu.cpp; path = src/ppu.cpp; sourceTree = "<group>"; };
 		1A879EED275F98A600D7919F /* ppu.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ppu.hpp; path = src/ppu.hpp; sourceTree = "<group>"; };
+		1AF7F6CC2777DC0000B217D9 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		1AF7F6CD2777DFBC00B217D9 /* cmake tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "cmake tests"; sourceTree = "<group>"; };
 		1AF80875276234BB0053DB8E /* screen.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = screen.cpp; path = "NES-Emulator/src/screen.cpp"; sourceTree = "<group>"; };
 		1AF80876276234BB0053DB8E /* screen.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = screen.hpp; path = "NES-Emulator/src/screen.hpp"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -93,6 +95,7 @@
 		1A3C43292747D94700DD181D /* NES-Emulator */ = {
 			isa = PBXGroup;
 			children = (
+				1AF7F6CD2777DFBC00B217D9 /* cmake tests */,
 				1A3FDB142760DF1C00519A4B /* NES-Emulator.entitlements */,
 				1A3C43422751165E00DD181D /* tests */,
 				1A3C43312747D99500DD181D /* obj */,
@@ -104,6 +107,7 @@
 				1A879EED275F98A600D7919F /* ppu.hpp */,
 				1A3FDAFA2760A04E00519A4B /* cartridge.cpp */,
 				1A3FDAFB2760A04E00519A4B /* cartridge.hpp */,
+				1AF7F6CC2777DC0000B217D9 /* CMakeLists.txt */,
 			);
 			path = "NES-Emulator";
 			sourceTree = "<group>";

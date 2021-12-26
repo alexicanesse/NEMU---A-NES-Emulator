@@ -9,6 +9,7 @@
 
 #include "nes.hpp"
 #include "ppu.hpp"
+#include "cartridge.hpp"
 
 
 
@@ -204,7 +205,6 @@ Byte NES::read(Address addr){
         }
     }
     else if (addr <= 0x401F){
-    #warning TODO read APU/IO
         switch (addr) {
             case 0x4014:
                 return this->ppu->getOAMDMA();
@@ -221,7 +221,6 @@ Byte NES::read(Address addr){
                 break;
         }
     }
-#warning TODO fill blank there
     else if(addr >= 0x8000) return this->cartridge->readROM(addr);
     
     
@@ -231,6 +230,7 @@ Byte NES::read(Address addr){
 
 
 void NES::clock(){
+#warning TODO Handle speed
     this->ppu->clock();
     if(this->cycle % 3 == 0){ //this cycle also concerns the cpu (which runs 3 times slower than the ppu
         if(this->transfert_dma){
