@@ -25,48 +25,32 @@ void CPU::setflag(Byte flg, bool value){
 }
 
 
-//We change all byte to 0 except the one that interest us which is not modyfied. Then we know it's value.
+//We change all byte to 0 except the one that interest us which is not modyfied. Then we know its value.
 bool CPU::getflag(Byte flg){
     return (this->registers.nv_bdizc & flg) != 0;
 }
 
-//Byte CPU::get_register_A(){
-//    return this->registers.r_A;
-//}
-//
-//Byte CPU::get_register_X(){
-//    return this->registers.r_iX;
-//}
-//
-//Byte CPU::get_register_Y(){
-//    return this->registers.r_iY;
-//}
-//
-//Byte CPU::get_register_SP(){
-//    return this->registers.r_SP;
-//}
-//
-//Address CPU::get_register_PC(){
-//    return this->registers.r_PC;
-//}
 
 
 //Emulate one cycle
 void CPU::clock(){
-    this->cycles++; //increase total number of cycles
+    this->cycles++;
+    
+    //a whole instruction is executed during the cycle it has been fetch
+    //this if-statement is used to idle the number of cycle the instruction was supposed
+    //to take
     if(this->rem_cycles != 0){
         this->rem_cycles--;
         return;
     }
     
     //fetch opcode
-    this->opcode = this->nes->read(this->registers.r_PC);
     //the pc register is incremented to be prepared for the next read.
-    this->registers.r_PC++;
+    this->opcode = this->nes->read(this->registers.r_PC++);
     
     instruction instr = (*this->instructions)[opcode]; //get the instruction
     
-    this->rem_cycles = instr.cycles - 1; //-1 because this cycle is the first cycle
+    this->rem_cycles = instr.cycles - 1; //-1 because this cycle is already the first cycle
     
     bool addr = (this->*instr.addressing_mode)();
     bool func = (this->*instr.function)();
@@ -74,41 +58,43 @@ void CPU::clock(){
     if(addr & func) //add an additional cycle if both addr_mode and function requiere it. ie if opcode requiere it
         this->rem_cycles++;
     
-    //branch instructions handle cycles themseles
-
+    //branch instructions handle additionnal cycles themseles
 }
+
+
+
+
+
+
 
 
 
 
 /*
- 
     Addressing modes
+    see https://www.pagetable.com/c64ref/6502/?tab=3 for details
 */
 //implied
 bool CPU::IMP(){
-    return false; //no additionnal cycle requiered
+    return false; //does nothing and no additionnal cycle is requiered
 }
 
 //accumulator
 bool CPU::ACC(){
-    return false; //no additionnal cycle requiered
+    return false; //does nothing and no additionnal cycle is requiered
 }
 
 //immediate
 bool CPU::IMM(){
-    //program counter is increamented to be prepared
+    //program counter is increamented to be prepared for the next read
     this->data_to_read = this->registers.r_PC++;
     return false; //no additionnal cycle requiered
 }
 
 //absolute
 bool CPU::ABS(){
-    Byte low = this->nes->read(this->registers.r_PC); //read 8 low bits
-    this->registers.r_PC++;
-    
-    Byte high = this->nes->read(this->registers.r_PC); //read 8 high bits
-    this->registers.r_PC++;
+    Byte low = this->nes->read(this->registers.r_PC++); //read 8 low bits
+    Byte high = this->nes->read(this->registers.r_PC++); //read 8 high bits
     
     this->data_to_read = (high << 8) | low; //concat them
     
@@ -117,11 +103,8 @@ bool CPU::ABS(){
 
 //X indexed absolute
 bool CPU::XIA(){
-    Byte low = this->nes->read(this->registers.r_PC); //read 8 low bits
-    this->registers.r_PC++;
-    
-    Byte high = this->nes->read(this->registers.r_PC); //read 8 high bits
-    this->registers.r_PC++;
+    Byte low = this->nes->read(this->registers.r_PC++); //read 8 low bits
+    Byte high = this->nes->read(this->registers.r_PC++); //read 8 high bits
     
     this->data_to_read = (high << 8) | low; //concat them
     
@@ -136,11 +119,8 @@ bool CPU::XIA(){
 
 //Y indexed absolute
 bool CPU::YIA(){
-    Byte low = this->nes->read(this->registers.r_PC); //read 8 low bits
-    this->registers.r_PC++;
-    
-    Byte high = this->nes->read(this->registers.r_PC); //read 8 high bits
-    this->registers.r_PC++;
+    Byte low = this->nes->read(this->registers.r_PC++); //read 8 low bits
+    Byte high = this->nes->read(this->registers.r_PC++); //read 8 high bits
     
     this->data_to_read = (high << 8) | low; //concat them
     
@@ -155,11 +135,8 @@ bool CPU::YIA(){
 
 //absolute indirect
 bool CPU::IND(){
-    Byte low = this->nes->read(this->registers.r_PC); //read 8 low bits
-    this->registers.r_PC++;
-    
-    Byte high = this->nes->read(this->registers.r_PC); //read 8 high bits
-    this->registers.r_PC++;
+    Byte low = this->nes->read(this->registers.r_PC++); //read 8 low bits
+    Byte high = this->nes->read(this->registers.r_PC++); //read 8 high bits
     
     Address temp = (high << 8) | low; //concat them
     
@@ -178,27 +155,21 @@ bool CPU::IND(){
 
 //zero page
 bool CPU::ZPA(){
-    this->data_to_read = (0x00FF) & this->nes->read(this->registers.r_PC);
-    this->registers.r_PC++;
-    
+    this->data_to_read = (0x00FF) & this->nes->read(this->registers.r_PC++);
     return false;
 }
 
 //X-indexed zero page
 bool CPU::XZP(){
     //like ZPA but we must add an offset
-    this->data_to_read = (0x00FF) & (this->nes->read(this->registers.r_PC) + this->registers.r_iX);
-    this->registers.r_PC++;
-    
+    this->data_to_read = (0x00FF) & (this->nes->read(this->registers.r_PC++) + this->registers.r_iX);
     return false;
 }
 
 //Y-indexed zero page
 bool CPU::YZP(){
     //like ZPA but we must add an offset
-    this->data_to_read = (0x00FF) & (this->nes->read(this->registers.r_PC) + this->registers.r_iY);
-    this->registers.r_PC++;
-    
+    this->data_to_read = (0x00FF) & (this->nes->read(this->registers.r_PC++) + this->registers.r_iY);
     return false;
 }
 
@@ -206,7 +177,6 @@ bool CPU::YZP(){
 bool CPU::XZI(){
     Byte add = this->nes->read(this->registers.r_PC++);
     Byte low = this->nes->read((add + this->registers.r_iX) & 0x00FF); //discard carry
-    
     Byte high = this->nes->read((add + 0x01 + this->registers.r_iX) & 0x00FF);
 
     this->data_to_read = (high << 8) | low; //concat them
@@ -235,13 +205,14 @@ bool CPU:: YZI(){
 }
 
 //relative
-//instructions will handle the t additionnal cycle
+//functions will handle the t additionnal cycle because this additional cycle is requiered only if the branch is taken
 bool CPU::REL(){
-    Address offset = this->nes->read(this->registers.r_PC);
-    this->registers.r_PC++;
+    Address offset = this->nes->read(this->registers.r_PC++);
 
+    //convert a 8 bit signed int to a 16 bit one
     if(offset & 0x80)
         offset |= 0xFF00;
+
     
     this->data_to_read = this->registers.r_PC + offset;
 
@@ -258,39 +229,25 @@ Interruptions
  Two interrupts (/IRQ and /NMI) and two instructions (PHP and BRK) push the flags to the stack. In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK) or 0 if from an interrupt line being pulled low (/IRQ or /NMI). This is the only time and place where the B flag actually exists: not in the status register itself, but in bit 4 of the copy that is written to the stack.
 */
 void CPU::IRQ(){
-    if(!this->getflag(0x04)){
-        //1    PC     R  fetch opcode (and discard it - $00 (BRK) is forced into the opcode register instead)
-        this->opcode = 0x00;
-        //2    PC     R  read next instruction byte (actually the same as above, since PC increment is suppressed. Also discarded.)
-        
-        //3  $0100,S  W  push PCH on stack, decrement S
-        
+    if(!this->getflag(flags.I)){ //if interupts are allowed
         //0x0100 to offset
-        this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) >> 8); //high
-        this->registers.r_SP--;
-        //4  $0100,S  W  push PCL on stack, decrement S
-        
-        this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
-        this->registers.r_SP--;
+        this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.r_PC) >> 8); //high
+        this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.r_PC) & 0x00FF); //low
         //*** At this point, the signal status determines which interrupt vector is used ***
-        //5  $0100,S  W  push P on stack (with B flag *clear*), decrement S
-        this->nes->write(0x0100 + this->registers.r_SP, (this->registers.nv_bdizc & 0xEF) | 0x24);
-        this->registers.r_SP--;
+
+        this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.nv_bdizc & 0xEF) | 0x24);
         this->registers.r_PC = this->nes->read(0xFFFE);
         this->registers.r_PC |= (this->nes->read(0xFFFF) << 8);
         
-        this->registers.nv_bdizc |= 0x04;
+        this->setflag(flags.I, true);
     }
 }
-void CPU::NMI(){
+void CPU::NMI(){ //NMI cannot be ignored even if the flag I is set
     this->rem_cycles = 6;
     
-    //0x0100 to offset
-    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) >> 8); //high
-    this->registers.r_SP--;
-    
-    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
-    this->registers.r_SP--;
+    //0x0100 to offset in the stack
+    this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.r_PC) >> 8); //high
+    this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.r_PC) & 0x00FF); //low
 
     this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.nv_bdizc & 0xEF) | 0x24);
 
@@ -300,18 +257,14 @@ void CPU::NMI(){
     this->registers.r_PC |= (this->nes->read(0xFFFB) << 8);
 }
 
-bool CPU::BRK(){ //return type is bool because BRK is also an instruction
+bool CPU::BRK(){ //return type is bool because BRK is also an instruction. I put it there in the file for consistency
     this->registers.r_PC++;
     
     //0x0100 to offset
-    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) >> 8); //high
-    this->registers.r_SP--;
+    this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.r_PC) >> 8); //high
+    this->nes->write(0x0100 + this->registers.r_SP--, (this->registers.r_PC) & 0x00FF); //low
 
-    this->nes->write(0x0100 + this->registers.r_SP, (this->registers.r_PC) & 0x00FF); //low
-    this->registers.r_SP--;
-
-    this->nes->write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x10);
-    this->registers.r_SP--;
+    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc | 0x10);
 
     this->registers.r_PC = this->nes->read(0xFFFE);
     this->registers.r_PC |= (this->nes->read(0xFFFF) << 8);
@@ -324,9 +277,7 @@ void CPU::reset(){
     this->rem_cycles = 6;
     
     this->opcode = 0x00;
-    this->registers.r_SP--;
-    this->registers.r_SP--;
-    this->registers.r_SP--;
+    this->registers.r_SP -= 3;
     this->registers.nv_bdizc |= 0x20;
     this->registers.r_PC = this->nes->read(0xFFFC);
     this->registers.r_PC |= (this->nes->read(0xFFFD) << 8);
@@ -1271,38 +1222,40 @@ CPU::CPU(NES *nes){
     (*this->instructions).at(0xFF).cycles = 7;
 }
 
-/* instructions */
+/*
+ instructions
+*/
 
 //load
 //Load Accumulator and Index Register X From Memory            undocumented
 bool CPU::LAX(){
     this->registers.r_A = this->nes->read(this->data_to_read);
     this->registers.r_iX = this->nes->read(this->data_to_read);
-    this->setflag(0x80, this->registers.r_A & 0x80);
-    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(flags.N, this->registers.r_A & 0x80);
+    this->setflag(flags.Z, this->registers.r_A == 0);
     return true;
 }
 //Load Accumulator with Memory
 bool CPU::LDA(){
     this->registers.r_A = this->nes->read(this->data_to_read);
-    this->setflag(0x80, this->registers.r_A & 0x80);
-    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(flags.N, this->registers.r_A & 0x80);
+    this->setflag(flags.Z, this->registers.r_A == 0);
     return true;
 }
 //Load Index Register X From Memory
 bool CPU::LDX(){
     this->registers.r_iX = this->nes->read(this->data_to_read);
     
-    this->setflag(0x80, this->registers.r_iX & 0x80);
-    this->setflag(0x02, this->registers.r_iX == 0);
+    this->setflag(flags.N, this->registers.r_iX & 0x80);
+    this->setflag(flags.Z, this->registers.r_iX == 0);
     return true;
 }
 //Load Index Register Y From Memory
 bool CPU::LDY(){
     this->registers.r_iY = this->nes->read(this->data_to_read);
     
-    this->setflag(0x80, this->registers.r_iY & 0x80);
-    this->setflag(0x02, this->registers.r_iY == 0);
+    this->setflag(flags.N, this->registers.r_iY & 0x80);
+    this->setflag(flags.Z, this->registers.r_iY == 0);
     return true;
 }
 //Store Accumulator "AND" Index Register X in Memory           undocumented
@@ -1332,32 +1285,32 @@ bool CPU::STY(){
 bool CPU::TAX(){
     this->registers.r_iX = this->registers.r_A;
     
-    this->setflag(0x80, this->registers.r_iX & 0x80);
-    this->setflag(0x02, this->registers.r_iX == 0);
+    this->setflag(flags.N, this->registers.r_iX & 0x80);
+    this->setflag(flags.Z, this->registers.r_iX == 0);
     return false;
 }
 //Transfer Accumula Tor To Index Y
 bool CPU::TAY(){
     this->registers.r_iY = this->registers.r_A;
     
-    this->setflag(0x80, this->registers.r_iY & 0x80);
-    this->setflag(0x02, this->registers.r_iY == 0);
+    this->setflag(flags.N, this->registers.r_iY & 0x80);
+    this->setflag(flags.Z, this->registers.r_iY == 0);
     return false;
 }
 //Transfer Stack Pointer To Index X
 bool CPU::TSX(){
     this->registers.r_iX = this->registers.r_SP;
     
-    this->setflag(0x80, this->registers.r_iX & 0x80);
-    this->setflag(0x02, this->registers.r_iX == 0);
+    this->setflag(flags.N, this->registers.r_iX & 0x80);
+    this->setflag(flags.Z, this->registers.r_iX == 0);
     return false;
 }
 //Transfer Index X To Accumulator
 bool CPU::TXA(){
     this->registers.r_A = this->registers.r_iX;
     
-    this->setflag(0x80, this->registers.r_A & 0x80);
-    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(flags.N, this->registers.r_A & 0x80);
+    this->setflag(flags.Z, this->registers.r_A == 0);
     return false;
 }
 //Transfer Index X To Stack Pointer
@@ -1370,8 +1323,8 @@ bool CPU::TXS(){
 bool CPU::TYA(){
     this->registers.r_A = this->registers.r_iY;
     
-    this->setflag(0x80, this->registers.r_A & 0x80);
-    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(flags.N, this->registers.r_A & 0x80);
+    this->setflag(flags.Z, this->registers.r_A == 0);
     return false;
 }
 
@@ -1387,17 +1340,18 @@ bool CPU::PHA(){
 //Push Processor Status On Stack
 bool CPU::PHP(){
     //0x0100 to offset
-    this->nes->write(0x0100 + this->registers.r_SP, this->registers.nv_bdizc | 0x34);
-    this->registers.r_SP--; //always point to next address
+    this->nes->write(0x0100 + this->registers.r_SP--, this->registers.nv_bdizc | 0x34);
+    //sp-- because sp needs to point to the nest empty location on the stack
     return false;
 }
 //Pull Accumulator From Stack
 bool CPU::PLA(){
     //0x0100 to offset
+    //sp is incremented before its use because it refere to the next *available* location
     this->registers.r_A = this->nes->read(0x0100 + ++this->registers.r_SP);
     
-    this->setflag(0x80, this->registers.r_A & 0x80);
-    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(flags.N, this->registers.r_A & 0x80);
+    this->setflag(flags.Z, this->registers.r_A == 0);
     return false;
 }
 //Pull Processor Status From Stack
@@ -1411,7 +1365,8 @@ bool CPU::PLP(){
 //Arithmetic Shift Left
 bool CPU::ASL(){
     Byte data = 0x00;
-    if(this->opcode == 0x0A){
+    if(this->opcode == 0x0A){//called on accumalator
+        //I do not use <<= because I need to set data in order to set the flags
         data = this->registers.r_A;
         this->registers.r_A = data << 1;
     }
@@ -1420,9 +1375,9 @@ bool CPU::ASL(){
         this->nes->write(this->data_to_read, data << 1);
     }
     
-    this->setflag(0x80, data & 0x40);
-    this->setflag(0x02, (data & 0x7F) == 0);
-    this->setflag(0x01, data & 0x80);
+    this->setflag(flags.N, data & 0x40);
+    this->setflag(flags.Z, (data & 0x7F) == 0);
+    this->setflag(flags.C, data & 0x80);
     return false;
 }
 //Logical Shift Right
@@ -1437,9 +1392,9 @@ bool CPU::LSR(){
         this->nes->write(this->data_to_read, data >> 1);
     }
     
-    this->setflag(0x80, false);
-    this->setflag(0x02, (data & 0xFE) == 0);
-    this->setflag(0x01, data & 0x01);
+    this->setflag(flags.N, false);
+    this->setflag(flags.Z, (data & 0xFE) == 0);
+    this->setflag(flags.C, data & 0x01);
     return false;
 }
 //Rotate Left
@@ -1447,16 +1402,16 @@ bool CPU::ROL(){
     Byte data = 0x00;
     if(this->opcode == 0x2A){
         data = this->registers.r_A;
-        this->registers.r_A = data << 1 | (this->getflag(0x01) & 0x01);
+        this->registers.r_A = data << 1 | (this->getflag(flags.C) & 0x01);
     }
     else{
         data = this->nes->read(this->data_to_read);
-        this->nes->write(this->data_to_read, data << 1 | (this->getflag(0x01) & 0x01));
+        this->nes->write(this->data_to_read, data << 1 | (this->getflag(flags.C) & 0x01));
     }
     
-    this->setflag(0x80, data & 0x40);
-    this->setflag(0x02, ((data & 0x7F) == 0) & (this->getflag(0x01) == 0));
-    this->setflag(0x01, data & 0x80);
+    this->setflag(flags.N, data & 0x40);
+    this->setflag(flags.Z, ((data & 0x7F) == 0) & (this->getflag(flags.C) == 0));
+    this->setflag(flags.C, data & 0x80);
     return false;
 }
 //Rotate Right
@@ -1464,16 +1419,16 @@ bool CPU::ROR(){
     Byte data = 0x00;
     if(this->opcode == 0x6A){
         data = this->registers.r_A;
-        this->registers.r_A = data >> 1 | this->getflag(0x01) << 7;
+        this->registers.r_A = data >> 1 | this->getflag(flags.C) << 7;
     }
     else{
         data = this->nes->read(this->data_to_read);
-        this->nes->write(this->data_to_read, data >> 1 | this->getflag(0x01) << 7);
+        this->nes->write(this->data_to_read, data >> 1 | this->getflag(flags.C) << 7);
     }
     
-    this->setflag(0x80, this->getflag(0x01));
-    this->setflag(0x02, ((data & 0xFE) == 0) & (this->getflag(0x01) == 0));
-    this->setflag(0x01, data & 0x01);
+    this->setflag(flags.N, this->getflag(0x01));
+    this->setflag(flags.Z, ((data & 0xFE) == 0) & (this->getflag(flags.C) == 0));
+    this->setflag(flags.C, data & 0x01);
     return false;
 }
 
@@ -1482,8 +1437,8 @@ bool CPU::ROR(){
 bool CPU::AND(){
     this->registers.r_A &= this->nes->read(this->data_to_read);
     
-    this->setflag(0x80, this->registers.r_A & 0x80);
-    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(flags.N, this->registers.r_A & 0x80);
+    this->setflag(flags.Z, this->registers.r_A == 0);
     return true;
 }
 //Test Bits in Memory with Accumulator
@@ -1491,25 +1446,25 @@ bool CPU::BIT(){
     Byte memtested = this->nes->read(this->data_to_read);
     bool result = this->registers.r_A & memtested;
     
-    this->setflag(0x80, memtested & 0x80);
-    this->setflag(0x40, memtested & 0x40);
-    this->setflag(0x02, result == 0);
+    this->setflag(flags.N, memtested & 0x80);
+    this->setflag(flags.V, memtested & 0x40);
+    this->setflag(flags.Z, result == 0);
     return false;
 }
 //"Exclusive OR" Memory with Accumulator
 bool CPU::EOR(){
     this->registers.r_A ^= this->nes->read(this->data_to_read);
     
-    this->setflag(0x80, this->registers.r_A & 0x80);
-    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(flags.N, this->registers.r_A & 0x80);
+    this->setflag(flags.Z, this->registers.r_A == 0);
     return true;
 }
 //"OR" Memory with Accumulator
 bool CPU::ORA(){
     this->registers.r_A |= this->nes->read(this->data_to_read);
     
-    this->setflag(0x80, this->registers.r_A & 0x80);
-    this->setflag(0x02, this->registers.r_A == 0);
+    this->setflag(flags.N, this->registers.r_A & 0x80);
+    this->setflag(flags.Z, this->registers.r_A == 0);
     return true;
 }
 
@@ -1675,7 +1630,6 @@ bool CPU::INY(){
 }
 
 //ctrl
-#warning NOT TESTED I DO NOT KNOW IF IT IS WORKING PROPERLY
 //Break Command
 //BRK's implementation is above with other interuptions
 //JMP Indirect

@@ -11,7 +11,7 @@
 //I know it's a weird way to include SDL but it's the only way I found to use SDL and CMake together
 #include "SDL.h"
 #include <array>
-#include <sstream>>
+#include <sstream>
 
 
 class GRAPHICS{

@@ -1,6 +1,9 @@
 #I choose version 3.22.1 minimum because I'm working with it and I'm too lazy to text older versions
 cmake_minimum_required(VERSION 3.22.1)
 
+#c++11 is requiered because initializing non static members was legal before c++11
+set (CMAKE_CXX_STANDARD 11)
+
 project(NES_Emulator)
 
 #List of files to compile

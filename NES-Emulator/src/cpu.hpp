@@ -29,7 +29,7 @@ public:
     /*
      Registers
     */
-    struct flgs { //used to reference flags without having to remember their order
+    struct flgs { //used to reference flags without having to remember their order. Its useless but make the code clearer
         Byte N = 0x80; //negative result | After most instructions that have a value result, this flag will contain bit 7 of that result.
         Byte V = 0x40; //overflow
         Byte B = 0x10; //break command | No CPU effect
