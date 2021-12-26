@@ -17,13 +17,12 @@
 typedef uint8_t Byte;
 typedef uint16_t Address;
 
+//forward declaration to avoid circular inclusion
 class NES;
 
-
 class CPU{
-//private:
-
-    
+    //I declared Debugger as a friend to be able to acced private members of the CPU from outside its class
+    friend class Debugger;
 public:
     CPU(NES *nes); //constructor
     
@@ -40,13 +39,9 @@ public:
         Byte C = 0x01; //carry
     } flags;
     
+    //These functions are useless but they avoid to do bitwise opperations each time I want to change a flag's state
     void setflag(Byte, bool);
     bool getflag(Byte flg);
-    Byte get_register_A();
-    Byte get_register_X();
-    Byte get_register_Y();
-    Byte get_register_SP();
-    Address get_register_PC();
     
     
     /*
@@ -58,14 +53,7 @@ public:
     bool BRK();
     void reset();
     
-    /*
-     Other
-    */
-    NES *nes;
-    Byte opcode = 0x00; //the opcode is stored for debugging purposses
-    int rem_cycles = 0; //remaining cycle until we fetch the next instruction
-    int cycles = 1; //initialized at 1 because clock() is called for the first time when the cpu has already finished it's reset
-    Address data_to_read = 0x0000; //used to store the data fetched until its use
+
     
     
     void clock(); //main function of the cpu
@@ -229,6 +217,16 @@ private:
     std::array<instruction, 256> *instructions = new std::array<instruction, 256>;
     //Some instructions may requiere an additional cycle in some cases
     int additionnal_cycles = 0;
+    
+    
+    /*
+     Other
+    */
+    NES *nes; //the CPU need to access other parts of the NES such as memory
+    Byte opcode = 0x00; //the current opcode is stored for debugging purposses
+    int rem_cycles = 0; //remaining cycle until we fetch the next instruction
+    int cycles = 1; //initialized at 1 because clock() is called for the first time when the cpu has already finished it's reset
+    Address data_to_read = 0x0000; //used to store the data fetched until its use
 };
 
 

@@ -10,7 +10,6 @@
 
 #include <iostream>
 #include <cstdint>
-#include <map>
 #include <array>
 
 #include "cpu.hpp"
@@ -31,25 +30,25 @@ bool CPU::getflag(Byte flg){
     return (this->registers.nv_bdizc & flg) != 0;
 }
 
-Byte CPU::get_register_A(){
-    return this->registers.r_A;
-}
-
-Byte CPU::get_register_X(){
-    return this->registers.r_iX;
-}
-
-Byte CPU::get_register_Y(){
-    return this->registers.r_iY;
-}
-
-Byte CPU::get_register_SP(){
-    return this->registers.r_SP;
-}
-
-Address CPU::get_register_PC(){
-    return this->registers.r_PC;
-}
+//Byte CPU::get_register_A(){
+//    return this->registers.r_A;
+//}
+//
+//Byte CPU::get_register_X(){
+//    return this->registers.r_iX;
+//}
+//
+//Byte CPU::get_register_Y(){
+//    return this->registers.r_iY;
+//}
+//
+//Byte CPU::get_register_SP(){
+//    return this->registers.r_SP;
+//}
+//
+//Address CPU::get_register_PC(){
+//    return this->registers.r_PC;
+//}
 
 
 //Emulate one cycle

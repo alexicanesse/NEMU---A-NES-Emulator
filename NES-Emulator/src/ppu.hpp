@@ -20,6 +20,7 @@ typedef std::array<Byte, 4> Sprite; //each byte as its own role and must be acce
 
 class NES;
 
+
 class PPU{
 private:
     /*
