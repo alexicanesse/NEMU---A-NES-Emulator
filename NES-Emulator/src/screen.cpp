@@ -7,24 +7,20 @@
 
 //I know it's a weird way to include SDL but it's the only way I found to use SDL and CMake together
 #include "SDL.h"
-#include <array>
-#include <sstream>
 
 #include "screen.hpp"
 
 /*
  Constructor and destructor
 */
-GRAPHICS::GRAPHICS(int width, int height){
+GRAPHICS::GRAPHICS(float coef){
     SDL_Init(SDL_INIT_VIDEO);       // Initializing SDL as Video
-    SDL_CreateWindowAndRenderer(width, height, 0, &window, &renderer);
-//    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-#warning TODO custome size
-    SDL_RenderSetScale(renderer, 4. * 8/7,4);
+    SDL_CreateWindowAndRenderer(coef * 320, coef * 240, 0, &window, &renderer);
+    SDL_RenderSetScale(renderer, coef * 8/7, coef);
+    //https://wiki.nesdev.org/w/index.php?title=Overscan explains why the horizontal coefficient is multiplied by 8/7
 }
 
 GRAPHICS::~GRAPHICS(){
-//    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

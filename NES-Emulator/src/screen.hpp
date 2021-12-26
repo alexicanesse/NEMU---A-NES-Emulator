@@ -10,21 +10,17 @@
 
 //I know it's a weird way to include SDL but it's the only way I found to use SDL and CMake together
 #include "SDL.h"
-#include <array>
-#include <sstream>
 
 
 class GRAPHICS{
 private:
-        int height;     // Height of the window
-        int width;      // Width of the window
         SDL_Renderer *renderer = NULL;      // Pointer to the renderer
         SDL_Window *window = NULL;      // Pointer to the window
 public:
     /*
      Constructor and destructor
     */
-    GRAPHICS(int width, int height);
+    GRAPHICS(float coef);
     ~GRAPHICS();
     
     

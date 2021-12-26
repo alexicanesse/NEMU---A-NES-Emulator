@@ -26,7 +26,7 @@ private:
     /*
      Graphics
     */
-    GRAPHICS graphics = *(new GRAPHICS(1280, 960));
+    GRAPHICS graphics = *(new GRAPHICS(5));
     SDL_Event event;
     int frames_last_seconde = 0;
     int last_time = 0;
