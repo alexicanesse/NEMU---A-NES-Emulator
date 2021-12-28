@@ -14,8 +14,9 @@
 
 class GRAPHICS{
 private:
-        SDL_Renderer *renderer = NULL;      // Pointer to the renderer
-        SDL_Window *window = NULL;      // Pointer to the window
+    SDL_Renderer *renderer = NULL;      // Pointer to the renderer
+    SDL_Window *window = NULL;      // Pointer to the window
+    
 public:
     /*
      Constructor and destructor

@@ -18,14 +18,24 @@ typedef uint8_t Byte;
 typedef uint16_t Address;
 typedef std::array<Byte, 4> Sprite; //each byte as its own role and must be accessed separatly so it doesn't make sense to use uint32_t (which is what I did at first)
 
+//forward declaration to avoid circular inclusion
 class NES;
 
 
+
+//Be careful: the PPU is definitly more complicated than the CPU.
+//I tryed to give as much information about the hardware in my comments
+//but I strongly advice you to keep this page open at all time to check
+//how the hardware works
+//https://wiki.nesdev.org/w/index.php?title=PPU
+//You should also read the whole thing before going through my code as
+//this is a complicated piece of hardware
 class PPU{
 private:
     /*
      Graphics
     */
+#warning TODO Handle screen size 
     GRAPHICS graphics = *(new GRAPHICS(5));
     SDL_Event event;
     int frames_last_seconde = 0;
@@ -180,6 +190,8 @@ public:
 //    Byte address_latch = 0x00;
     NES *nes;
     void clock();
+    bool is_sprite_0_there = false;
+    bool is_sprite_0_rendering = false;
     
     
     //debug

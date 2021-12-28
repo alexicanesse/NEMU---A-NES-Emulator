@@ -231,8 +231,13 @@ Byte NES::read(Address addr){
 
 void NES::clock(){
 #warning TODO Handle speed
-    this->ppu->clock();
-    if(this->cycle % 3 == 0){ //this cycle also concerns the cpu (which runs 3 times slower than the ppu
+    ppu->clock();
+    ppu->clock();
+    ppu->clock();
+    
+    
+    
+//    if(this->cycle % 3 == 0){ //this cycle also concerns the cpu (which runs 3 times slower than the ppu
         if(this->transfert_dma){
             if(this->dma_idle_cycle_done){
                 //read is done on even cycles and write on odd cycles
@@ -261,9 +266,7 @@ void NES::clock(){
         }
         else
             this->cpu->clock();
-    }
-    
-
+//    }
     
     cycle++;
 }

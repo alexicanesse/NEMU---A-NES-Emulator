@@ -36,7 +36,7 @@ void CARTRIDGE::load(std::string link){
     ROMfile.read(&buffer,1);
     if(buffer == 0x01) mirror_prgrom = true;
 
-    //number of 2kB vrom banks
+    //number of 8kB vrom banks
     ROMfile.read(&buffer,1); //skip nbr_chrom_banks because mapper 0 only have one 8kiB chrom bank
     
     ROMfile.read(&buffer,1); //flag 6
@@ -84,7 +84,7 @@ void CARTRIDGE::load(std::string link){
         }
     }
     else{
-        for(Address pos = 0x8000; ((int) pos) < 0x10000; pos++){ //load prgrom
+        for(int pos = 0x8000; pos <= 0xFFFF; pos++){ //load prgrom
             ROMfile.read(&buffer,1);
             this->prgROM->at(pos) = (Byte) buffer;
         }

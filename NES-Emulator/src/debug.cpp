@@ -48,7 +48,8 @@ void Debugger::show_registers(CPU cpu){
            << "\nY : 0x" << std::hex << (int) cpu.registers.r_iY
            << "\nStack pointer : 0x" << std::hex << (int) cpu.registers.r_SP
            << "\nProgram counter : 0x" << std::hex << (int) cpu.registers.r_PC
-           << "\nCycles : " << std::dec << cpu.cycles;
+           << "\nCycles : " << std::dec << cpu.cycles
+           << "\nOPCODE : " << std::hex << (int) cpu.opcode;
     addstr(buffer.str().c_str());
 }
 
@@ -72,9 +73,9 @@ void Debugger::show_interrupts(NES nes){
     move(0,50);
     std::stringstream buffer;
     buffer << "Interupts :"; addstr(buffer.str().c_str()); move(1,50); buffer.str("");
-    buffer << std::hex << "Reset:   0x" << (int) nes.read(0xFFFD) << (int) nes.read(0xFFFC); addstr(buffer.str().c_str()); move(2,50); buffer.str("");
-    buffer << std::hex << "BRK:   0x" << (int) nes.read(0xFFFF) << (int) nes.read(0xFFFE); addstr(buffer.str().c_str()); move(3,50); buffer.str("");
-    buffer << std::hex << "IRQ/NMI: 0x" << (int) nes.read(0xFFFB) << (int) nes.read(0xFFFA); addstr(buffer.str().c_str());
+    buffer << std::hex << "Reset:   0x" << (int) (nes.read(0xFFFD) << 8 | nes.read(0xFFFC)); addstr(buffer.str().c_str()); move(2,50); buffer.str("");
+    buffer << std::hex << "BRK:   0x" << (int) (nes.read(0xFFFF) << 8 | nes.read(0xFFFE)); addstr(buffer.str().c_str()); move(3,50); buffer.str("");
+    buffer << std::hex << "IRQ/NMI: 0x" << (int) (nes.read(0xFFFB) << 8 | nes.read(0xFFFA)); addstr(buffer.str().c_str());
 }
 
 void Debugger::show_position(PPU ppu){
@@ -107,31 +108,31 @@ void Debugger::show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu, NES nes)
 
 int main(){
 //    initscr();
-
     
     
     Debugger debug;
     
     Address old_pc = 0x0000;
-  
+
     debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes");
 //  debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes");
 //  debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/scanline.nes");
-//    debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/Tetris.nes");
 //        debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/smb.nes");
-    std::ofstream log;
+//    debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/1.Branch_Basics.nes");
+    
+//    std::ofstream log;
     debug.cpu->reset();
     
     
-    log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
-    log.close();
+//    log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
+//    log.close();
 //    logging(*cpu);
 
     
     
-    int a = 0;
-    while(1){
+//    int a = 0;
 
+    while(1){
         debug.nes.clock();
 //        ppu->clock();
 ////
@@ -145,7 +146,7 @@ int main(){
 //            }
 
 //                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-//            show_state(*cpu, *nes.ram, *ppu);
+//            debug.show_state(*debug.cpu, *debug.nes.ram, *debug.ppu, debug.nes);
 //            refresh();
 //        }
 //        if(ppu->asknmi){
