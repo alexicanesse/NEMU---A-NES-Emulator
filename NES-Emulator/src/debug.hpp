@@ -28,7 +28,6 @@ class CPU;
 class Debugger{
 #warning TODO befriend everyone
 public:
-    void show_ram(std::array<Byte, 2048> ram);
     void show_registers(CPU cpu);
     void show_stack(std::array<Byte, 2048> ram);
     void show_ppu_register(PPU ppu);

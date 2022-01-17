@@ -309,7 +309,7 @@ Byte PPU::getOAMADDR(){
 }
 //get OAM data port
 Byte PPU::getOAMDATA(){
-    return ((uint8_t *) this->OAM)[this->registers.OAMADDR]; //we convert it to a pointer in order to read the appropriate byte
+    return ((uint8_t *) this->OAM)[this->registers.OAMADDR]; //we convert it to a pointer in order to read the appropriate byte without having to deal with arithmetic as the array is 64*4
 }
 //get scrolling position register
 Byte PPU::getPPUSCROLL(){
@@ -510,7 +510,7 @@ void PPU::LowBGByteTile(){//Low BG Byte tile
 
 
 void PPU::HighBGByteTile(){
-    //the high tile follows the low tile and is 8 Byte wide;
+    //the high tile follows the low tile and is 8 Bytes wide;
     this->pattern_data_shift_register_2_latch = this->read((((( (Address) this->registers.PPUCTRL) & 0x0010) << 8) + (((Address) this->next_pattern_data_shift_register_location) << 4) + ((this->vmem_addr & 0x7000) >> 12)) + 8);
 }
 
@@ -546,11 +546,11 @@ void PPU::ATByte(){
 
 void PPU::incHori_v(){
     if((this->vmem_addr & 0x001F) == 0x1F){ //last tile on that line
-        this->vmem_addr &= 0xFFE0;        //coarse X = 0
-        this->vmem_addr ^= 0x0400;        //switch horizontal nametable
+        this->vmem_addr &= 0xFFE0;          //coarse X = 0
+        this->vmem_addr ^= 0x0400;          //switch horizontal nametable
     }
     else
-        this->vmem_addr++;                // increment coarse X
+        this->vmem_addr++;                  // increment coarse X
 }
 
 void PPU::shift(){
@@ -567,7 +567,7 @@ void PPU::shift(){
             if(i < this->number_of_sprites){//for each sprite we found
                 if(this->sprite_counters->at(i) != 0) //we have not reached the sprite yet
                     this->sprite_counters->at(i)--;
-                else{//we need to shiffts the pattern registers
+                else{//we need to shift the pattern registers
                     if(this->sprite_latches->at(i) & 0x40){//we shift in the other direction because the sprite is flipped horizontaly
                         this->sprite_shift_registers->at(i).at(0) >>= 1;
                         this->sprite_shift_registers->at(i).at(1) >>= 1;
@@ -604,7 +604,7 @@ void PPU::incY(){
 
 
 void PPU::clock(){
-#warning TODO Handle 8 pixel borders
+    //https://wiki.nesdev.org/w/index.php?title=File:Ntsc_timing.png
     if((this->registers.PPUMASK & 0x18) && (this->scanline <= 239)){//it includes the pre-render line
         if((this->scanline == -1) && (this->cycle == 1)){
             this->registers.PPUSTATUS &= 0x1F; //clear vblank, sprite overflow and sprite 0 hit
@@ -676,7 +676,9 @@ void PPU::clock(){
     
     if((this->registers.PPUMASK & 0x18) && this->scanline <= 239){//this includes the pre-render line
         //Cycles 1-64: Secondary OAM (32-byte buffer for current sprites on scanline) is initialized to $FF - attempting to read $2004 will return $FF. Internally, the clear operation is implemented by reading from the OAM and writing into the secondary OAM as usual, only a signal is active that makes the read always return $FF.
-        if((this->cycle == 1) && (this->scanline >= 0)){ //it is not cycle accurate but who cares ? (does not append during the pre render line)
+        
+        //it is not cycle accurate but who cares ? (I do eveyrthin during the first cycle and idle during the others
+        if((this->cycle == 1) && (this->scanline >= 0)){ //(does not append during the pre render line)
             this->last_available_slot = 0; // secondary OAM is empty
             is_sprite_0_there = false; //we have not found sprite zero yet
             for(int i = 0; i< 8; i++){
@@ -692,10 +694,10 @@ void PPU::clock(){
 //        }
 
         //Cycles 65-256: Sprite evaluation
-        if((this->cycle >= 65) && (this->cycle <= 256) && (this->scanline >= 0)){ //does not append during the pre render line
+        else if((this->cycle >= 65) && (this->cycle <= 256) && (this->scanline >= 0)){ //does not append during the pre render line
             //Sprite evaluation occurs if either the sprite layer or background layer is enabled via $2001. Unless both layers are disabled, it merely hides sprite rendering.
             //sprite evaluation
-            if(this->cycle == 65){//it ain't accurate as I'm not using OAMADDR but it only matter when rendering is enable at the middle of the screen because oamaddr is reset at the begging of rendering
+            if(this->cycle == 65){//it ain't accurate as I'm not using OAMADDR but it only matter when rendering is enable at the middle of the screen because oamaddr is reset at the beggining of rendering
                 this->n = 0;
                 this->sprite_cycle = 0;
                 this->last_available_slot = 0;
@@ -777,12 +779,12 @@ void PPU::clock(){
                 }
                 //we have fetched 8 sprites
                 //we should look for an other sprite in order to set the sprite overflow flag if it needs to be set
-                //though, this is bug as hell
+                //though, this is bugged as hell
                 //During sprite evaluation, if eight in-range sprites have been found so far, the sprite evaluation logic continues to scan the primary OAM looking for one more in-range sprite to determine whether to set the sprite overflow flag. The first such check correctly checks the y coordinate of the next OAM entry, but after that the logic breaks and starts scanning OAM "diagonally", evaluating the tile number/attributes/X-coordinates of subsequent OAM entries as Y-coordinates (due to incorrectly incrementing m when moving to the next sprite). This results in inconsistent sprite overflow behavior showing both false positives and false negatives.
                 //therefor only tricky to emulate games uses this
                 //I'm not taking care of this for now
-                //proof that it doesn't matter that much
-                //The sprite overflow flag is rarely used, mainly due to bugs when exactly 8 sprites are present on a scanline. No games rely on the buggy behavior.
+                //proof that it doesn't matter that much:
+                //"The sprite overflow flag is rarely used, mainly due to bugs when exactly 8 sprites are present on a scanline. No games rely on the buggy behavior."
             }
         }
 
@@ -794,10 +796,10 @@ void PPU::clock(){
             this->registers.OAMADDR = 0x00;
             
             //I could be cycle accurate
-            //but the cpu cannot mess we secondary oam
+            //but the cpu cannot mess with secondary oam
             //so only the PPU has access to it
             //and therefor I can do all of it during a single cycle
-            //it is easier to implement and faster to run
+            //it is easier to implement and runs faster
             if(this->cycle == 257){
                 this->number_of_sprites = this->last_available_slot;
                 
@@ -970,10 +972,6 @@ void PPU::clock(){
             
             
             //the following code is meant to write the current frame per seconds as the title
-//            int currentTime = SDL_GetTicks();
-//            std::string re = "FPS: " + std::to_string(1000/(currentTime - last_time));
-//            graphics.ChangeTitle(re.c_str());
-//            last_time = currentTime;
             frames_last_seconde++;
             int currentTime = SDL_GetTicks();
             if (currentTime > last_time + 1000) {

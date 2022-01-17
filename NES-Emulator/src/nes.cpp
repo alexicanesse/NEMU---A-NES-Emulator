@@ -6,6 +6,7 @@
 //
 //#include <cstdio>
 #include <array>
+#include <boost/program_options.hpp>
 
 #include "nes.hpp"
 #include "ppu.hpp"
@@ -232,19 +233,14 @@ Byte NES::read(Address addr){
 void NES::clock(){
 #warning TODO Handle speed
     ppu->clock();
-    ppu->clock();
-    ppu->clock();
-    
-    
-    
-//    if(this->cycle % 3 == 0){ //this cycle also concerns the cpu (which runs 3 times slower than the ppu
+
+    if(this->cycle % 3 == 0){ //this cycle also concerns the cpu (which runs 3 times slower than the ppu)
         if(this->transfert_dma){
             if(this->dma_idle_cycle_done){
                 //read is done on even cycles and write on odd cycles
                 //I'll do both during odd cycles. It won't matter as CPU is disabled
                 if(this->cycle & 0x01){
                     this->ppu->setOAM_with_addr( this->read((this->ppu->getOAMDMA() << 8) + this->dma_offset), this->dma_offset);
-//                    this->ppu->setOAM_with_addr( this->dma_offset, this->dma_offset);
 
                 
                     if(this->dma_offset == 0xFF){//dma transfert is done
@@ -266,8 +262,55 @@ void NES::clock(){
         }
         else
             this->cpu->clock();
-//    }
+    }
     
     cycle++;
 }
 
+
+
+
+
+int main(int argc, char** argv){
+    boost::program_options::options_description desc("Allowed options");
+    desc.add_options()
+        ("help", "print the help message")
+        ("rom", boost::program_options::value<std::string>(), "set the rom file to open")
+        ("screen_size_multiplier", boost::program_options::value<int>(), "set the screen size multiplier")
+        ("d", "start in debug mode")
+    ;
+
+    boost::program_options::variables_map vm;
+    boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
+    boost::program_options::notify(vm);
+
+    if (vm.count("help")) {
+        std::cout << desc << "\n";
+        return 1;
+    }
+    
+    if(vm.count("rom")){
+#warning TODO
+    }
+    else{
+        std::cout << "--rom option is requiered";
+        return 0;
+    }
+    
+    if(vm.count("screen_size_multiplier")){
+#warning TODO
+    }
+    else{
+#warning TODO set default
+    }
+    
+    if(vm.count("d")){
+#warning TODO
+    }
+    else{
+#warning TODO 
+    }
+    
+    
+    return 0;
+}

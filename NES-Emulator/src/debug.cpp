@@ -20,7 +20,7 @@
 #include "screen.hpp"
 
 
-//Show ram value
+//Show stack content
 void Debugger::show_stack(std::array<Byte, 2048> ram){
     std::stringstream buffer;
     buffer << "\n\nStack:\n";
@@ -49,7 +49,7 @@ void Debugger::show_registers(CPU cpu){
            << "\nStack pointer : 0x" << std::hex << (int) cpu.registers.r_SP
            << "\nProgram counter : 0x" << std::hex << (int) cpu.registers.r_PC
            << "\nCycles : " << std::dec << cpu.cycles
-           << "\nOPCODE : " << std::hex << (int) cpu.opcode;
+           << "\nOPcode : " << std::hex << (int) cpu.opcode;
     addstr(buffer.str().c_str());
 }
 
@@ -58,14 +58,14 @@ void Debugger::show_ppu_register(PPU ppu){
     move(0,30);
     std::stringstream buffer;
     buffer << "PPU Registers:"; addstr(buffer.str().c_str()); move(1,30); buffer.str("");
-    buffer << std::hex << "PPUCTRL:   0x" << (int) ppu.getPPUCTRL(); addstr(buffer.str().c_str()); move(2,30); buffer.str("");
-    buffer << std::hex << "PPUMASK:   0x" << (int) ppu.getPPUMASK(); addstr(buffer.str().c_str()); move(3,30); buffer.str("");
+    buffer << std::hex << "PPUCTRL:   0x" << (int) ppu.getPPUCTRL();   addstr(buffer.str().c_str()); move(2,30); buffer.str("");
+    buffer << std::hex << "PPUMASK:   0x" << (int) ppu.getPPUMASK();   addstr(buffer.str().c_str()); move(3,30); buffer.str("");
     buffer << std::hex << "PPUSTATUS: 0x" << (int) ppu.getPPUSTATUS(); addstr(buffer.str().c_str()); move(4,30); buffer.str("");
-    buffer << std::hex << "OAMADDR:   0x" << (int) ppu.getOAMADDR(); addstr(buffer.str().c_str()); move(5,30); buffer.str("");
-    buffer << std::hex << "OAMDATA:   0x" << (int) ppu.getOAMDATA(); addstr(buffer.str().c_str()); move(6,30); buffer.str("");
+    buffer << std::hex << "OAMADDR:   0x" << (int) ppu.getOAMADDR();   addstr(buffer.str().c_str()); move(5,30); buffer.str("");
+    buffer << std::hex << "OAMDATA:   0x" << (int) ppu.getOAMDATA();   addstr(buffer.str().c_str()); move(6,30); buffer.str("");
     buffer << std::hex << "PPUSCROLL: 0x" << (int) ppu.getPPUSCROLL(); addstr(buffer.str().c_str()); move(7,30); buffer.str("");
-    buffer << std::hex << "PPUADDR:   0x" << (int) ppu.getPPUADDR(); addstr(buffer.str().c_str()); move(8,30); buffer.str("");
-    buffer << std::hex << "OAMDMA:    0x" << (int) ppu.getOAMDMA(); addstr(buffer.str().c_str());
+    buffer << std::hex << "PPUADDR:   0x" << (int) ppu.getPPUADDR();   addstr(buffer.str().c_str()); move(8,30); buffer.str("");
+    buffer << std::hex << "OAMDMA:    0x" << (int) ppu.getOAMDMA();    addstr(buffer.str().c_str());
 }
 
 //Show interrupts locations
@@ -74,7 +74,7 @@ void Debugger::show_interrupts(NES nes){
     std::stringstream buffer;
     buffer << "Interupts :"; addstr(buffer.str().c_str()); move(1,50); buffer.str("");
     buffer << std::hex << "Reset:   0x" << (int) (nes.read(0xFFFD) << 8 | nes.read(0xFFFC)); addstr(buffer.str().c_str()); move(2,50); buffer.str("");
-    buffer << std::hex << "BRK:   0x" << (int) (nes.read(0xFFFF) << 8 | nes.read(0xFFFE)); addstr(buffer.str().c_str()); move(3,50); buffer.str("");
+    buffer << std::hex << "BRK:   0x"   << (int) (nes.read(0xFFFF) << 8 | nes.read(0xFFFE)); addstr(buffer.str().c_str()); move(3,50); buffer.str("");
     buffer << std::hex << "IRQ/NMI: 0x" << (int) (nes.read(0xFFFB) << 8 | nes.read(0xFFFA)); addstr(buffer.str().c_str());
 }
 
@@ -82,8 +82,8 @@ void Debugger::show_position(PPU ppu){
     move(6,50);
     std::stringstream buffer;
     buffer << "PPU position:"; addstr(buffer.str().c_str()); move(7,50); buffer.str("");
-    buffer << std::dec << "Scanline: " << ppu.get_scanline();; addstr(buffer.str().c_str()); move(8,50); buffer.str("");
-    buffer << std::dec << "Cycle: " << ppu.get_cycle(); addstr(buffer.str().c_str()); move(9,50); buffer.str("");
+    buffer << std::dec << "Scanline: " << ppu.get_scanline(); addstr(buffer.str().c_str()); move(8,50); buffer.str("");
+    buffer << std::dec << "Cycle: "    << ppu.get_cycle();     addstr(buffer.str().c_str()); move(9,50); buffer.str("");
 }
 
 void Debugger::show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu, NES nes){
@@ -93,7 +93,6 @@ void Debugger::show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu, NES nes)
     show_ppu_register(ppu);
     show_interrupts(nes);
     show_position(ppu);
-//    show_chrom(ppu);
     refresh();
 }
 
@@ -106,62 +105,63 @@ void Debugger::show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu, NES nes)
 //    log.close();
 //}
 
-int main(){
-//    initscr();
-    
-    
-    Debugger debug;
-    
-    Address old_pc = 0x0000;
-
-    debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes");
-//  debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes");
-//  debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/scanline.nes");
-//        debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/smb.nes");
-//    debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/1.Branch_Basics.nes");
-    
-//    std::ofstream log;
-    debug.cpu->reset();
-    
-    
-//    log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
-//    log.close();
-//    logging(*cpu);
-
-    
-    
-//    int a = 0;
-
-    while(1){
-        debug.nes.clock();
-//        ppu->clock();
-////
-//        if(a %3 == 0){
-//            cpu->clock();
-
-//            cpu->clock();
-//            if(cpu->rem_cycles == 0){
-//                logging(*cpu, old_pc, *ppu);
-//                old_pc = cpu->get_register_PC();
-//            }
-
-//                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-//            debug.show_state(*debug.cpu, *debug.nes.ram, *debug.ppu, debug.nes);
-//            refresh();
-//        }
-//        if(ppu->asknmi){
-//            cpu->NMI();
-//            ppu->asknmi = false;
-//        }
-//        a++;
-//        logging(*cpu, old_pc, *ppu);
-    }
-    
-    
-    
-    return 0;
-}
-
-
-
-
+// Description
+//int main(){
+////    initscr();
+//
+//
+//    Debugger debug;
+//
+//    Address old_pc = 0x0000;
+//
+//    debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/donkeykong.nes");
+////  debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/nestest.nes");
+////  debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/scanline.nes");
+////        debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/smb.nes");
+////    debug.cartridge->load("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/1.Branch_Basics.nes");
+//
+////    std::ofstream log;
+//    debug.cpu->reset();
+//
+//
+////    log.open("/Users/alexicanesse/Documents/prog/nes/NES-Emulator/NES-Emulator/tests/nestest/lognesttest.log", std::ifstream::trunc);
+////    log.close();
+////    logging(*cpu);
+//
+//
+//
+////    int a = 0;
+//
+//    while(1){
+//        debug.nes.clock();
+////        ppu->clock();
+//////
+////        if(a %3 == 0){
+////            cpu->clock();
+//
+////            cpu->clock();
+////            if(cpu->rem_cycles == 0){
+////                logging(*cpu, old_pc, *ppu);
+////                old_pc = cpu->get_register_PC();
+////            }
+//
+////                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+////            debug.show_state(*debug.cpu, *debug.nes.ram, *debug.ppu, debug.nes);
+////            refresh();
+////        }
+////        if(ppu->asknmi){
+////            cpu->NMI();
+////            ppu->asknmi = false;
+////        }
+////        a++;
+////        logging(*cpu, old_pc, *ppu);
+//    }
+//
+//
+//
+//    return 0;
+//}
+//
+//
+//
+//

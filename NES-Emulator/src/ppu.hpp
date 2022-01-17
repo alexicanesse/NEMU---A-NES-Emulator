@@ -24,7 +24,7 @@ class NES;
 
 
 //Be careful: the PPU is definitly more complicated than the CPU.
-//I tryed to give as much information about the hardware in my comments
+//I tryed to give as much information as I can about the hardware in my comments
 //but I strongly advice you to keep this page open at all time to check
 //how the hardware works
 //https://wiki.nesdev.org/w/index.php?title=PPU
@@ -38,7 +38,7 @@ private:
 #warning TODO Handle screen size 
     GRAPHICS graphics = *(new GRAPHICS(5));
     SDL_Event event;
-    int frames_last_seconde = 0;
+    int frames_last_seconde = 0; //used to handle fps counter
     int last_time = 0;
     
     //https://wiki.nesdev.org/w/index.php?title=PPU_frame_timing
@@ -57,15 +57,15 @@ private:
     //power-up state
     //https://wiki.nesdev.org/w/index.php?title=PPU_power_up_state
     struct registers {
-        Byte PPUCTRL = 0x00; // Address 0x2000       PPU control register
-        Byte PPUMASK = 0x00; // Address 0x2001       PPU mask register
+        Byte PPUCTRL   = 0x00; // Address 0x2000       PPU control register
+        Byte PPUMASK   = 0x00; // Address 0x2001       PPU mask register
         Byte PPUSTATUS = 0x00; // Address 0x2002     PPU status register
-        Byte OAMADDR = 0x00; // Address 0x2003       OAM address port
-        Byte OAMDATA = 0x00; // Address 0x2004       OAM data port
+        Byte OAMADDR   = 0x00; // Address 0x2003       OAM address port
+        Byte OAMDATA   = 0x00; // Address 0x2004       OAM data port
         Byte PPUSCROLL = 0x00; // Address 0x2005     PPU scrolling position register
-        Byte PPUADDR = 0x00; // Address 0x2006      PPU address register
+        Byte PPUADDR   = 0x00; // Address 0x2006      PPU address register
 //      // Address 0x2007       PPU data port: vmem_addr(declared in public)
-        Byte OAMDMA = 0x00; // Address 0x4014        OAM DMA register (high byte)
+        Byte OAMDMA    = 0x00; // Address 0x4014        OAM DMA register (high byte)
     } registers;
     
     struct Color{
@@ -78,8 +78,8 @@ private:
     //Memory
     //https://wiki.nesdev.org/w/index.php?title=PPU_memory_map
     std::array<std::array<Byte, 0x1000>, 2> *Pattern_table = new std::array<std::array<Byte, 0x1000>, 2>; //pattern table 0 and 1
-    std::array<std::array<Byte, 0x0400>, 4> *Nametable = new std::array<std::array<Byte, 0x0400>, 4>;
-    std::array<Byte, 0x0020> *Palette = new std::array<Byte, 0x0020>;
+    std::array<std::array<Byte, 0x0400>, 4> *Nametable = new std::array<std::array<Byte, 0x0400>, 4>;     //nametables 0 to 3
+    std::array<Byte, 0x0020> *Palette = new std::array<Byte, 0x0020>;                                     //current colors in the used palette
     std::array<GRAPHICS::Color,64> *palette = new std::array<GRAPHICS::Color,64>; //all available colors
     
     
@@ -106,13 +106,15 @@ private:
     std::array<Sprite, 8> *Sec_OAM = new std::array<Sprite, 8>;
     int last_available_slot = 0; //helper variable that indicates were to write in the secondary OAM. 8 indicates that the secondary OAM is full.
     std::array<std::array<Byte,2>,8> *sprite_shift_registers = new std::array<std::array<Byte,2>,8>; //These contain the pattern table data for up to 8 sprites, to be rendered on the current scanline. Unused sprites are loaded with an all-transparent set of values.
-    std::array<Byte,8> *sprite_latches = new std::array<Byte,8>; //These contain the attribute bytes for up to 8 sprites.
+    std::array<Byte,8> *sprite_latches = new std::array<Byte,8>;  //These contain the attribute bytes for up to 8 sprites.
     std::array<Byte,8> *sprite_counters = new std::array<Byte,8>; //These contain the X positions for up to 8 sprites.
-    int n = 0; //helper variable
-    int sprite_cycle = 0; //helper variable
-    Byte sprite_data_read = 0x00; //helper variable
+    
+    
+    int n = 0;                          //helper variable (index which sprite is currently being evaluated)
+    int sprite_cycle = 0;               //helper variable
+    Byte sprite_data_read = 0x00;       //helper variable
     bool sprite_search_is_done = false; //helper variable
-    int number_of_sprites = 0; //helper variable
+    int number_of_sprites = 0;          //helper variable
 public:
 
     
@@ -174,9 +176,9 @@ public:
     //First or second write toggle (1 bit)
     bool write_toggle = false;
     
-    bool asknmi = false;
+    bool asknmi = false;  //should the cpu enter in the nmi phase during the next cycle ?
     
-    Byte read_buffer = 0x00;
+    Byte read_buffer = 0x00; //reading buffer
     
     /*
      chrROM
@@ -187,7 +189,6 @@ public:
     /*
      Other
     */
-//    Byte address_latch = 0x00;
     NES *nes;
     void clock();
     bool is_sprite_0_there = false;
