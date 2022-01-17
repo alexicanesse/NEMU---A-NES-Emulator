@@ -22,24 +22,30 @@ typedef uint8_t Byte;
 typedef uint16_t Address;
 
 class CPU;
+class NES;
+class PPU;
 
 #warning JUST TEMP
 
 class Debugger{
 #warning TODO befriend everyone
 public:
-    void show_registers(CPU cpu);
-    void show_stack(std::array<Byte, 2048> ram);
-    void show_ppu_register(PPU ppu);
-    void show_interrupts(NES nes);
-    void show_position(PPU ppu);
-    void show_state(CPU cpu, std::array<Byte, 2048> ram, PPU ppu, NES nes);
-    void logging(CPU cpu, Address pc, PPU ppu);
+    Debugger(NES *nes, CPU *cpu, PPU *ppu); //constructor
     
-    NES nes;
-    CPU *cpu = nes.cpu;
-    PPU *ppu = nes.ppu;
-    CARTRIDGE *cartridge = nes.cartridge;
+    void show_registers();
+    void show_stack();
+    void show_ppu_register();
+    void show_interrupts();
+    void show_position();
+    void show_state();
+    void logging();
+    
+    NES *nes;
+    CPU *cpu;
+    PPU *ppu;
+    
+    Address old_pc = 0x0000; //store the last opcode read as a buffer
+    std::ofstream log; //used for logging
 };
 
 

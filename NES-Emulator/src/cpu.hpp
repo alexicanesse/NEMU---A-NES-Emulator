@@ -57,6 +57,10 @@ public:
     
     
     void clock(); //main function of the cpu
+    
+    /* other */
+    Byte get_register_PC(){ return this->registers.r_PC; }
+    int get_rem_cycles(){ return this->rem_cycles; }
 private:
     /*
      Registers
@@ -227,6 +231,8 @@ private:
     int rem_cycles = 0; //remaining cycle until we fetch the next instruction
     int cycles = 1; //initialized at 1 because clock() is called for the first time when the cpu has already finished it's reset
     Address data_to_read = 0x0000; //used to store the data fetched until its use
+    
+   
 };
 
 

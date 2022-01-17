@@ -268,21 +268,59 @@ void NES::clock(){
 }
 
 
+void NES::debug_loop(bool log){
+#warning WTF is going on with stack ??
+#warning TODO step by step
+    
+    this->debug = new Debugger(this, cpu, ppu); //we only initialize it when it is requiered
+    
+    int ppucycle = 0;
+    while(1){
+            this->clock();
+            if(ppucycle %3 == 0){
+                if(cpu->get_rem_cycles() == 0){
+                    if(log)
+                        debug->logging();
+                    debug->old_pc = cpu->get_register_PC();
+                }
+                debug->show_state();
+                refresh();
+            }
+            if(ppu->asknmi){
+                cpu->NMI();
+                ppu->asknmi = false;
+            }
+            ppucycle++;
+            if(log)
+                debug->logging();
+    }
+}
 
+void NES::usual_loop(){
+    while(1){
+            this->clock();
+    }
+}
 
 
 int main(int argc, char** argv){
+    NES nes;
+    
     boost::program_options::options_description desc("Allowed options");
     desc.add_options()
         ("help", "print the help message")
         ("rom", boost::program_options::value<std::string>(), "set the rom file to open")
         ("screen_size_multiplier", boost::program_options::value<int>(), "set the screen size multiplier")
         ("d", "start in debug mode")
+        ("log", "enable logging")
     ;
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
     boost::program_options::notify(vm);
+
+    nes.cartridge->load("./tests/donkeykong.nes");
+    nes.cpu->reset(); //this initialize the cpu in the right state
 
     if (vm.count("help")) {
         std::cout << desc << "\n";
@@ -296,21 +334,28 @@ int main(int argc, char** argv){
         std::cout << "--rom option is requiered";
         return 0;
     }
-    
+
     if(vm.count("screen_size_multiplier")){
 #warning TODO
     }
     else{
 #warning TODO set default
     }
-    
+
     if(vm.count("d")){
-#warning TODO
+        if(vm.count("log"))
+            nes.debug_loop(true);
+        else
+            nes.debug_loop(false);
     }
     else{
-#warning TODO 
+        nes.usual_loop();
     }
-    
+
+
+
+
+
     
     return 0;
 }

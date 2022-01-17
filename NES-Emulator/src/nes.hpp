@@ -14,6 +14,7 @@
 #include "cpu.hpp"
 #include "ppu.hpp"
 #include "cartridge.hpp"
+#include "debug.hpp"
 
 typedef uint8_t Byte;
 typedef uint16_t Address;
@@ -22,6 +23,8 @@ typedef uint16_t Address;
 class NES{
 private:
     int cycle; //it will be used to make the cpu run at a third of ppu speed
+    
+    Debugger *debug;
     
     bool transfert_dma = false;
     Byte dma_offset = 0x00;
@@ -37,16 +40,18 @@ public:
     NES();
     
     
-    //controller (only one because it's annoying to map tow controllers to one keyboard)
+    //controller (only one because it's annoying to map two controllers to one keyboard)
     Byte controler_shifter = 0x00;
     
-#warning TODO init matrix at init
-    std::array<Byte, 2048> *ram = new std::array<Byte, 2048>;
+    std::array<Byte, 2048> *ram = new std::array<Byte, 2048>; //the power-up state doesn't matter so the array doesn't have to be initialized
     
     void write(Address adr, Byte content);
     Byte read(Address adr);
     
     void clock();
+    
+    void debug_loop(bool log);
+    void usual_loop();
 };
 
 
