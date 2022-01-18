@@ -35,8 +35,7 @@ private:
     /*
      Graphics
     */
-#warning TODO Handle screen size 
-    GRAPHICS graphics = *(new GRAPHICS(5));
+    GRAPHICS *graphics;;
     SDL_Event event;
     int frames_last_seconde = 0; //used to handle fps counter
     int last_time = 0;
@@ -121,12 +120,11 @@ public:
     /*
         Constructor
     */
-    PPU(NES*);
+    PPU(NES*, float screen_coef);
     
     /*
      Registers
     */
-#warning TODO properly
     Byte getPPUCTRL();    //get PPU control register
     Byte getPPUMASK();    //get PPU mask register
     Byte getPPUSTATUS();  //get PPU status register
@@ -199,7 +197,7 @@ public:
     int get_scanline(){ return scanline; }
     int get_cycle(){ return cycle; }
     struct registers r() {return registers; }
-    GRAPHICS getgraphics() { return graphics; }
+    GRAPHICS getgraphics() { return *graphics; }
 };
 
 

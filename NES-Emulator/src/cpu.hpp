@@ -195,7 +195,6 @@ private:
     //flags
     bool CLC(); //Clear Carry Flag
     bool CLD(); //Clear Decimal Mode
-#warning TODO
     bool CLI(); //Clear Interrupt Disable
     bool CLV(); //Clear Overflow Flag
     bool SEC(); //Set Carry Flag

@@ -25,10 +25,8 @@ class CPU;
 class NES;
 class PPU;
 
-#warning JUST TEMP
-
 class Debugger{
-#warning TODO befriend everyone
+
 public:
     Debugger(NES *nes, CPU *cpu, PPU *ppu); //constructor
     

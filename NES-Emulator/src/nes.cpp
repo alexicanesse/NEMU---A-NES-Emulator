@@ -20,7 +20,6 @@
 */
 NES::NES(){
     this->cpu = new CPU(this);
-    this->ppu = new PPU(this);
     this->cartridge = new CARTRIDGE(this);
 }
 
@@ -231,7 +230,6 @@ Byte NES::read(Address addr){
 
 
 void NES::clock(){
-#warning TODO Handle speed
     ppu->clock();
 
     if(this->cycle % 3 == 0){ //this cycle also concerns the cpu (which runs 3 times slower than the ppu)
@@ -268,16 +266,18 @@ void NES::clock(){
 }
 
 
-void NES::debug_loop(bool log){
-#warning WTF is going on with stack ??
-#warning TODO step by step
-    
+void NES::debug_loop(bool log, bool sts){
     this->debug = new Debugger(this, cpu, ppu); //we only initialize it when it is requiered
     
     int ppucycle = 0;
     while(1){
             this->clock();
             if(ppucycle %3 == 0){
+                //trickery to run instruction by instruction
+                if(sts){
+                    getchar();
+                }
+                
                 if(cpu->get_rem_cycles() == 0){
                     if(log)
                         debug->logging();
@@ -297,7 +297,18 @@ void NES::debug_loop(bool log){
 }
 
 void NES::usual_loop(){
+    //all of this is meant to keep the ppu to run too fast. A defined number of cycle is used to construct af frame. If the host runs too fast, the game will be unplayable.
+    int currentTime = SDL_GetTicks();
+    int lastFrame = SDL_GetTicks();
     while(1){
+        currentTime = SDL_GetTicks();
+        if(ppu->get_scanline() == -1 && ppu->get_cycle() == 0){ //we wait during each frame to keep a steedy 60 fps (at a higher framerate, everything is faster)
+            if((float (currentTime - lastFrame)) >= 1./60){
+                lastFrame = currentTime;
+                this->clock();
+            }
+        }
+        else
             this->clock();
     }
 }
@@ -308,54 +319,58 @@ int main(int argc, char** argv){
     
     boost::program_options::options_description desc("Allowed options");
     desc.add_options()
-        ("help", "print the help message")
+        ("help,h", "print the help message")
         ("rom", boost::program_options::value<std::string>(), "set the rom file to open")
-        ("screen_size_multiplier", boost::program_options::value<int>(), "set the screen size multiplier")
-        ("d", "start in debug mode")
+        ("screen_size_multiplier,ssm", boost::program_options::value<float>(), "set the screen size multiplier")
+        ("debug,d", "start in debug mode")
         ("log", "enable logging")
+        ("step_by_step,sbs", "enable step by step")
     ;
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
-    boost::program_options::notify(vm);
+    try{
+        boost::program_options::notify(vm);
+    }
+    catch (std::exception& e) {
+      std::cout << "Error: " << e.what() << std::endl;
+      std::cout << desc << std::endl;
+      return 1;
+    }
 
-    nes.cartridge->load("./tests/donkeykong.nes");
-    nes.cpu->reset(); //this initialize the cpu in the right state
-
+    boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
+    
     if (vm.count("help")) {
         std::cout << desc << "\n";
         return 1;
     }
+
+    if(vm.count("screen_size_multiplier")){ //this must be evaluated first as it initialize the ppu 
+        nes.ppu = new PPU(&nes, vm["screen_size_multiplier"].as<float>());
+    }
+    else{
+        nes.ppu = new PPU(&nes, 3);
+    }
     
     if(vm.count("rom")){
-#warning TODO
+        nes.cartridge->load(vm["rom"].as<std::string>());
     }
     else{
         std::cout << "--rom option is requiered";
         return 0;
     }
 
-    if(vm.count("screen_size_multiplier")){
-#warning TODO
-    }
-    else{
-#warning TODO set default
-    }
+    nes.cpu->reset(); //this initialize the cpu in the right state
+    
+    if(vm.count("debug")){
+        bool log = !(vm.count("log") == 0);
+        bool sts = !(vm.count("step_by_step") == 0);
 
-    if(vm.count("d")){
-        if(vm.count("log"))
-            nes.debug_loop(true);
-        else
-            nes.debug_loop(false);
+        nes.debug_loop(log,sts);
     }
     else{
         nes.usual_loop();
     }
 
-
-
-
-
-    
     return 0;
 }

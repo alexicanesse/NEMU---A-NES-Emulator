@@ -9,7 +9,7 @@
 #include <array>
 #include <string>
 #include <sstream>
-
+#include <iomanip>
 #include <ncurses.h>
 
 #include "cpu.hpp"

@@ -50,7 +50,7 @@ public:
     
     void clock();
     
-    void debug_loop(bool log);
+    void debug_loop(bool log, bool sts);
     void usual_loop();
 };
 

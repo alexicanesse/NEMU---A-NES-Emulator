@@ -223,7 +223,7 @@ bool CPU::REL(){
     
 }
 
-#warning TODO cycle by cycle
+
 /*
 Interruptions
  Two interrupts (/IRQ and /NMI) and two instructions (PHP and BRK) push the flags to the stack. In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK) or 0 if from an interrupt line being pulled low (/IRQ or /NMI). This is the only time and place where the B flag actually exists: not in the status register itself, but in bit 4 of the copy that is written to the stack.
@@ -1671,7 +1671,7 @@ bool CPU::RTS(){
     return false;
 }
 
-#warning Je ne suis pas sur de devoir faire cycle--
+
 //bra
 //Branch on Carry Clear
 bool CPU::BCC(){

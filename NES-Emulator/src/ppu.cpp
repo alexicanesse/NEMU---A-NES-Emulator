@@ -17,9 +17,9 @@
 /*
     Constructor
 */
-PPU::PPU(NES *nes){
+PPU::PPU(NES *nes, float screen_coef){
     this->nes = nes;
-    
+    this->graphics = new GRAPHICS(screen_coef);
     /*
     define the palette
     https://wiki.nesdev.org/w/index.php/PPU_palettes#Palettes
@@ -954,7 +954,7 @@ void PPU::clock(){
         //|++--- Palette number from attribute table or OAM
         //+----- Background/Sprite select
         GRAPHICS::Color c = this->palette->at(this->read( 0x3F00 + ( final_pixel | (final_palette << 2) )) & 0x3F);
-        graphics.DrawPixel(cycle, scanline, c);
+        graphics->DrawPixel(cycle, scanline, c);
     }
 
     cycle++;                                   //each cycle the ppu generate one pixel
@@ -976,12 +976,12 @@ void PPU::clock(){
             int currentTime = SDL_GetTicks();
             if (currentTime > last_time + 1000) {
                 std::string re = "FPS: " + std::to_string(frames_last_seconde);
-                graphics.ChangeTitle(re.c_str());
+                graphics->ChangeTitle(re.c_str());
                 last_time = currentTime;
                 frames_last_seconde = 0;
             }
             
-            graphics.update(); //update the screen with the new frame
+            graphics->update(); //update the screen with the new frame
         }
     }
 
