@@ -120,36 +120,9 @@ void NES::write(Address adr, Byte content){
         this->ppu->setOAMDMA(content);
         this->transfert_dma = true;
     }
-    else if(adr == 0x4016){
-        //0 - A
-        //1 - B
-        //2 - Select
-        //3 - Start
-        //4 - Up
-        //5 - Down
-        //6 - Left
-        //7 - Right
-        this->controler_shifter = 0x00;
-        SDL_Event event;
-        SDL_PollEvent(&event);
-        const Byte *keys = SDL_GetKeyboardState(NULL); //keyboard is handled as qwerty
-        if(keys[SDL_SCANCODE_W]) // z
-            this->controler_shifter |= 0x08;
-        if(keys[SDL_SCANCODE_A]) // q
-            this->controler_shifter |= 0x02;
-        if(keys[SDL_SCANCODE_S])
-            this->controler_shifter |= 0x04;
-        if(keys[SDL_SCANCODE_D])
-            this->controler_shifter |= 0x01;
-        if(keys[SDL_SCANCODE_G])
-            this->controler_shifter |= 0x20;
-        if(keys[SDL_SCANCODE_H])
-            this->controler_shifter |= 0x10;
-        if(keys[SDL_SCANCODE_K])
-            this->controler_shifter |= 0x80;
-        if(keys[SDL_SCANCODE_L])
-            this->controler_shifter |= 0x40;
-    }
+    //else if(adr == 0x4016){
+        //the controller state is update at each new frame
+    //}
 }
 
 
@@ -262,6 +235,41 @@ void NES::clock(){
             this->cpu->clock();
     }
     
+    if(ppu->get_cycle() == 0 && ppu->get_scanline() == -1){ //we update the controler state at each frame
+        SDL_Event event;
+        //0 - A
+        //1 - B
+        //2 - Select
+        //3 - Start
+        //4 - Up
+        //5 - Down
+        //6 - Left
+        //7 - Right
+        this->controler_shifter = 0x00;
+        SDL_PollEvent(&event);
+        const Byte *keys = SDL_GetKeyboardState(NULL); //keyboard is handled as qwerty
+        if(keys[SDL_SCANCODE_W]) // z
+            this->controler_shifter |= 0x08;
+        if(keys[SDL_SCANCODE_A]) // q
+            this->controler_shifter |= 0x02;
+        if(keys[SDL_SCANCODE_S])
+            this->controler_shifter |= 0x04;
+        if(keys[SDL_SCANCODE_D])
+            this->controler_shifter |= 0x01;
+        if(keys[SDL_SCANCODE_G])
+            this->controler_shifter |= 0x20;
+        if(keys[SDL_SCANCODE_H])
+            this->controler_shifter |= 0x10;
+        if(keys[SDL_SCANCODE_K])
+            this->controler_shifter |= 0x80;
+        if(keys[SDL_SCANCODE_L])
+            this->controler_shifter |= 0x40;
+
+
+        if(event.type == SDL_QUIT) //we quit if the user tells us to quit
+            exit(0);
+    }
+    
     cycle++;
 }
 
@@ -271,28 +279,28 @@ void NES::debug_loop(bool log, bool sts){
     
     int ppucycle = 0;
     while(1){
-            this->clock();
-            if(ppucycle %3 == 0){
-                //trickery to run instruction by instruction
-                if(sts){
-                    getchar();
-                }
-                
-                if(cpu->get_rem_cycles() == 0){
-                    if(log)
-                        debug->logging();
-                    debug->old_pc = cpu->get_register_PC();
-                }
-                debug->show_state();
-                refresh();
+        this->clock();
+        if(ppucycle %3 == 0){
+            //trickery to run instruction by instruction
+            if(sts){
+                getchar();
             }
-            if(ppu->asknmi){
-                cpu->NMI();
-                ppu->asknmi = false;
+            
+            if(cpu->get_rem_cycles() == 0){
+                if(log)
+                    debug->logging();
+                debug->old_pc = cpu->get_register_PC();
             }
-            ppucycle++;
-            if(log)
-                debug->logging();
+            debug->show_state();
+            refresh();
+        }
+        if(ppu->asknmi){
+            cpu->NMI();
+            ppu->asknmi = false;
+        }
+        ppucycle++;
+        if(log)
+            debug->logging();
     }
 }
 
