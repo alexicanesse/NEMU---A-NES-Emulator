@@ -26,7 +26,7 @@ set(HEADERS
     )
 
 #remove -pipe if your system does not have much memory
-set(CMAKE_CXX_FLAGS "-lncurses -O2 -pipe")
+set(CMAKE_CXX_FLAGS "-lncurses -Ofast -pipe")
 
 find_package(SDL2 REQUIRED)
 find_package(Boost 1.45.0 COMPONENTS program_options)
